@@ -1,12 +1,16 @@
 {
-  "name": "venefit-trainer-app",
-  "private": true,
+  "name": "venefit",
   "version": "1.0.0",
   "type": "module",
+  "description": "Mobile-first personal trainer platform for workout planning, routine tracking, and client management.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/openrise-hub/venefit.git"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -19,6 +23,9 @@
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.4",
+    "tailwindcss": "^3.4.17",
     "vite": "^6.1.0"
   }
 }

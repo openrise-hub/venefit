@@ -76,11 +76,11 @@
         "options": { "min": null, "max": null, "pattern": "" }
       }
     ],
-    "listRule": "",
-    "viewRule": "",
-    "createRule": "",
-    "updateRule": "",
-    "deleteRule": ""
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\""
   },
   {
     "id": "exercises_col_id",
@@ -123,9 +123,9 @@
     ],
     "listRule": "",
     "viewRule": "",
-    "createRule": "",
-    "updateRule": "",
-    "deleteRule": ""
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\""
   },
   {
     "id": "workout_plans_col_id",
@@ -180,11 +180,11 @@
         "options": { "min": null, "max": null, "pattern": "" }
       }
     ],
-    "listRule": "",
-    "viewRule": "",
-    "createRule": "",
-    "updateRule": "",
-    "deleteRule": ""
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\""
   },
   {
     "id": "plan_routines_col_id",
@@ -253,11 +253,11 @@
         "options": {}
       }
     ],
-    "listRule": "",
-    "viewRule": "",
-    "createRule": "",
-    "updateRule": "",
-    "deleteRule": ""
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\""
   },
   {
     "id": "routine_exercises_col_id",
@@ -350,11 +350,11 @@
         "options": { "min": null, "max": null, "pattern": "" }
       }
     ],
-    "listRule": "",
-    "viewRule": "",
-    "createRule": "",
-    "updateRule": "",
-    "deleteRule": ""
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\""
   },
   {
     "id": "daily_set_results_col_id",
@@ -433,10 +433,10 @@
         "options": {}
       }
     ],
-    "listRule": "",
-    "viewRule": "",
-    "createRule": "",
-    "updateRule": "",
-    "deleteRule": ""
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\""
   }
 ]

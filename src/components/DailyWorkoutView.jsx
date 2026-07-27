@@ -101,12 +101,12 @@ export default function DailyWorkoutView({
         }
       };
 
-      saveSingleSetToSupabase(routineExId, dateStr, setNum, updatedSet);
+      persistSetResult(routineExId, dateStr, setNum, updatedSet);
       return newState;
     });
   };
 
-  const saveSingleSetToSupabase = async (routineExId, date, setNum, setData) => {
+  const persistSetResult = async (routineExId, date, setNum, setData) => {
     try {
       await saveSetResult({
         routine_exercise_id: routineExId,

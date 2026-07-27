@@ -9,9 +9,9 @@ export function formatDateISO(date) {
 export function getWeekDates(targetDate = new Date()) {
   const curr = new Date(targetDate);
   const day = curr.getDay();
-  const diffToMonday = curr.getDate() - (day === 0 ? 6 : day - 1);
-  
-  const monday = new Date(curr.setDate(diffToMonday));
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+  const monday = new Date(curr);
+  monday.setDate(curr.getDate() + diffToMonday);
   const week = [];
 
   const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];

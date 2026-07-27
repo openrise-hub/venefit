@@ -1,6 +1,6 @@
-@import "https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/base.min.css";
-@import "https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/components.min.css";
-@import "https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/utilities.min.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
   :root {
@@ -21,7 +21,6 @@
   }
 }
 
-/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -40,7 +39,6 @@
   background: #334155;
 }
 
-/* Safe area for mobile navigation bars */
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0.75rem);
 }
