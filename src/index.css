@@ -1,0 +1,55 @@
+@import "https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/base.min.css";
+@import "https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/components.min.css";
+@import "https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/utilities.min.css";
+
+@layer base {
+  :root {
+    --font-heading: 'Outfit', system-ui, -apple-system, sans-serif;
+    --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    font-family: var(--font-body);
+    background-color: #0b0f19;
+    color: #f8fafc;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1, h2, h3, h4, .font-heading {
+    font-family: var(--font-heading);
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b0f19;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Safe area for mobile navigation bars */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0.75rem);
+}
+
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spinSlow 8s linear infinite;
+}
