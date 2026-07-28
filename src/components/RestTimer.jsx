@@ -8,21 +8,26 @@ export default function RestTimer({ initialSeconds = 90, onClose }) {
   const [isFinished, setIsFinished] = useState(false);
 
   useEffect(() => {
-    let interval = null;
-    if (isRunning && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    } else if (timeLeft === 0 && isRunning) {
-      setIsRunning(false);
-      setIsFinished(true);
-      playAlertBeep();
-      if (navigator.vibrate) {
-        navigator.vibrate([200, 100, 200]);
-      }
-    }
+    if (!isRunning) return;
+
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setIsRunning(false);
+          setIsFinished(true);
+          playAlertBeep();
+          if (navigator.vibrate) {
+            navigator.vibrate([200, 100, 200]);
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
     return () => clearInterval(interval);
-  }, [isRunning, timeLeft]);
+  }, [isRunning]);
 
   const playAlertBeep = () => {
     try {
