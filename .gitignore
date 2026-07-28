@@ -2,6 +2,11 @@
 node_modules/
 .pnpm-store/
 
+# Agent skills
+.agents/
+skills-lock.json
+.skills-lock.json
+
 # Build outputs
 dist/
 dist-ssr/
