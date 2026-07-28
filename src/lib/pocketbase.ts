@@ -1,56 +1,57 @@
 import PocketBase from 'pocketbase';
+import { TrainerUser } from '../types';
 
-const pbUrl = import.meta.env.VITE_POCKETBASE_URL || window.location.origin;
+let pbInstance: PocketBase | null = null;
 
-let pbInstance = null;
-
-export function getPocketBaseClient() {
+export function getPocketBaseClient(): PocketBase {
   if (!pbInstance) {
-    pbInstance = new PocketBase(pbUrl);
+    const baseUrl = import.meta.env.VITE_POCKETBASE_URL || window.location.origin;
+    pbInstance = new PocketBase(baseUrl);
     pbInstance.autoCancellation(false);
   }
   return pbInstance;
 }
 
-export function getCurrentTrainer() {
+export function getCurrentTrainer(): TrainerUser | null {
   const pb = getPocketBaseClient();
-  return pb && pb.authStore.isValid ? pb.authStore.model : null;
+  if (pb.authStore.isValid && pb.authStore.record) {
+    return {
+      id: pb.authStore.record.id,
+      email: pb.authStore.record.email,
+      name: pb.authStore.record.name
+    };
+  }
+  return null;
 }
 
-export function isTrainerAuthenticated() {
+export function isTrainerAuthenticated(): boolean {
   const pb = getPocketBaseClient();
-  return Boolean(pb && pb.authStore.isValid);
+  return pb.authStore.isValid;
 }
 
-export async function loginTrainer(email, password) {
+export async function loginTrainer(email: string, pass: string) {
   const pb = getPocketBaseClient();
-  return await pb.collection('users').authWithPassword(email, password);
+  return await pb.collection('users').authWithPassword(email, pass);
 }
 
-export async function registerTrainer(email, password, name = '') {
+export async function registerTrainer(email: string, pass: string, name: string) {
   const pb = getPocketBaseClient();
   const user = await pb.collection('users').create({
     email,
-    password,
-    passwordConfirm: password,
-    name: name.trim() || email.split('@')[0]
+    password: pass,
+    passwordConfirm: pass,
+    name
   });
-
-  await loginTrainer(email, password);
+  await loginTrainer(email, pass);
   return user;
 }
 
 export function logoutTrainer() {
   const pb = getPocketBaseClient();
-  if (pb) pb.authStore.clear();
+  pb.authStore.clear();
 }
 
-export function subscribeAuthChange(callback) {
+export function subscribeAuthChange(callback: (token: string, model: any) => void) {
   const pb = getPocketBaseClient();
-  if (pb) {
-    return pb.authStore.onChange((token, model) => {
-      callback(model);
-    });
-  }
-  return () => {};
+  return pb.authStore.onChange(callback);
 }

@@ -1,26 +1,64 @@
 import { useState, useEffect } from 'react';
 
-let listeners = [];
+export type ToastType = 'info' | 'success' | 'error';
 
-export function showToast(message, type = 'error') {
-  listeners.forEach((listener) => listener({ id: Date.now(), message, type }));
+export interface Toast {
+  id: string;
+  message: string;
+  type: ToastType;
+}
+
+type ToastListener = (toasts: Toast[]) => void;
+
+let toasts: Toast[] = [];
+let listeners: ToastListener[] = [];
+
+function notify() {
+  listeners.forEach((listener) => listener([...toasts]));
+}
+
+export function showToast(message: string, type: ToastType = 'info') {
+  const id = Math.random().toString(36).substring(2, 9);
+  const newToast: Toast = { id, message, type };
+
+  toasts = [...toasts, newToast];
+  notify();
+
+  setTimeout(() => {
+    removeToast(id);
+  }, 4000);
+}
+
+export function removeToast(id: string) {
+  toasts = toasts.filter((t) => t.id !== id);
+  notify();
+}
+
+export function subscribeToasts(listener: ToastListener) {
+  listeners.push(listener);
+  listener([...toasts]);
+
+  return () => {
+    listeners = listeners.filter((l) => l !== listener);
+  };
 }
 
 export function useToast() {
-  const [toast, setToast] = useState(null);
+  const [currentToasts, setCurrentToasts] = useState<Toast[]>(toasts);
 
   useEffect(() => {
-    const handleToast = (newToast) => {
-      setToast(newToast);
-    };
-
-    listeners.push(handleToast);
-    return () => {
-      listeners = listeners.filter((l) => l !== handleToast);
-    };
+    return subscribeToasts((newToasts) => {
+      setCurrentToasts(newToasts);
+    });
   }, []);
 
-  const clearToast = () => setToast(null);
+  const activeToast = currentToasts.length > 0 ? currentToasts[currentToasts.length - 1] : null;
 
-  return { toast, clearToast };
+  return {
+    toast: activeToast,
+    toasts: currentToasts,
+    clearToast: () => {
+      if (activeToast) removeToast(activeToast.id);
+    }
+  };
 }
