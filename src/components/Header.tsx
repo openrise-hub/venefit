@@ -2,6 +2,15 @@ import React from 'react';
 import { Button, Chip } from '@heroui/react';
 import { Dumbbell, Users, Plus, UserCheck, LogOut } from 'lucide-react';
 import { getCurrentTrainer, logoutTrainer } from '../lib/pocketbase';
+import { Client } from '../types';
+
+interface HeaderProps {
+  clients?: Client[];
+  selectedClient?: Client | null;
+  onSelectClient: (client: Client) => void;
+  onOpenNewClientModal: () => void;
+  onOpenLoginModal: () => void;
+}
 
 export default function Header({ 
   clients = [], 
@@ -9,7 +18,7 @@ export default function Header({
   onSelectClient, 
   onOpenNewClientModal,
   onOpenLoginModal 
-}) {
+}: HeaderProps) {
   const currentTrainer = getCurrentTrainer();
 
   return (
