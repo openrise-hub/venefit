@@ -1,19 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import Header from './components/Header';
 import Navigation from './components/Navigation';
 import ClientHeader from './components/ClientHeader';
 import WeekStrip from './components/WeekStrip';
 import DailyWorkoutView from './components/DailyWorkoutView';
-import PlanBuilderModal from './components/PlanBuilderModal';
-import ClientManagerModal from './components/ClientManagerModal';
-import LoginModal from './components/LoginModal';
 import PwaPrompt from './components/PwaPrompt';
 import ToastContainer from './components/ToastContainer';
 import { getClients, deleteClient, getClientPlans } from './lib/api';
 import { formatDateISO } from './lib/utils';
-import { subscribeAuthChange, isTrainerAuthenticated } from './lib/pocketbase';
+import { subscribeAuthChange } from './lib/pocketbase';
 import { showToast } from './lib/toastStore';
-import { Users, Plus, ShieldAlert } from 'lucide-react';
+import { Users, Plus } from 'lucide-react';
+
+const PlanBuilderModal = lazy(() => import('./components/PlanBuilderModal'));
+const ClientManagerModal = lazy(() => import('./components/ClientManagerModal'));
+const LoginModal = lazy(() => import('./components/LoginModal'));
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('workout');
@@ -197,31 +198,37 @@ export default function App() {
         )}
       </main>
 
-      {selectedClient && (
-        <PlanBuilderModal
-          isOpen={isPlanBuilderOpen}
-          onClose={() => setIsPlanBuilderOpen(false)}
-          clientId={selectedClient.id}
-          onPlanCreated={() => {
-            fetchClientPlans(selectedClient.id);
-          }}
-        />
-      )}
+      <Suspense fallback={null}>
+        {selectedClient && isPlanBuilderOpen && (
+          <PlanBuilderModal
+            isOpen={isPlanBuilderOpen}
+            onClose={() => setIsPlanBuilderOpen(false)}
+            clientId={selectedClient.id}
+            onPlanCreated={() => {
+              fetchClientPlans(selectedClient.id);
+            }}
+          />
+        )}
 
-      <ClientManagerModal
-        isOpen={isNewClientOpen}
-        onClose={() => setIsNewClientOpen(false)}
-        onClientCreated={(newClient) => {
-          loadClientsData();
-          handleSelectClient(newClient);
-        }}
-      />
+        {isNewClientOpen && (
+          <ClientManagerModal
+            isOpen={isNewClientOpen}
+            onClose={() => setIsNewClientOpen(false)}
+            onClientCreated={(newClient) => {
+              loadClientsData();
+              handleSelectClient(newClient);
+            }}
+          />
+        )}
 
-      <LoginModal
-        isOpen={isLoginOpen}
-        onClose={() => setIsLoginOpen(false)}
-        onLoginSuccess={() => loadClientsData()}
-      />
+        {isLoginOpen && (
+          <LoginModal
+            isOpen={isLoginOpen}
+            onClose={() => setIsLoginOpen(false)}
+            onLoginSuccess={() => loadClientsData()}
+          />
+        )}
+      </Suspense>
 
       <PwaPrompt />
     </div>
