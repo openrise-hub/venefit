@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import Navigation from './components/Navigation';
 import ClientHeader from './components/ClientHeader';
@@ -28,26 +28,29 @@ export default function App() {
   const [isNewClientOpen, setIsNewClientOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
 
-  useEffect(() => {
-    loadClientsData();
-
-    const unsubscribe = subscribeAuthChange(() => {
-      loadClientsData();
-    });
-
-    return () => unsubscribe();
+  const fetchClientPlans = useCallback(async (clientId) => {
+    try {
+      const plans = await getClientPlans(clientId);
+      setClientPlans(plans);
+    } catch (e) {
+      console.error('[App:fetchClientPlans] Failed to load client plans:', e);
+    }
   }, []);
 
-  const loadClientsData = async () => {
+  const loadClientsData = useCallback(async () => {
     try {
       setLoadingClients(true);
       const data = await getClients();
       setClients(data);
+
       if (data && data.length > 0) {
-        if (!selectedClient || !data.some(c => c.id === selectedClient.id)) {
-          setSelectedClient(data[0]);
-          fetchClientPlans(data[0].id);
-        }
+        setSelectedClient(prev => {
+          if (!prev || !data.some(c => c.id === prev.id)) {
+            fetchClientPlans(data[0].id);
+            return data[0];
+          }
+          return prev;
+        });
       } else {
         setSelectedClient(null);
         setClientPlans([]);
@@ -57,30 +60,31 @@ export default function App() {
     } finally {
       setLoadingClients(false);
     }
-  };
+  }, [fetchClientPlans]);
 
-  const fetchClientPlans = async (clientId) => {
-    try {
-      const plans = await getClientPlans(clientId);
-      setClientPlans(plans);
-    } catch (e) {
-      console.error('[App:fetchClientPlans] Failed to load client plans:', e);
-    }
-  };
+  useEffect(() => {
+    loadClientsData();
 
-  const handleSelectClient = (client) => {
+    const unsubscribe = subscribeAuthChange(() => {
+      loadClientsData();
+    });
+
+    return () => unsubscribe();
+  }, [loadClientsData]);
+
+  const handleSelectClient = useCallback((client) => {
     setSelectedClient(client);
     fetchClientPlans(client.id);
-  };
+  }, [fetchClientPlans]);
 
-  const handleDeleteClient = async (clientId) => {
+  const handleDeleteClient = useCallback(async (clientId) => {
     try {
       await deleteClient(clientId);
       await loadClientsData();
     } catch (e) {
       console.error('[App:handleDeleteClient] Failed to delete client:', e);
     }
-  };
+  }, [loadClientsData]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans antialiased selection:bg-emerald-500 selection:text-slate-950 pb-24 md:pb-12">
