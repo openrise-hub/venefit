@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { X, Calendar, CheckCircle2 } from 'lucide-react';
+import { ModalDialog, ModalHeader, ModalBody, ModalFooter, Button } from '@heroui/react';
+import { Calendar, CheckCircle2, X } from 'lucide-react';
 import ExerciseSelectorModal from './ExerciseSelectorModal';
 import PlanMetadataForm from './plan-builder/PlanMetadataForm';
 import DayTabSelector from './plan-builder/DayTabSelector';
@@ -193,29 +194,24 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
   const activeConfig = dayRoutinesConfig[activeDayTab] || { routineName: '', exercises: [] };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto">
-        
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/70">
+    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4">
+      <ModalDialog className="bg-slate-900 border border-slate-800 text-slate-100 w-full max-w-4xl max-h-[92vh] rounded-2xl shadow-2xl p-4 flex flex-col">
+        <ModalHeader className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center text-slate-950 font-bold">
               <Calendar className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-extrabold text-white">Creador de Planes</h3>
-              <p className="text-xs text-slate-400">Diseña rutinas y replícalas en el rango de fechas</p>
+              <p className="text-xs text-slate-400 font-normal">Diseña rutinas y replícalas en el rango de fechas</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition-all"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+          <Button isIconOnly size="sm" variant="light" onPress={onClose} className="text-slate-400 hover:text-white">
+            <X className="w-4 h-4" />
+          </Button>
+        </ModalHeader>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-5">
-          
+        <ModalBody className="py-4 space-y-5 overflow-y-auto flex-1">
           <PlanMetadataForm
             planName={planName}
             onPlanNameChange={setPlanName}
@@ -246,29 +242,24 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
               onDrop={handleDrop}
             />
           )}
+        </ModalBody>
 
-        </div>
-
-        <div className="p-4 border-t border-slate-800 bg-slate-950 flex items-center justify-end">
-          <div className="flex gap-2">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 bg-slate-900 border border-slate-800 text-slate-300 hover:text-white rounded-xl text-xs font-semibold"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleSaveAndReplicate}
-              disabled={saving}
-              className="px-5 py-2 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-extrabold rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition-all"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              {saving ? 'Guardando...' : 'Guardar y Replicar Plan'}
-            </button>
-          </div>
-        </div>
-
-      </div>
+        <ModalFooter className="border-t border-slate-800 flex justify-end gap-2">
+          <Button variant="flat" size="sm" onPress={onClose}>
+            Cancelar
+          </Button>
+          <Button
+            color="success"
+            size="sm"
+            className="font-extrabold text-slate-950 shadow-lg shadow-emerald-500/20"
+            isLoading={saving}
+            onPress={handleSaveAndReplicate}
+            startContent={!saving && <CheckCircle2 className="w-4 h-4" />}
+          >
+            Guardar y Replicar Plan
+          </Button>
+        </ModalFooter>
+      </ModalDialog>
 
       <ExerciseSelectorModal
         isOpen={isExerciseSelectorOpen}

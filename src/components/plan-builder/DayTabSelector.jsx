@@ -1,4 +1,5 @@
 import React, { memo } from 'react';
+import { Tabs, Tab, Button } from '@heroui/react';
 
 const DAYS_OF_WEEK = [
   { id: 1, name: 'Lunes', short: 'Lun' },
@@ -26,43 +27,40 @@ function DayTabSelector({
           {DAYS_OF_WEEK.map((d) => {
             const isSelected = selectedDaysOfWeek.includes(d.id);
             return (
-              <button
+              <Button
                 key={d.id}
-                type="button"
-                onClick={() => onToggleDay(d.id)}
-                className={`py-2 rounded-xl text-xs font-bold transition-all border ${
-                  isSelected
-                    ? 'bg-emerald-500 border-emerald-400 text-slate-950 shadow-md'
-                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
-                }`}
+                size="sm"
+                color={isSelected ? "success" : "default"}
+                variant={isSelected ? "solid" : "bordered"}
+                onPress={() => onToggleDay(d.id)}
+                className={`font-bold text-xs ${isSelected ? 'text-slate-950 shadow-md' : 'border-slate-800 text-slate-400'}`}
               >
                 {d.short}
-              </button>
+              </Button>
             );
           })}
         </div>
       </div>
 
       {selectedDaysOfWeek.length > 0 && (
-        <div className="flex items-center gap-1.5 border-b border-slate-800 pb-2 overflow-x-auto">
-          {selectedDaysOfWeek.map((dayId) => {
-            const dayObj = DAYS_OF_WEEK.find(d => d.id === dayId);
-            const active = activeDayTab === dayId;
-            return (
-              <button
-                key={dayId}
-                type="button"
-                onClick={() => onSelectActiveTab(dayId)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
-                  active
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                    : 'text-slate-400 hover:text-white bg-slate-900 border border-slate-800'
-                }`}
-              >
-                {dayObj ? dayObj.name : 'Día'}
-              </button>
-            );
-          })}
+        <div className="pt-1 overflow-x-auto">
+          <Tabs
+            selectedKey={String(activeDayTab)}
+            onSelectionChange={(key) => onSelectActiveTab(Number(key))}
+            color="success"
+            variant="flat"
+            size="sm"
+          >
+            {selectedDaysOfWeek.map((dayId) => {
+              const dayObj = DAYS_OF_WEEK.find(d => d.id === dayId);
+              return (
+                <Tab
+                  key={String(dayId)}
+                  title={dayObj ? dayObj.name : 'Día'}
+                />
+              );
+            })}
+          </Tabs>
         </div>
       )}
     </div>
