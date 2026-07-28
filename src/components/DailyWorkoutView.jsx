@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Timer, Check, Plus, RefreshCw, CalendarX } from 'lucide-react';
-import { getRoutineForDay, saveSetResult, updateExerciseSortOrder } from '../lib/api';
+import { Plus, RefreshCw, CalendarX } from 'lucide-react';
+import { saveSetResult, updateExerciseSortOrder } from '../lib/api';
+import { useRoutineForDay } from '../lib/useWorkoutData';
 import { convertWeight } from '../lib/utils';
 import RestTimer from './RestTimer';
 import ExerciseCard from './ExerciseCard';
@@ -10,53 +11,36 @@ export default function DailyWorkoutView({
   dateStr, 
   onOpenPlanBuilder 
 }) {
-  const [loading, setLoading] = useState(true);
-  const [routineData, setRoutineData] = useState(null);
+  const { routineData, exercisesList: fetchedExercises, isLoading, mutate } = useRoutineForDay(clientId, dateStr);
   const [exercisesList, setExercisesList] = useState([]);
   const [setsState, setSetsState] = useState({});
   const [activeTimerSeconds, setActiveTimerSeconds] = useState(null);
 
   useEffect(() => {
-    if (clientId && dateStr) {
-      loadDayWorkout();
-    }
-  }, [clientId, dateStr]);
+    if (fetchedExercises && fetchedExercises.length > 0) {
+      setExercisesList(fetchedExercises);
 
-  const loadDayWorkout = async () => {
-    try {
-      setLoading(true);
-      const data = await getRoutineForDay(clientId, dateStr);
-      if (data) {
-        setRoutineData(data.routine);
-        setExercisesList(data.exercises || []);
-
-        const initialSets = {};
-        (data.exercises || []).forEach(ex => {
-          initialSets[ex.id] = {};
-          const numSets = ex.target_sets || 3;
-          for (let s = 1; s <= numSets; s++) {
-            const existing = ex.setResults ? ex.setResults[s] : null;
-            initialSets[ex.id][s] = {
-              reps: existing ? existing.completed_reps : '',
-              weight: existing ? existing.weight_used : (ex.target_weight || ''),
-              unit: existing ? existing.weight_unit : (ex.weight_unit || 'kg'),
-              rir: existing ? existing.actual_rir : (ex.target_rir || 2),
-              completed: existing ? existing.completed : false
-            };
-          }
-        });
-        setSetsState(initialSets);
-      } else {
-        setRoutineData(null);
-        setExercisesList([]);
-        setSetsState({});
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+      const initialSets = {};
+      fetchedExercises.forEach(ex => {
+        initialSets[ex.id] = {};
+        const numSets = ex.target_sets || 3;
+        for (let s = 1; s <= numSets; s++) {
+          const existing = ex.setResults ? ex.setResults[s] : null;
+          initialSets[ex.id][s] = {
+            reps: existing ? existing.completed_reps : '',
+            weight: existing ? existing.weight_used : (ex.target_weight || ''),
+            unit: existing ? existing.weight_unit : (ex.weight_unit || 'kg'),
+            rir: existing ? existing.actual_rir : (ex.target_rir || 2),
+            completed: existing ? existing.completed : false
+          };
+        }
+      });
+      setSetsState(initialSets);
+    } else {
+      setExercisesList([]);
+      setSetsState({});
     }
-  };
+  }, [fetchedExercises]);
 
   const persistSetResult = async (routineExId, date, setNum, setData) => {
     try {
@@ -70,6 +54,7 @@ export default function DailyWorkoutView({
         actual_rir: setData.rir,
         completed: setData.completed
       });
+      mutate();
     } catch (e) {
       console.error(e);
     }
@@ -136,11 +121,12 @@ export default function DailyWorkoutView({
     if (routineData) {
       try {
         await updateExerciseSortOrder(routineData.id, newList);
+        mutate();
       } catch (e) {
         console.error(e);
       }
     }
-  }, [exercisesList, routineData]);
+  }, [exercisesList, routineData, mutate]);
 
   const handleDragStart = useCallback((e, index) => {
     e.dataTransfer.setData('text/plain', index.toString());
@@ -158,11 +144,11 @@ export default function DailyWorkoutView({
     setActiveTimerSeconds(seconds);
   }, []);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-slate-400 text-xs">
         <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-emerald-400" />
-        Cargando entrenamiento...
+        Cargando entrenamiento con caché SWR...
       </div>
     );
   }
