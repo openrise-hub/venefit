@@ -6,12 +6,14 @@ import WeekStrip from './components/WeekStrip';
 import DailyWorkoutView from './components/DailyWorkoutView';
 import PlanBuilderModal from './components/PlanBuilderModal';
 import ClientManagerModal from './components/ClientManagerModal';
+import LoginModal from './components/LoginModal';
 import PwaPrompt from './components/PwaPrompt';
 import ToastContainer from './components/ToastContainer';
 import { getClients, deleteClient, getClientPlans } from './lib/api';
 import { formatDateISO } from './lib/utils';
+import { subscribeAuthChange, isTrainerAuthenticated } from './lib/pocketbase';
 import { showToast } from './lib/toastStore';
-import { Users, Plus } from 'lucide-react';
+import { Users, Plus, ShieldAlert } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('workout');
@@ -24,9 +26,16 @@ export default function App() {
 
   const [isPlanBuilderOpen, setIsPlanBuilderOpen] = useState(false);
   const [isNewClientOpen, setIsNewClientOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
 
   useEffect(() => {
     loadClientsData();
+
+    const unsubscribe = subscribeAuthChange(() => {
+      loadClientsData();
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const loadClientsData = async () => {
@@ -45,7 +54,6 @@ export default function App() {
       }
     } catch (err) {
       console.error('[App:loadClientsData] Failed to load clients:', err);
-      showToast('Error al cargar la información de clientes', 'error');
     } finally {
       setLoadingClients(false);
     }
@@ -57,7 +65,6 @@ export default function App() {
       setClientPlans(plans);
     } catch (e) {
       console.error('[App:fetchClientPlans] Failed to load client plans:', e);
-      showToast('Error al consultar los planes de entrenamiento', 'error');
     }
   };
 
@@ -84,6 +91,7 @@ export default function App() {
         selectedClient={selectedClient}
         onSelectClient={handleSelectClient}
         onOpenNewClientModal={() => setIsNewClientOpen(true)}
+        onOpenLoginModal={() => setIsLoginOpen(true)}
       />
 
       <Navigation
@@ -203,6 +211,12 @@ export default function App() {
           loadClientsData();
           handleSelectClient(newClient);
         }}
+      />
+
+      <LoginModal
+        isOpen={isLoginOpen}
+        onClose={() => setIsLoginOpen(false)}
+        onLoginSuccess={() => loadClientsData()}
       />
 
       <PwaPrompt />

@@ -1,12 +1,16 @@
 import React from 'react';
-import { Dumbbell, Users, Plus } from 'lucide-react';
+import { Dumbbell, Users, Plus, UserCheck, LogOut } from 'lucide-react';
+import { getCurrentTrainer, logoutTrainer } from '../lib/pocketbase';
 
 export default function Header({ 
   clients = [], 
   selectedClient, 
   onSelectClient, 
-  onOpenNewClientModal 
+  onOpenNewClientModal,
+  onOpenLoginModal 
 }) {
+  const currentTrainer = getCurrentTrainer();
+
   return (
     <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 px-4 py-3">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
@@ -53,6 +57,29 @@ export default function Header({
             <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">Nuevo Cliente</span>
           </button>
+
+          {currentTrainer ? (
+            <button
+              onClick={() => logoutTrainer()}
+              className="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-rose-400 p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all"
+              title={`Sesión activa: ${currentTrainer.email}. Clic para salir.`}
+            >
+              <UserCheck className="w-4 h-4 text-emerald-400" />
+              <span className="hidden md:inline truncate max-w-[100px]">
+                {currentTrainer.name || currentTrainer.email.split('@')[0]}
+              </span>
+              <LogOut className="w-3.5 h-3.5 text-slate-500 hover:text-rose-400" />
+            </button>
+          ) : (
+            <button
+              onClick={onOpenLoginModal}
+              className="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-emerald-400 p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all"
+              title="Iniciar Sesión de Entrenador"
+            >
+              <UserCheck className="w-4 h-4" />
+              <span className="hidden sm:inline">Acceso Trainer</span>
+            </button>
+          )}
         </div>
       </div>
     </header>
