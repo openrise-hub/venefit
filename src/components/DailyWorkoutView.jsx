@@ -59,51 +59,54 @@ export default function DailyWorkoutView({
     }
   };
 
-  const handleSetChange = async (routineExId, setNum, key, value) => {
+  const handleSetChange = (routineExId, setNum, key, value) => {
+    let updatedSet = null;
+
     setSetsState(prev => {
       const currentExSets = prev[routineExId] || {};
       const currentSet = currentExSets[setNum] || {};
-      const updatedSet = { ...currentSet, [key]: value };
-      
-      const newState = {
+      updatedSet = { ...currentSet, [key]: value };
+
+      return {
         ...prev,
         [routineExId]: {
           ...currentExSets,
           [setNum]: updatedSet
         }
       };
-
-      if (key === 'completed' && value === true) {
-        saveSingleSetToSupabase(routineExId, dateStr, setNum, updatedSet);
-      }
-
-      return newState;
     });
+
+    if (key === 'completed' && value === true && updatedSet) {
+      persistSetResult(routineExId, dateStr, setNum, updatedSet);
+    }
   };
 
   const toggleUnitForSet = (routineExId, setNum) => {
+    let updatedSet = null;
+
     setSetsState(prev => {
       const currentSet = prev[routineExId][setNum];
       const newUnit = currentSet.unit === 'kg' ? 'lb' : 'kg';
       const convertedWeight = convertWeight(currentSet.weight, currentSet.unit, newUnit);
 
-      const updatedSet = {
+      updatedSet = {
         ...currentSet,
         unit: newUnit,
         weight: convertedWeight
       };
 
-      const newState = {
+      return {
         ...prev,
         [routineExId]: {
           ...prev[routineExId],
           [setNum]: updatedSet
         }
       };
-
-      persistSetResult(routineExId, dateStr, setNum, updatedSet);
-      return newState;
     });
+
+    if (updatedSet) {
+      persistSetResult(routineExId, dateStr, setNum, updatedSet);
+    }
   };
 
   const persistSetResult = async (routineExId, date, setNum, setData) => {
