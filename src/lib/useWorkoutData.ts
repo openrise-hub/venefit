@@ -1,12 +1,13 @@
 import useSWR from 'swr';
 import { getRoutineForDay, getClients, getClientPlans } from './api';
+import { Client, ClientPlan, DayRoutine, RoutineExercise } from '../types';
 
-export function useRoutineForDay(clientId, dateStr) {
+export function useRoutineForDay(clientId?: string, dateStr?: string) {
   const key = clientId && dateStr ? `routine/${clientId}/${dateStr}` : null;
 
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading, mutate } = useSWR<{ routine: DayRoutine; exercises: RoutineExercise[] } | null>(
     key,
-    () => getRoutineForDay(clientId, dateStr),
+    () => getRoutineForDay(clientId!, dateStr!),
     {
       revalidateOnFocus: false,
       dedupingInterval: 5000
@@ -23,7 +24,7 @@ export function useRoutineForDay(clientId, dateStr) {
 }
 
 export function useClientsList() {
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading, mutate } = useSWR<Client[]>(
     'clients/list',
     () => getClients(),
     {
@@ -40,12 +41,12 @@ export function useClientsList() {
   };
 }
 
-export function useClientPlansList(clientId) {
+export function useClientPlansList(clientId?: string) {
   const key = clientId ? `plans/${clientId}` : null;
 
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading, mutate } = useSWR<ClientPlan[]>(
     key,
-    () => getClientPlans(clientId),
+    () => getClientPlans(clientId!),
     {
       revalidateOnFocus: false
     }

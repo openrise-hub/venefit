@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { Card, CardContent, Chip, Button, Input } from '@heroui/react';
 import { GripVertical, Timer, ArrowUp, ArrowDown, Check } from 'lucide-react';
+import { RoutineExercise, ExerciseSetResult } from '../types';
 
 const RIR_OPTIONS = [
   { key: '0', label: 'RIR 0 (Fallo)' },
@@ -9,6 +10,19 @@ const RIR_OPTIONS = [
   { key: '3', label: 'RIR 3' },
   { key: '4', label: 'RIR 4+' }
 ];
+
+interface ExerciseCardProps {
+  exItem: RoutineExercise;
+  exIdx: number;
+  exSets: Record<number, ExerciseSetResult>;
+  totalExercises: number;
+  onSetChange: (routineExId: string, setNum: number, key: string, value: any) => void;
+  onToggleUnit: (routineExId: string, setNum: number) => void;
+  onStartRestTimer: (seconds: number) => void;
+  onMoveExercise: (fromIndex: number, toIndex: number) => void;
+  onDragStart: (e: React.DragEvent, index: number) => void;
+  onDrop: (e: React.DragEvent, toIndex: number) => void;
+}
 
 function ExerciseCard({
   exItem,
@@ -21,16 +35,16 @@ function ExerciseCard({
   onMoveExercise,
   onDragStart,
   onDrop
-}) {
-  const exercise = exItem.exercise || {};
+}: ExerciseCardProps) {
+  const exercise = exItem.exercise || { name: 'Ejercicio' };
   const numSets = exItem.target_sets || 3;
 
   return (
     <Card
       draggable
-      onDragStart={(e) => onDragStart(e, exIdx)}
-      onDragOver={(e) => e.preventDefault()}
-      onDrop={(e) => onDrop(e, exIdx)}
+      onDragStart={(e: any) => onDragStart(e, exIdx)}
+      onDragOver={(e: any) => e.preventDefault()}
+      onDrop={(e: any) => onDrop(e, exIdx)}
       className="bg-slate-900 border border-slate-800/80 shadow-xl transition-all"
     >
       <CardContent className="p-4 space-y-3">
@@ -170,7 +184,7 @@ function ExerciseCard({
 
                     <td className="py-2 px-2">
                       <select
-                        value={String(setData.rir)}
+                        value={String(setData.actual_rir ?? setData.rir ?? 2)}
                         onChange={(e) => onSetChange(exItem.id, setNum, 'rir', e.target.value)}
                         className="bg-slate-950 text-slate-200 font-medium px-2 py-1.5 rounded-xl border border-slate-800 text-xs focus:outline-none"
                       >
