@@ -1,4 +1,5 @@
 import React, { memo } from 'react';
+import { Input, Button } from '@heroui/react';
 
 const DURATION_PRESETS = [
   { label: '1 Semana', days: 7 },
@@ -18,37 +19,33 @@ function PlanMetadataForm({
 }) {
   return (
     <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 space-y-3">
-      <div>
-        <label className="text-xs font-bold text-slate-300 block mb-1">Nombre del Plan</label>
-        <input
-          type="text"
-          value={planName}
-          onChange={(e) => onPlanNameChange(e.target.value)}
-          className="w-full bg-slate-900 text-white text-sm px-3 py-2 rounded-xl border border-slate-800 focus:border-emerald-500 focus:outline-none"
-          placeholder="Ej. Hipertrofia 12 Semanas"
-        />
-      </div>
+      <Input
+        label="Nombre del Plan"
+        placeholder="Ej. Hipertrofia 12 Semanas"
+        value={planName}
+        onChange={(e) => onPlanNameChange(e.target.value)}
+        variant="bordered"
+        size="sm"
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label className="text-xs font-bold text-slate-300 block mb-1">Fecha de Inicio</label>
-          <input
-            type="date"
-            value={startDateStr}
-            onChange={(e) => onStartDateChange(e.target.value)}
-            className="w-full bg-slate-900 text-slate-200 text-xs px-3 py-2 rounded-xl border border-slate-800 focus:border-emerald-500 focus:outline-none"
-          />
-        </div>
+        <Input
+          type="date"
+          label="Fecha de Inicio"
+          value={startDateStr}
+          onChange={(e) => onStartDateChange(e.target.value)}
+          variant="bordered"
+          size="sm"
+        />
 
-        <div>
-          <label className="text-xs font-bold text-slate-300 block mb-1">Fecha Final</label>
-          <input
-            type="date"
-            value={endDateStr}
-            onChange={(e) => onEndDateChange(e.target.value)}
-            className="w-full bg-slate-900 text-slate-200 text-xs px-3 py-2 rounded-xl border border-slate-800 focus:border-emerald-500 focus:outline-none"
-          />
-        </div>
+        <Input
+          type="date"
+          label="Fecha Final"
+          value={endDateStr}
+          onChange={(e) => onEndDateChange(e.target.value)}
+          variant="bordered"
+          size="sm"
+        />
       </div>
 
       <div>
@@ -57,14 +54,16 @@ function PlanMetadataForm({
         </span>
         <div className="flex flex-wrap gap-1.5">
           {DURATION_PRESETS.map((preset) => (
-            <button
+            <Button
               key={preset.label}
-              type="button"
-              onClick={() => onPresetSelect(preset.days)}
-              className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-emerald-400 text-xs rounded-lg font-semibold transition-all"
+              size="sm"
+              variant="flat"
+              color="success"
+              onPress={() => onPresetSelect(preset.days)}
+              className="font-semibold text-xs h-7 min-w-0"
             >
               {preset.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
