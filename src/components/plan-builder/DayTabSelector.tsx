@@ -11,12 +11,19 @@ const DAYS_OF_WEEK = [
   { id: 0, name: 'Domingo', short: 'Dom' }
 ];
 
+interface DayTabSelectorProps {
+  selectedDaysOfWeek: number[];
+  activeDayTab: number;
+  onToggleDay: (dayId: number) => void;
+  onSelectActiveTab: (dayId: number) => void;
+}
+
 function DayTabSelector({
   selectedDaysOfWeek,
   activeDayTab,
   onToggleDay,
   onSelectActiveTab
-}) {
+}: DayTabSelectorProps) {
   return (
     <div className="space-y-3">
       <div>
@@ -30,10 +37,8 @@ function DayTabSelector({
               <Button
                 key={d.id}
                 size="sm"
-                color={isSelected ? "success" : "default"}
-                variant={isSelected ? "solid" : "bordered"}
+                variant={isSelected ? "primary" : "ghost"}
                 onPress={() => onToggleDay(d.id)}
-                className={`font-bold text-xs ${isSelected ? 'text-slate-950 shadow-md' : 'border-slate-800 text-slate-400'}`}
               >
                 {d.short}
               </Button>
@@ -47,17 +52,13 @@ function DayTabSelector({
           <Tabs
             selectedKey={String(activeDayTab)}
             onSelectionChange={(key) => onSelectActiveTab(Number(key))}
-            color="success"
-            variant="flat"
-            size="sm"
           >
             {selectedDaysOfWeek.map((dayId) => {
               const dayObj = DAYS_OF_WEEK.find(d => d.id === dayId);
               return (
-                <Tab
-                  key={String(dayId)}
-                  title={dayObj ? dayObj.name : 'Día'}
-                />
+                <Tab key={String(dayId)}>
+                  {dayObj ? dayObj.name : 'Día'}
+                </Tab>
               );
             })}
           </Tabs>

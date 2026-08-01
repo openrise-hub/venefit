@@ -1,6 +1,17 @@
 import React, { memo } from 'react';
 import { GripVertical, ArrowUp, ArrowDown, Trash2 } from 'lucide-react';
 
+interface ExerciseParamRowProps {
+  ex: any;
+  idx: number;
+  totalExercises: number;
+  onUpdateParam: (index: number, key: string, val: any) => void;
+  onRemove: (index: number) => void;
+  onMove: (from: number, to: number) => void;
+  onDragStart: (e: React.DragEvent, index: number) => void;
+  onDrop: (e: React.DragEvent, toIndex: number) => void;
+}
+
 function ExerciseParamRow({
   ex,
   idx,
@@ -10,7 +21,7 @@ function ExerciseParamRow({
   onMove,
   onDragStart,
   onDrop
-}) {
+}: ExerciseParamRowProps) {
   return (
     <div
       draggable

@@ -2,6 +2,21 @@ import React, { memo } from 'react';
 import { Plus } from 'lucide-react';
 import ExerciseParamRow from './ExerciseParamRow';
 
+interface DayRoutineEditorProps {
+  activeDayTab: number;
+  activeConfig: {
+    routineName?: string;
+    exercises?: any[];
+  };
+  onRoutineNameChange: (dayId: number, name: string) => void;
+  onOpenExerciseSelector: () => void;
+  onUpdateExerciseParam: (dayId: number, index: number, key: string, val: any) => void;
+  onRemoveExercise: (dayId: number, index: number) => void;
+  onMoveExercise: (dayId: number, from: number, to: number) => void;
+  onDragStart: (e: React.DragEvent, index: number) => void;
+  onDrop: (e: React.DragEvent, toIndex: number) => void;
+}
+
 function DayRoutineEditor({
   activeDayTab,
   activeConfig,
@@ -12,7 +27,7 @@ function DayRoutineEditor({
   onMoveExercise,
   onDragStart,
   onDrop
-}) {
+}: DayRoutineEditorProps) {
   const exercises = activeConfig.exercises || [];
 
   return (
@@ -25,7 +40,7 @@ function DayRoutineEditor({
           type="text"
           value={activeConfig.routineName || ''}
           onChange={(e) => onRoutineNameChange(activeDayTab, e.target.value)}
-          className="w-full bg-slate-900 text-slate-200 text-xs px-3 py-2 rounded-xl border border-slate-800 focus:border-emerald-500 focus:outline-none"
+          className="w-full bg-slate-900 text-slate-200 text-xs px-3 py-2 rounded-xl border border-slate-800 focus:outline-none"
           placeholder="Ej. Pecho + Tríceps"
         />
       </div>
@@ -37,7 +52,7 @@ function DayRoutineEditor({
         <button
           type="button"
           onClick={onOpenExerciseSelector}
-          className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-emerald-500/20 transition-all"
+          className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all"
         >
           <Plus className="w-4 h-4" /> Agregar Ejercicio
         </button>

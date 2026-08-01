@@ -1,78 +1,77 @@
 import React from 'react';
+import { Button } from '@heroui/react';
 import { Calendar, PlusCircle, Users } from 'lucide-react';
 
-export default function Navigation({ activeTab, setActiveTab, onOpenPlanBuilder }) {
+interface NavigationProps {
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+  onOpenPlanBuilder: () => void;
+}
+
+export default function Navigation({ activeTab, setActiveTab, onOpenPlanBuilder }: NavigationProps) {
   return (
     <>
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/90 backdrop-blur-lg border-t border-slate-800 px-4 py-2 flex items-center justify-around safe-bottom">
-        <button
-          onClick={() => setActiveTab('workout')}
-          className={`flex flex-col items-center gap-1 p-2 rounded-xl text-xs font-medium transition-all ${
-            activeTab === 'workout' 
-              ? 'text-emerald-400 font-bold scale-105' 
-              : 'text-slate-400 hover:text-slate-200'
-          }`}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-4 py-2 flex items-center justify-around border-t safe-bottom">
+        <Button
+          variant={activeTab === 'workout' ? 'primary' : 'ghost'}
+          size="sm"
+          onPress={() => setActiveTab('workout')}
         >
-          <Calendar className="w-5 h-5" />
+          <Calendar />
           <span>Rutinas</span>
-        </button>
+        </Button>
 
-        <button
-          onClick={onOpenPlanBuilder}
-          className="flex flex-col items-center justify-center w-12 h-12 -mt-5 rounded-full bg-gradient-to-tr from-emerald-500 to-cyan-500 text-slate-950 shadow-lg shadow-emerald-500/30 active:scale-90 transition-all font-bold"
-          title="Crear Nuevo Plan"
-        >
-          <PlusCircle className="w-6 h-6" />
-        </button>
+        <div title="Crear Nuevo Plan">
+          <Button
+            variant="primary"
+            size="lg"
+            isIconOnly
+            onPress={onOpenPlanBuilder}
+          >
+            <PlusCircle />
+          </Button>
+        </div>
 
-        <button
-          onClick={() => setActiveTab('clients')}
-          className={`flex flex-col items-center gap-1 p-2 rounded-xl text-xs font-medium transition-all ${
-            activeTab === 'clients' 
-              ? 'text-emerald-400 font-bold scale-105' 
-              : 'text-slate-400 hover:text-slate-200'
-          }`}
+        <Button
+          variant={activeTab === 'clients' ? 'primary' : 'ghost'}
+          size="sm"
+          onPress={() => setActiveTab('clients')}
         >
-          <Users className="w-5 h-5" />
+          <Users />
           <span>Clientes</span>
-        </button>
+        </Button>
       </nav>
 
-      <div className="hidden md:block bg-slate-900/60 border-b border-slate-800/80 px-4 py-2">
+      <div className="hidden md:block border-b px-4 py-2">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setActiveTab('workout')}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all ${
-                activeTab === 'workout'
-                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
+            <Button
+              variant={activeTab === 'workout' ? 'primary' : 'ghost'}
+              size="sm"
+              onPress={() => setActiveTab('workout')}
             >
-              <Calendar className="w-4 h-4" />
-              Rutinas & Calendario
-            </button>
+              <Calendar />
+              <span>Rutinas & Calendario</span>
+            </Button>
 
-            <button
-              onClick={() => setActiveTab('clients')}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all ${
-                activeTab === 'clients'
-                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
+            <Button
+              variant={activeTab === 'clients' ? 'primary' : 'ghost'}
+              size="sm"
+              onPress={() => setActiveTab('clients')}
             >
-              <Users className="w-4 h-4" />
-              Lista de Clientes
-            </button>
+              <Users />
+              <span>Lista de Clientes</span>
+            </Button>
           </div>
 
-          <button
-            onClick={onOpenPlanBuilder}
-            className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-md shadow-emerald-500/20 active:scale-95 transition-all"
+          <Button
+            variant="primary"
+            size="sm"
+            onPress={onOpenPlanBuilder}
           >
-            <PlusCircle className="w-4 h-4" />
-            Crear Plan de Entrenamiento
-          </button>
+            <PlusCircle />
+            <span>Crear Plan de Entrenamiento</span>
+          </Button>
         </div>
       </div>
     </>
