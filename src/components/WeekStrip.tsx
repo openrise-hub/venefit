@@ -1,97 +1,100 @@
 import React from 'react';
+import { Card, CardContent, Button, Chip } from '@heroui/react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, RotateCcw } from 'lucide-react';
 import { getWeekDates, formatDateISO } from '../lib/utils';
 
-export default function WeekStrip({ selectedDateStr, onSelectDate }) {
-  const todayStr = formatDateISO(new Date());
-  const currentWeek = getWeekDates(new Date(selectedDateStr + 'T00:00:00'));
+interface WeekStripProps {
+  selectedDateStr: string;
+  onSelectDate: (dateStr: string) => void;
+}
 
-  const navigateWeek = (direction) => {
+export default function WeekStrip({ selectedDateStr, onSelectDate }: WeekStripProps) {
+  const todayStr = formatDateISO(new Date());
+  const currentWeek = getWeekDates(selectedDateStr);
+
+  const navigateWeek = (direction: number) => {
     const current = new Date(selectedDateStr + 'T00:00:00');
     current.setDate(current.getDate() + (direction * 7));
     onSelectDate(formatDateISO(current));
   };
 
   return (
-    <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 sm:p-4 mb-5 shadow-lg">
-      <div className="flex items-center justify-between gap-2 mb-3">
-        <div className="flex items-center gap-2">
-          <CalendarIcon className="w-4 h-4 text-emerald-400" />
-          <span className="text-xs font-bold text-slate-200 uppercase tracking-wider">
-            {new Date(selectedDateStr + 'T00:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
-          </span>
-        </div>
+    <Card className="mb-5">
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2">
+            <CalendarIcon className="w-4 h-4" />
+            <span className="text-xs font-bold uppercase tracking-wider">
+              {new Date(selectedDateStr + 'T00:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+            </span>
+          </div>
 
-        <div className="flex items-center gap-1.5">
-          <input
-            type="date"
-            value={selectedDateStr}
-            onChange={(e) => {
-              if (e.target.value) onSelectDate(e.target.value);
-            }}
-            className="bg-slate-950 text-slate-300 text-xs border border-slate-800 rounded-xl px-2 py-1 focus:outline-none focus:border-emerald-500 cursor-pointer"
-            title="Seleccionar fecha"
-          />
+          <div className="flex items-center gap-1.5">
+            <input
+              type="date"
+              value={selectedDateStr}
+              onChange={(e) => {
+                if (e.target.value) onSelectDate(e.target.value);
+              }}
+              className="text-xs rounded-xl px-2 py-1 cursor-pointer border"
+            />
 
-          {selectedDateStr !== todayStr && (
-            <button
-              onClick={() => onSelectDate(todayStr)}
-              className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[11px] px-2.5 py-1 rounded-xl font-bold flex items-center gap-1 transition-all"
-            >
-              <RotateCcw className="w-3 h-3" />
-              <span>Hoy</span>
-            </button>
-          )}
+            {selectedDateStr !== todayStr && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onPress={() => onSelectDate(todayStr)}
+              >
+                <RotateCcw />
+                <span>Hoy</span>
+              </Button>
+            )}
 
-          <div className="flex items-center gap-1 bg-slate-950 border border-slate-800 rounded-xl p-1">
-            <button
-              onClick={() => navigateWeek(-1)}
-              className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-all"
-              title="Semana anterior"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => navigateWeek(1)}
-              className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-all"
-              title="Semana siguiente"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-0.5 border rounded-xl p-0.5">
+              <Button
+                isIconOnly
+                size="sm"
+                variant="ghost"
+                onPress={() => navigateWeek(-1)}
+              >
+                <ChevronLeft />
+              </Button>
+              <Button
+                isIconOnly
+                size="sm"
+                variant="ghost"
+                onPress={() => navigateWeek(1)}
+              >
+                <ChevronRight />
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
-        {currentWeek.map((day) => {
-          const isSelected = day.dateStr === selectedDateStr;
-          const isToday = day.dateStr === todayStr;
+        <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+          {currentWeek.map((day) => {
+            const isSelected = day.dateStr === selectedDateStr;
+            const isToday = day.dateStr === todayStr;
 
-          return (
-            <button
-              key={day.dateStr}
-              onClick={() => onSelectDate(day.dateStr)}
-              className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all cursor-pointer select-none ${
-                isSelected
-                  ? 'bg-gradient-to-b from-emerald-500 to-emerald-600 border-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/25 scale-[1.02] font-extrabold'
-                  : isToday
-                  ? 'bg-slate-800/90 border-emerald-500/50 text-emerald-400 font-bold'
-                  : 'bg-slate-950/60 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
-              }`}
-            >
-              <span className="text-[10px] sm:text-xs tracking-tight uppercase opacity-80">
-                {day.shortDay}
-              </span>
-              <span className="text-sm sm:text-base font-black my-0.5">
-                {day.dayNumber}
-              </span>
-              {isToday && !isSelected && (
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse mt-0.5" />
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </div>
+            return (
+              <Button
+                key={day.dateStr}
+                variant={isSelected ? "primary" : isToday ? "outline" : "ghost"}
+                size="sm"
+                onPress={() => onSelectDate(day.dateStr)}
+                className="flex flex-col h-auto py-2"
+              >
+                <span className="text-[10px] uppercase opacity-80">
+                  {day.dayName}
+                </span>
+                <span className="text-sm font-black my-0.5">
+                  {day.dayNum}
+                </span>
+              </Button>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

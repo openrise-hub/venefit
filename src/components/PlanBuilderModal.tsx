@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { ModalDialog, ModalHeader, ModalBody, ModalFooter, Button } from '@heroui/react';
-import { Calendar, CheckCircle2, X } from 'lucide-react';
+import { ModalBackdrop, ModalContainer, ModalDialog, ModalHeader, ModalHeading, ModalBody, ModalFooter, ModalCloseTrigger, Button } from '@heroui/react';
+import { Calendar, CheckCircle2 } from 'lucide-react';
 import ExerciseSelectorModal from './ExerciseSelectorModal';
 import PlanMetadataForm from './plan-builder/PlanMetadataForm';
 import DayTabSelector from './plan-builder/DayTabSelector';
@@ -19,7 +19,14 @@ const DAYS_OF_WEEK = [
   { id: 0, name: 'Domingo', short: 'Dom' }
 ];
 
-export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCreated }) {
+interface PlanBuilderModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  clientId: string;
+  onPlanCreated: () => void;
+}
+
+export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCreated }: PlanBuilderModalProps) {
   const today = formatDateISO(new Date());
 
   const [planName, setPlanName] = useState('Plan de Entrenamiento Intensivo');
@@ -33,7 +40,7 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
   const [selectedDaysOfWeek, setSelectedDaysOfWeek] = useState([1, 3, 5]);
   const [activeDayTab, setActiveDayTab] = useState(1);
 
-  const [dayRoutinesConfig, setDayRoutinesConfig] = useState({
+  const [dayRoutinesConfig, setDayRoutinesConfig] = useState<Record<number, any>>({
     1: { routineName: 'Rutina Lunes - Empuje / Pecho', muscleGroups: ['Pecho', 'Tríceps'], exercises: [] },
     3: { routineName: 'Rutina Miércoles - Tracción / Espalda', muscleGroups: ['Espalda', 'Bíceps'], exercises: [] },
     5: { routineName: 'Rutina Viernes - Pierna / Hombros', muscleGroups: ['Cuádriceps', 'Glúteos', 'Hombros'], exercises: [] }
@@ -42,14 +49,14 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
   const [isExerciseSelectorOpen, setIsExerciseSelectorOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const setPresetDuration = useCallback((days) => {
+  const setPresetDuration = useCallback((days: number) => {
     const start = new Date(startDateStr + 'T00:00:00');
     const end = new Date(start);
     end.setDate(end.getDate() + days);
     setEndDateStr(formatDateISO(end));
   }, [startDateStr]);
 
-  const toggleDaySelection = useCallback((dayId) => {
+  const toggleDaySelection = useCallback((dayId: number) => {
     setSelectedDaysOfWeek(prev => {
       if (prev.includes(dayId)) {
         return prev.filter(d => d !== dayId);
@@ -76,14 +83,14 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
     setActiveDayTab(dayId);
   }, []);
 
-  const handleRoutineNameChange = useCallback((dayId, val) => {
+  const handleRoutineNameChange = useCallback((dayId: number, val: string) => {
     setDayRoutinesConfig(prev => ({
       ...prev,
       [dayId]: { ...prev[dayId], routineName: val }
     }));
   }, []);
 
-  const handleAddExercisesToCurrentDay = useCallback((newExercises) => {
+  const handleAddExercisesToCurrentDay = useCallback((newExercises: any[]) => {
     setDayRoutinesConfig(prev => {
       const currentConfig = prev[activeDayTab] || { routineName: 'Rutina', muscleGroups: [], exercises: [] };
       const formattedNew = newExercises.map(ex => ({
@@ -108,7 +115,7 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
     });
   }, [activeDayTab]);
 
-  const updateExerciseParam = useCallback((dayId, index, key, value) => {
+  const updateExerciseParam = useCallback((dayId: number, index: number, key: string, value: any) => {
     setDayRoutinesConfig(prev => {
       const dayConf = prev[dayId];
       if (!dayConf) return prev;
@@ -121,7 +128,7 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
     });
   }, []);
 
-  const removeExerciseFromDay = useCallback((dayId, index) => {
+  const removeExerciseFromDay = useCallback((dayId: number, index: number) => {
     setDayRoutinesConfig(prev => {
       const dayConf = prev[dayId];
       if (!dayConf) return prev;
@@ -133,7 +140,7 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
     });
   }, []);
 
-  const moveExerciseOrder = useCallback((dayId, fromIndex, toIndex) => {
+  const moveExerciseOrder = useCallback((dayId: number, fromIndex: number, toIndex: number) => {
     setDayRoutinesConfig(prev => {
       const dayConf = prev[dayId];
       if (!dayConf) return prev;
@@ -148,11 +155,11 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
     });
   }, []);
 
-  const handleDragStart = useCallback((e, index) => {
+  const handleDragStart = useCallback((e: React.DragEvent, index: number) => {
     e.dataTransfer.setData('text/plain', index.toString());
   }, []);
 
-  const handleDrop = useCallback((e, toIndex) => {
+  const handleDrop = useCallback((e: React.DragEvent, toIndex: number) => {
     e.preventDefault();
     const fromIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
     if (!isNaN(fromIndex)) {
@@ -194,78 +201,75 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
   const activeConfig = dayRoutinesConfig[activeDayTab] || { routineName: '', exercises: [] };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4">
-      <ModalDialog className="bg-slate-900 border border-slate-800 text-slate-100 w-full max-w-4xl max-h-[92vh] rounded-2xl shadow-2xl p-4 flex flex-col">
-        <ModalHeader className="flex items-center justify-between border-b border-slate-800 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center text-slate-950 font-bold">
-              <Calendar className="w-5 h-5" />
+    <ModalBackdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <ModalContainer size="lg">
+        <ModalDialog>
+          <ModalHeader className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Calendar />
+              <div>
+                <ModalHeading>Creador de Planes</ModalHeading>
+                <p className="text-xs font-normal">Diseña rutinas y replícalas en el rango de fechas</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-base sm:text-lg font-extrabold text-white">Creador de Planes</h3>
-              <p className="text-xs text-slate-400 font-normal">Diseña rutinas y replícalas en el rango de fechas</p>
-            </div>
-          </div>
-          <Button isIconOnly size="sm" variant="light" onPress={onClose} className="text-slate-400 hover:text-white">
-            <X className="w-4 h-4" />
-          </Button>
-        </ModalHeader>
+            <ModalCloseTrigger onClick={onClose} />
+          </ModalHeader>
 
-        <ModalBody className="py-4 space-y-5 overflow-y-auto flex-1">
-          <PlanMetadataForm
-            planName={planName}
-            onPlanNameChange={setPlanName}
-            startDateStr={startDateStr}
-            onStartDateChange={setStartDateStr}
-            endDateStr={endDateStr}
-            onEndDateChange={setEndDateStr}
-            onPresetSelect={setPresetDuration}
-          />
-
-          <DayTabSelector
-            selectedDaysOfWeek={selectedDaysOfWeek}
-            activeDayTab={activeDayTab}
-            onToggleDay={toggleDaySelection}
-            onSelectActiveTab={setActiveDayTab}
-          />
-
-          {selectedDaysOfWeek.length > 0 && (
-            <DayRoutineEditor
-              activeDayTab={activeDayTab}
-              activeConfig={activeConfig}
-              onRoutineNameChange={handleRoutineNameChange}
-              onOpenExerciseSelector={() => setIsExerciseSelectorOpen(true)}
-              onUpdateExerciseParam={updateExerciseParam}
-              onRemoveExercise={removeExerciseFromDay}
-              onMoveExercise={moveExerciseOrder}
-              onDragStart={handleDragStart}
-              onDrop={handleDrop}
+          <ModalBody className="gap-4">
+            <PlanMetadataForm
+              planName={planName}
+              onPlanNameChange={setPlanName}
+              startDateStr={startDateStr}
+              onStartDateChange={setStartDateStr}
+              endDateStr={endDateStr}
+              onEndDateChange={setEndDateStr}
+              onPresetSelect={setPresetDuration}
             />
-          )}
-        </ModalBody>
 
-        <ModalFooter className="border-t border-slate-800 flex justify-end gap-2">
-          <Button variant="flat" size="sm" onPress={onClose}>
-            Cancelar
-          </Button>
-          <Button
-            color="success"
-            size="sm"
-            className="font-extrabold text-slate-950 shadow-lg shadow-emerald-500/20"
-            isLoading={saving}
-            onPress={handleSaveAndReplicate}
-            startContent={!saving && <CheckCircle2 className="w-4 h-4" />}
-          >
-            Guardar y Replicar Plan
-          </Button>
-        </ModalFooter>
-      </ModalDialog>
+            <DayTabSelector
+              selectedDaysOfWeek={selectedDaysOfWeek}
+              activeDayTab={activeDayTab}
+              onToggleDay={toggleDaySelection}
+              onSelectActiveTab={setActiveDayTab}
+            />
+
+            {selectedDaysOfWeek.length > 0 && (
+              <DayRoutineEditor
+                activeDayTab={activeDayTab}
+                activeConfig={activeConfig}
+                onRoutineNameChange={handleRoutineNameChange}
+                onOpenExerciseSelector={() => setIsExerciseSelectorOpen(true)}
+                onUpdateExerciseParam={updateExerciseParam}
+                onRemoveExercise={removeExerciseFromDay}
+                onMoveExercise={moveExerciseOrder}
+                onDragStart={handleDragStart}
+                onDrop={handleDrop}
+              />
+            )}
+          </ModalBody>
+
+          <ModalFooter className="flex justify-end gap-2">
+            <Button variant="ghost" size="sm" onPress={onClose}>
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              isDisabled={saving}
+              onPress={handleSaveAndReplicate}
+            >
+              <CheckCircle2 />
+              <span>Guardar y Replicar Plan</span>
+            </Button>
+          </ModalFooter>
+        </ModalDialog>
+      </ModalContainer>
 
       <ExerciseSelectorModal
         isOpen={isExerciseSelectorOpen}
         onClose={() => setIsExerciseSelectorOpen(false)}
         onAddExercises={handleAddExercisesToCurrentDay}
       />
-    </div>
+    </ModalBackdrop>
   );
 }

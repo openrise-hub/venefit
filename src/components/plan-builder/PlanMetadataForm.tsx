@@ -8,6 +8,16 @@ const DURATION_PRESETS = [
   { label: '6 Meses (Semestral)', days: 180 }
 ];
 
+interface PlanMetadataFormProps {
+  planName: string;
+  onPlanNameChange: (name: string) => void;
+  startDateStr: string;
+  onStartDateChange: (date: string) => void;
+  endDateStr: string;
+  onEndDateChange: (date: string) => void;
+  onPresetSelect: (days: number) => void;
+}
+
 function PlanMetadataForm({
   planName,
   onPlanNameChange,
@@ -16,36 +26,36 @@ function PlanMetadataForm({
   endDateStr,
   onEndDateChange,
   onPresetSelect
-}) {
+}: PlanMetadataFormProps) {
   return (
     <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 space-y-3">
-      <Input
-        label="Nombre del Plan"
-        placeholder="Ej. Hipertrofia 12 Semanas"
-        value={planName}
-        onChange={(e) => onPlanNameChange(e.target.value)}
-        variant="bordered"
-        size="sm"
-      />
+      <div className="space-y-1">
+        <label className="text-xs text-slate-400 font-medium">Nombre del Plan</label>
+        <Input
+          placeholder="Ej. Hipertrofia 12 Semanas"
+          value={planName}
+          onChange={(e) => onPlanNameChange(e.target.value)}
+        />
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Input
-          type="date"
-          label="Fecha de Inicio"
-          value={startDateStr}
-          onChange={(e) => onStartDateChange(e.target.value)}
-          variant="bordered"
-          size="sm"
-        />
+        <div className="space-y-1">
+          <label className="text-xs text-slate-400 font-medium">Fecha de Inicio</label>
+          <Input
+            type="date"
+            value={startDateStr}
+            onChange={(e) => onStartDateChange(e.target.value)}
+          />
+        </div>
 
-        <Input
-          type="date"
-          label="Fecha Final"
-          value={endDateStr}
-          onChange={(e) => onEndDateChange(e.target.value)}
-          variant="bordered"
-          size="sm"
-        />
+        <div className="space-y-1">
+          <label className="text-xs text-slate-400 font-medium">Fecha Final</label>
+          <Input
+            type="date"
+            value={endDateStr}
+            onChange={(e) => onEndDateChange(e.target.value)}
+          />
+        </div>
       </div>
 
       <div>
@@ -57,10 +67,8 @@ function PlanMetadataForm({
             <Button
               key={preset.label}
               size="sm"
-              variant="flat"
-              color="success"
+              variant="ghost"
               onPress={() => onPresetSelect(preset.days)}
-              className="font-semibold text-xs h-7 min-w-0"
             >
               {preset.label}
             </Button>

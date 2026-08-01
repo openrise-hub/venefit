@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 export interface Client {
   id: string;
   name: string;
@@ -40,10 +42,14 @@ export interface ExerciseSetResult {
   routine_exercise_id: string;
   date: string;
   set_number: number;
-  completed_reps: number | string;
-  weight_used: number | string;
-  weight_unit: 'kg' | 'lb';
-  actual_rir: number;
+  completed_reps?: number | string;
+  reps?: number | string;
+  weight_used?: number | string;
+  weight?: number | string;
+  unit?: 'kg' | 'lb';
+  weight_unit?: 'kg' | 'lb';
+  actual_rir?: number;
+  rir?: number;
   completed: boolean;
 }
 

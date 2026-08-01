@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { Card, CardContent, Button } from '@heroui/react';
 import Header from './components/Header';
 import Navigation from './components/Navigation';
 import ClientHeader from './components/ClientHeader';
@@ -11,6 +12,7 @@ import { formatDateISO } from './lib/utils';
 import { subscribeAuthChange } from './lib/pocketbase';
 import { showToast } from './lib/toastStore';
 import { Users, Plus } from 'lucide-react';
+import { Client, ClientPlan } from './types';
 
 const PlanBuilderModal = lazy(() => import('./components/PlanBuilderModal'));
 const ClientManagerModal = lazy(() => import('./components/ClientManagerModal'));
@@ -20,16 +22,16 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('workout');
   const [selectedDateStr, setSelectedDateStr] = useState(() => formatDateISO(new Date()));
 
-  const [clients, setClients] = useState([]);
-  const [selectedClient, setSelectedClient] = useState(null);
-  const [clientPlans, setClientPlans] = useState([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [clientPlans, setClientPlans] = useState<ClientPlan[]>([]);
   const [loadingClients, setLoadingClients] = useState(true);
 
   const [isPlanBuilderOpen, setIsPlanBuilderOpen] = useState(false);
   const [isNewClientOpen, setIsNewClientOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
 
-  const fetchClientPlans = useCallback(async (clientId) => {
+  const fetchClientPlans = useCallback(async (clientId: string) => {
     try {
       const plans = await getClientPlans(clientId);
       setClientPlans(plans);
@@ -73,12 +75,12 @@ export default function App() {
     return () => unsubscribe();
   }, [loadClientsData]);
 
-  const handleSelectClient = useCallback((client) => {
+  const handleSelectClient = useCallback((client: Client) => {
     setSelectedClient(client);
     fetchClientPlans(client.id);
   }, [fetchClientPlans]);
 
-  const handleDeleteClient = useCallback(async (clientId) => {
+  const handleDeleteClient = useCallback(async (clientId: string) => {
     try {
       await deleteClient(clientId);
       await loadClientsData();
@@ -88,7 +90,7 @@ export default function App() {
   }, [loadClientsData]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans antialiased selection:bg-emerald-500 selection:text-slate-950 pb-24 md:pb-12">
+    <div className="min-h-screen flex flex-col font-sans antialiased pb-24 md:pb-12">
       <ToastContainer />
 
       <Header
@@ -114,19 +116,23 @@ export default function App() {
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-4 py-4 sm:py-6">
         {!loadingClients && clients.length === 0 && (
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center my-6">
-            <Users className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
-            <h3 className="text-lg font-bold text-white mb-1">Bienvenido a Venefit</h3>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto mb-4">
-              Agrega un cliente para comenzar a crear planes de entrenamiento y registrar rutinas.
-            </p>
-            <button
-              onClick={() => setIsNewClientOpen(true)}
-              className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold px-5 py-2.5 rounded-xl text-xs inline-flex items-center gap-2 shadow-lg shadow-emerald-500/20"
-            >
-              <Plus className="w-4 h-4" /> Agregar Primer Cliente
-            </button>
-          </div>
+          <Card className="my-6">
+            <CardContent className="p-8 text-center">
+              <Users className="w-12 h-12 mx-auto mb-3" />
+              <h3 className="text-lg font-bold mb-1">Bienvenido a Venefit</h3>
+              <p className="text-xs opacity-70 max-w-sm mx-auto mb-4">
+                Agrega un cliente para comenzar a crear planes de entrenamiento y registrar rutinas.
+              </p>
+              <Button
+                variant="primary"
+                size="sm"
+                onPress={() => setIsNewClientOpen(true)}
+              >
+                <Plus />
+                <span>Agregar Primer Cliente</span>
+              </Button>
+            </CardContent>
+          </Card>
         )}
 
         {selectedClient && activeTab === 'workout' && (
@@ -154,13 +160,15 @@ export default function App() {
         {activeTab === 'clients' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-black text-white">Lista de Clientes</h2>
-              <button
-                onClick={() => setIsNewClientOpen(true)}
-                className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-emerald-500/20"
+              <h2 className="text-lg font-black">Lista de Clientes</h2>
+              <Button
+                variant="primary"
+                size="sm"
+                onPress={() => setIsNewClientOpen(true)}
               >
-                <Plus className="w-4 h-4" /> Nuevo Cliente
-              </button>
+                <Plus />
+                <span>Nuevo Cliente</span>
+              </Button>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -171,26 +179,26 @@ export default function App() {
                     handleSelectClient(c);
                     setActiveTab('workout');
                   }}
-                  className={`bg-slate-900 border rounded-2xl p-4 transition-all cursor-pointer flex flex-col justify-between ${
-                    selectedClient && selectedClient.id === c.id 
-                      ? 'border-emerald-500/60 shadow-lg shadow-emerald-500/10' 
-                      : 'border-slate-800 hover:border-slate-700'
-                  }`}
+                  className="cursor-pointer"
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-800 text-emerald-400 font-bold flex items-center justify-center text-base border border-slate-700 shrink-0">
-                      {c.name.charAt(0)}
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-extrabold text-white">{c.name}</h4>
-                      <p className="text-xs text-slate-400 mt-0.5">{c.goal || 'Sin objetivo registrado'}</p>
-                    </div>
-                  </div>
+                  <Card>
+                    <CardContent className="p-4 flex flex-col justify-between">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl border font-bold flex items-center justify-center text-base shrink-0">
+                          {c.name.charAt(0)}
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-extrabold">{c.name}</h4>
+                          <p className="text-xs opacity-70 mt-0.5">{c.goal || 'Sin objetivo registrado'}</p>
+                        </div>
+                      </div>
 
-                  <div className="border-t border-slate-800/80 pt-3 mt-3 flex items-center justify-between text-xs text-slate-400">
-                    <span>Peso: <strong className="text-slate-200">{c.current_weight || '-'} kg</strong></span>
-                    <span>Altura: <strong className="text-slate-200">{c.height || '-'} cm</strong></span>
-                  </div>
+                      <div className="border-t pt-3 mt-3 flex items-center justify-between text-xs opacity-70">
+                        <span>Peso: <strong>{c.current_weight || '-'} kg</strong></span>
+                        <span>Altura: <strong>{c.height || '-'} cm</strong></span>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               ))}
             </div>

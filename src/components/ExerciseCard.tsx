@@ -36,7 +36,8 @@ function ExerciseCard({
   onDragStart,
   onDrop
 }: ExerciseCardProps) {
-  const exercise = exItem.exercise || { name: 'Ejercicio' };
+  const exercise = exItem.exercise || { name: 'Ejercicio', muscle_groups: [] };
+  const muscleGroups = exercise.muscle_groups || [];
   const numSets = exItem.target_sets || 3;
 
   return (
@@ -45,29 +46,28 @@ function ExerciseCard({
       onDragStart={(e: any) => onDragStart(e, exIdx)}
       onDragOver={(e: any) => e.preventDefault()}
       onDrop={(e: any) => onDrop(e, exIdx)}
-      className="bg-slate-900 border border-slate-800/80 shadow-xl transition-all"
     >
       <CardContent className="p-4 space-y-3">
-        <div className="flex items-start justify-between gap-2 border-b border-slate-800/80 pb-3">
+        <div className="flex items-start justify-between gap-2 border-b pb-3">
           <div className="flex items-start gap-2.5">
             <span className="cursor-grab text-slate-500 hover:text-slate-300 p-1 mt-0.5" title="Arrastrar para ordenar">
               <GripVertical className="w-4 h-4" />
             </span>
             <div>
               <div className="flex items-center gap-2">
-                <Chip color="success" variant="flat" size="sm" className="font-extrabold text-xs">
+                <Chip variant="soft" size="sm">
                   #{exIdx + 1}
                 </Chip>
-                <h4 className="text-base font-extrabold text-white">{exercise.name}</h4>
+                <h4 className="text-base font-bold">{exercise.name}</h4>
               </div>
 
               <div className="flex flex-wrap items-center gap-2 mt-2">
-                {exercise.muscle_groups && (
-                  <Chip size="sm" variant="bordered" className="border-slate-800 text-slate-300 text-[11px]">
-                    💪 {exercise.muscle_groups.join(', ')}
+                {muscleGroups.length > 0 && (
+                  <Chip size="sm" variant="soft">
+                    💪 {muscleGroups.join(', ')}
                   </Chip>
                 )}
-                <Chip size="sm" color="success" variant="bordered" className="text-[11px] font-semibold">
+                <Chip size="sm" variant="soft">
                   Meta: {exItem.target_sets} sets x {exItem.target_reps} @ RIR {exItem.target_rir} ({exItem.target_weight}{exItem.weight_unit})
                 </Chip>
               </div>
@@ -77,38 +77,36 @@ function ExerciseCard({
           <div className="flex items-center gap-1.5">
             <Button
               size="sm"
-              color="success"
-              variant="flat"
+              variant="ghost"
               onPress={() => onStartRestTimer(exItem.target_rest_sec || 90)}
-              startContent={<Timer className="w-3.5 h-3.5" />}
-              className="font-bold text-xs"
             >
-              {exItem.target_rest_sec || 90}s
+              <Timer className="w-3.5 h-3.5" />
+              <span>{exItem.target_rest_sec || 90}s</span>
             </Button>
 
-            <div className="flex items-center gap-0.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
-              <Button
-                isIconOnly
-                size="sm"
-                variant="light"
-                isDisabled={exIdx === 0}
-                onPress={() => onMoveExercise(exIdx, exIdx - 1)}
-                className="text-slate-400 hover:text-white min-w-6 w-6 h-6"
-                title="Subir"
-              >
-                <ArrowUp className="w-3.5 h-3.5" />
-              </Button>
-              <Button
-                isIconOnly
-                size="sm"
-                variant="light"
-                isDisabled={exIdx === totalExercises - 1}
-                onPress={() => onMoveExercise(exIdx, exIdx + 1)}
-                className="text-slate-400 hover:text-white min-w-6 w-6 h-6"
-                title="Bajar"
-              >
-                <ArrowDown className="w-3.5 h-3.5" />
-              </Button>
+            <div className="flex items-center gap-0.5 p-1 rounded-xl border">
+              <div title="Subir">
+                <Button
+                  isIconOnly
+                  size="sm"
+                  variant="ghost"
+                  isDisabled={exIdx === 0}
+                  onPress={() => onMoveExercise(exIdx, exIdx - 1)}
+                >
+                  <ArrowUp className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+              <div title="Bajar">
+                <Button
+                  isIconOnly
+                  size="sm"
+                  variant="ghost"
+                  isDisabled={exIdx === totalExercises - 1}
+                  onPress={() => onMoveExercise(exIdx, exIdx + 1)}
+                >
+                  <ArrowDown className="w-3.5 h-3.5" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -116,7 +114,7 @@ function ExerciseCard({
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
             <thead>
-              <tr className="text-[10px] font-bold text-slate-400 uppercase border-b border-slate-800/60">
+              <tr className="text-[10px] font-bold uppercase border-b">
                 <th className="py-2 px-2">Serie</th>
                 <th className="py-2 px-2">Peso Usado</th>
                 <th className="py-2 px-2">Reps</th>
@@ -124,24 +122,18 @@ function ExerciseCard({
                 <th className="py-2 px-2 text-center">Estado</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/40">
+            <tbody className="divide-y">
               {Array.from({ length: numSets }, (_, i) => i + 1).map((setNum) => {
-                const setData = exSets[setNum] || {
-                  reps: '',
-                  weight: exItem.target_weight || '',
-                  unit: exItem.weight_unit || 'kg',
-                  rir: exItem.target_rir || 2,
-                  completed: false
-                };
+                const rawSet = exSets[setNum];
+                const weightVal = rawSet ? (rawSet.weight ?? rawSet.weight_used ?? exItem.target_weight ?? 0) : (exItem.target_weight ?? 0);
+                const repsVal = rawSet ? (rawSet.reps ?? rawSet.completed_reps ?? 0) : 0;
+                const unitVal = rawSet ? (rawSet.unit ?? rawSet.weight_unit ?? exItem.weight_unit ?? 'kg') : (exItem.weight_unit ?? 'kg');
+                const rirVal = rawSet ? (rawSet.actual_rir ?? rawSet.rir ?? exItem.target_rir ?? 2) : (exItem.target_rir ?? 2);
+                const isCompleted = rawSet ? rawSet.completed : false;
 
                 return (
-                  <tr 
-                    key={setNum}
-                    className={`transition-all ${
-                      setData.completed ? 'bg-emerald-500/5' : 'hover:bg-slate-800/30'
-                    }`}
-                  >
-                    <td className="py-2 px-2 font-black text-slate-300">
+                  <tr key={setNum}>
+                    <td className="py-2 px-2 font-bold">
                       SET {setNum}
                     </td>
 
@@ -149,24 +141,20 @@ function ExerciseCard({
                       <div className="flex items-center gap-1">
                         <Input
                           type="number"
-                          step="0.5"
+                          step={0.5}
                           placeholder="0"
-                          size="sm"
-                          value={String(setData.weight)}
+                          value={Number(weightVal) || undefined}
                           onChange={(e) => onSetChange(exItem.id, setNum, 'weight', e.target.value)}
-                          className="w-20"
-                          aria-label="Peso usado"
                         />
-                        <Button
-                          size="sm"
-                          variant="flat"
-                          color="success"
-                          onPress={() => onToggleUnit(exItem.id, setNum)}
-                          className="min-w-8 px-1.5 h-8 font-bold text-[10px] uppercase"
-                          title="Cambiar unidad de peso (kg <-> lb)"
-                        >
-                          {setData.unit}
-                        </Button>
+                        <div title="Cambiar unidad (kg <-> lb)">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onPress={() => onToggleUnit(exItem.id, setNum)}
+                          >
+                            {unitVal}
+                          </Button>
+                        </div>
                       </div>
                     </td>
 
@@ -174,19 +162,16 @@ function ExerciseCard({
                       <Input
                         type="number"
                         placeholder="Reps"
-                        size="sm"
-                        value={String(setData.reps)}
+                        value={Number(repsVal) || undefined}
                         onChange={(e) => onSetChange(exItem.id, setNum, 'reps', e.target.value)}
-                        className="w-16"
-                        aria-label="Repeticiones logradas"
                       />
                     </td>
 
                     <td className="py-2 px-2">
                       <select
-                        value={String(setData.actual_rir ?? setData.rir ?? 2)}
+                        value={String(rirVal)}
                         onChange={(e) => onSetChange(exItem.id, setNum, 'rir', e.target.value)}
-                        className="bg-slate-950 text-slate-200 font-medium px-2 py-1.5 rounded-xl border border-slate-800 text-xs focus:outline-none"
+                        className="px-2 py-1.5 rounded-xl border text-xs focus:outline-none"
                       >
                         {RIR_OPTIONS.map(opt => (
                           <option key={opt.key} value={opt.key}>{opt.label}</option>
@@ -195,17 +180,16 @@ function ExerciseCard({
                     </td>
 
                     <td className="py-2 px-2 text-center">
-                      <Button
-                        isIconOnly
-                        size="sm"
-                        color={setData.completed ? "success" : "default"}
-                        variant={setData.completed ? "solid" : "bordered"}
-                        onPress={() => onSetChange(exItem.id, setNum, 'completed', !setData.completed)}
-                        className="min-w-8 w-8 h-8 rounded-lg"
-                        title={setData.completed ? "Serie completada" : "Marcar serie completada"}
-                      >
-                        {setData.completed ? <Check className="w-4 h-4 stroke-[3]" /> : null}
-                      </Button>
+                      <div title={isCompleted ? "Serie completada" : "Marcar serie completada"}>
+                        <Button
+                          isIconOnly
+                          size="sm"
+                          variant={isCompleted ? "primary" : "outline"}
+                          onPress={() => onSetChange(exItem.id, setNum, 'completed', !isCompleted)}
+                        >
+                          {isCompleted ? <Check className="w-4 h-4 stroke-[3]" /> : null}
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 );

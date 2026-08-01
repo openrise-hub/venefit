@@ -1,0 +1,448 @@
+migrate((db) => {
+  const snapshot = [
+    {
+      "id": "clients_col_id",
+      "name": "clients",
+      "type": "base",
+      "system": false,
+      "schema": [
+        {
+          "system": false,
+          "id": "cl_trainer",
+          "name": "trainer",
+          "type": "relation",
+          "required": false,
+          "options": {
+            "collectionId": "_pb_users_auth_",
+            "cascadeDelete": true,
+            "minSelect": null,
+            "maxSelect": 1,
+            "displayFields": []
+          }
+        },
+        {
+          "system": false,
+          "id": "cl_name",
+          "name": "name",
+          "type": "text",
+          "required": true,
+          "options": { "min": null, "max": null, "pattern": "" }
+        },
+        {
+          "system": false,
+          "id": "cl_email",
+          "name": "email",
+          "type": "email",
+          "required": false,
+          "options": { "exceptDomains": null, "onlyDomains": null }
+        },
+        {
+          "system": false,
+          "id": "cl_phone",
+          "name": "phone",
+          "type": "text",
+          "required": false,
+          "options": { "min": null, "max": null, "pattern": "" }
+        },
+        {
+          "system": false,
+          "id": "cl_goal",
+          "name": "goal",
+          "type": "text",
+          "required": false,
+          "options": { "min": null, "max": null, "pattern": "" }
+        },
+        {
+          "system": false,
+          "id": "cl_current_weight",
+          "name": "current_weight",
+          "type": "number",
+          "required": false,
+          "options": { "min": null, "max": null }
+        },
+        {
+          "system": false,
+          "id": "cl_height",
+          "name": "height",
+          "type": "number",
+          "required": false,
+          "options": { "min": null, "max": null }
+        },
+        {
+          "system": false,
+          "id": "cl_notes",
+          "name": "notes",
+          "type": "text",
+          "required": false,
+          "options": { "min": null, "max": null, "pattern": "" }
+        }
+      ],
+      "listRule": "@request.auth.id != \"\"",
+      "viewRule": "@request.auth.id != \"\"",
+      "createRule": "@request.auth.id != \"\"",
+      "updateRule": "@request.auth.id != \"\"",
+      "deleteRule": "@request.auth.id != \"\""
+    },
+    {
+      "id": "exercises_col_id",
+      "name": "exercises",
+      "type": "base",
+      "system": false,
+      "schema": [
+        {
+          "system": false,
+          "id": "ex_name",
+          "name": "name",
+          "type": "text",
+          "required": true,
+          "options": { "min": null, "max": null, "pattern": "" }
+        },
+        {
+          "system": false,
+          "id": "ex_muscle_groups",
+          "name": "muscle_groups",
+          "type": "json",
+          "required": false,
+          "options": {}
+        },
+        {
+          "system": false,
+          "id": "ex_description",
+          "name": "description",
+          "type": "text",
+          "required": false,
+          "options": { "min": null, "max": null, "pattern": "" }
+        },
+        {
+          "system": false,
+          "id": "ex_equipment",
+          "name": "equipment",
+          "type": "text",
+          "required": false,
+          "options": { "min": null, "max": null, "pattern": "" }
+        }
+      ],
+      "listRule": "",
+      "viewRule": "",
+      "createRule": "@request.auth.id != \"\"",
+      "updateRule": "@request.auth.id != \"\"",
+      "deleteRule": "@request.auth.id != \"\""
+    },
+    {
+      "id": "workout_plans_col_id",
+      "name": "workout_plans",
+      "type": "base",
+      "system": false,
+      "schema": [
+        {
+          "system": false,
+          "id": "wp_client",
+          "name": "client",
+          "type": "relation",
+          "required": true,
+          "options": {
+            "collectionId": "clients_col_id",
+            "cascadeDelete": true,
+            "minSelect": null,
+            "maxSelect": 1,
+            "displayFields": []
+          }
+        },
+        {
+          "system": false,
+          "id": "wp_name",
+          "name": "name",
+          "type": "text",
+          "required": true,
+          "options": { "min": null, "max": null, "pattern": "" }
+        },
+        {
+          "system": false,
+          "id": "wp_start_date",
+          "name": "start_date",
+          "type": "text",
+          "required": true,
+          "options": { "min": null, "max": null, "pattern": "" }
+        },
+        {
+          "system": false,
+          "id": "wp_end_date",
+          "name": "end_date",
+          "type": "text",
+          "required": true,
+          "options": { "min": null, "max": null, "pattern": "" }
+        },
+        {
+          "system": false,
+          "id": "wp_notes",
+          "name": "notes",
+          "type": "text",
+          "required": false,
+          "options": { "min": null, "max": null, "pattern": "" }
+        }
+      ],
+      "listRule": "@request.auth.id != \"\"",
+      "viewRule": "@request.auth.id != \"\"",
+      "createRule": "@request.auth.id != \"\"",
+      "updateRule": "@request.auth.id != \"\"",
+      "deleteRule": "@request.auth.id != \"\""
+    },
+    {
+      "id": "plan_routines_col_id",
+      "name": "plan_routines",
+      "type": "base",
+      "system": false,
+      "schema": [
+        {
+          "system": false,
+          "id": "pr_plan",
+          "name": "plan",
+          "type": "relation",
+          "required": false,
+          "options": {
+            "collectionId": "workout_plans_col_id",
+            "cascadeDelete": true,
+            "minSelect": null,
+            "maxSelect": 1,
+            "displayFields": []
+          }
+        },
+        {
+          "system": false,
+          "id": "pr_client",
+          "name": "client",
+          "type": "relation",
+          "required": true,
+          "options": {
+            "collectionId": "clients_col_id",
+            "cascadeDelete": true,
+            "minSelect": null,
+            "maxSelect": 1,
+            "displayFields": []
+          }
+        },
+        {
+          "system": false,
+          "id": "pr_date",
+          "name": "date",
+          "type": "text",
+          "required": true,
+          "options": { "min": null, "max": null, "pattern": "" }
+        },
+        {
+          "system": false,
+          "id": "pr_day_of_week",
+          "name": "day_of_week",
+          "type": "number",
+          "required": false,
+          "options": { "min": null, "max": null }
+        },
+        {
+          "system": false,
+          "id": "pr_routine_name",
+          "name": "routine_name",
+          "type": "text",
+          "required": true,
+          "options": { "min": null, "max": null, "pattern": "" }
+        },
+        {
+          "system": false,
+          "id": "pr_muscle_groups",
+          "name": "muscle_groups",
+          "type": "json",
+          "required": false,
+          "options": {}
+        }
+      ],
+      "listRule": "@request.auth.id != \"\"",
+      "viewRule": "@request.auth.id != \"\"",
+      "createRule": "@request.auth.id != \"\"",
+      "updateRule": "@request.auth.id != \"\"",
+      "deleteRule": "@request.auth.id != \"\""
+    },
+    {
+      "id": "routine_exercises_col_id",
+      "name": "routine_exercises",
+      "type": "base",
+      "system": false,
+      "schema": [
+        {
+          "system": false,
+          "id": "re_routine",
+          "name": "routine",
+          "type": "relation",
+          "required": true,
+          "options": {
+            "collectionId": "plan_routines_col_id",
+            "cascadeDelete": true,
+            "minSelect": null,
+            "maxSelect": 1,
+            "displayFields": []
+          }
+        },
+        {
+          "system": false,
+          "id": "re_exercise",
+          "name": "exercise",
+          "type": "relation",
+          "required": true,
+          "options": {
+            "collectionId": "exercises_col_id",
+            "cascadeDelete": false,
+            "minSelect": null,
+            "maxSelect": 1,
+            "displayFields": []
+          }
+        },
+        {
+          "system": false,
+          "id": "re_sort_order",
+          "name": "sort_order",
+          "type": "number",
+          "required": false,
+          "options": { "min": null, "max": null }
+        },
+        {
+          "system": false,
+          "id": "re_target_sets",
+          "name": "target_sets",
+          "type": "number",
+          "required": false,
+          "options": { "min": null, "max": null }
+        },
+        {
+          "system": false,
+          "id": "re_target_reps",
+          "name": "target_reps",
+          "type": "text",
+          "required": false,
+          "options": { "min": null, "max": null, "pattern": "" }
+        },
+        {
+          "system": false,
+          "id": "re_target_rir",
+          "name": "target_rir",
+          "type": "number",
+          "required": false,
+          "options": { "min": null, "max": null }
+        },
+        {
+          "system": false,
+          "id": "re_target_rest_sec",
+          "name": "target_rest_sec",
+          "type": "number",
+          "required": false,
+          "options": { "min": null, "max": null }
+        },
+        {
+          "system": false,
+          "id": "re_target_weight",
+          "name": "target_weight",
+          "type": "number",
+          "required": false,
+          "options": { "min": null, "max": null }
+        },
+        {
+          "system": false,
+          "id": "re_weight_unit",
+          "name": "weight_unit",
+          "type": "text",
+          "required": false,
+          "options": { "min": null, "max": null, "pattern": "" }
+        }
+      ],
+      "listRule": "@request.auth.id != \"\"",
+      "viewRule": "@request.auth.id != \"\"",
+      "createRule": "@request.auth.id != \"\"",
+      "updateRule": "@request.auth.id != \"\"",
+      "deleteRule": "@request.auth.id != \"\""
+    },
+    {
+      "id": "daily_set_results_col_id",
+      "name": "daily_set_results",
+      "type": "base",
+      "system": false,
+      "schema": [
+        {
+          "system": false,
+          "id": "ds_routine_exercise",
+          "name": "routine_exercise",
+          "type": "relation",
+          "required": true,
+          "options": {
+            "collectionId": "routine_exercises_col_id",
+            "cascadeDelete": true,
+            "minSelect": null,
+            "maxSelect": 1,
+            "displayFields": []
+          }
+        },
+        {
+          "system": false,
+          "id": "ds_date",
+          "name": "date",
+          "type": "text",
+          "required": true,
+          "options": { "min": null, "max": null, "pattern": "" }
+        },
+        {
+          "system": false,
+          "id": "ds_set_number",
+          "name": "set_number",
+          "type": "number",
+          "required": true,
+          "options": { "min": null, "max": null }
+        },
+        {
+          "system": false,
+          "id": "ds_completed_reps",
+          "name": "completed_reps",
+          "type": "number",
+          "required": false,
+          "options": { "min": null, "max": null }
+        },
+        {
+          "system": false,
+          "id": "ds_weight_used",
+          "name": "weight_used",
+          "type": "number",
+          "required": false,
+          "options": { "min": null, "max": null }
+        },
+        {
+          "system": false,
+          "id": "ds_weight_unit",
+          "name": "weight_unit",
+          "type": "text",
+          "required": false,
+          "options": { "min": null, "max": null, "pattern": "" }
+        },
+        {
+          "system": false,
+          "id": "ds_actual_rir",
+          "name": "actual_rir",
+          "type": "number",
+          "required": false,
+          "options": { "min": null, "max": null }
+        },
+        {
+          "system": false,
+          "id": "ds_completed",
+          "name": "completed",
+          "type": "bool",
+          "required": false,
+          "options": {}
+        }
+      ],
+      "listRule": "@request.auth.id != \"\"",
+      "viewRule": "@request.auth.id != \"\"",
+      "createRule": "@request.auth.id != \"\"",
+      "updateRule": "@request.auth.id != \"\"",
+      "deleteRule": "@request.auth.id != \"\""
+    }
+  ];
+
+  return Dao(db).importCollections(snapshot, true);
+}, (db) => {
+  return null;
+});
