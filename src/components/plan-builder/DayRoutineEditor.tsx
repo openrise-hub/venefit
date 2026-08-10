@@ -1,4 +1,5 @@
 import React, { memo } from 'react';
+import { Card, CardContent, Input, Button } from '@heroui/react';
 import { Plus } from 'lucide-react';
 import ExerciseParamRow from './ExerciseParamRow';
 
@@ -31,55 +32,56 @@ function DayRoutineEditor({
   const exercises = activeConfig.exercises || [];
 
   return (
-    <div className="border border-slate-800 rounded-xl bg-slate-950/40 p-3 space-y-3">
-      <div>
-        <label className="text-xs font-semibold text-slate-400 block mb-1">
-          Nombre de la Rutina de este día
-        </label>
-        <input
-          type="text"
-          value={activeConfig.routineName || ''}
-          onChange={(e) => onRoutineNameChange(activeDayTab, e.target.value)}
-          className="w-full bg-slate-900 text-slate-200 text-xs px-3 py-2 rounded-xl border border-slate-800 focus:outline-none"
-          placeholder="Ej. Pecho + Tríceps"
-        />
-      </div>
+    <Card className="p-3.5 sm:p-4">
+      <CardContent className="p-0 space-y-3.5">
+        <div className="space-y-1">
+          <label className="text-xs font-medium opacity-80 block">
+            Nombre de la Rutina de este día
+          </label>
+          <Input
+            placeholder="Ej. Pecho + Tríceps"
+            value={activeConfig.routineName || ''}
+            onChange={(e) => onRoutineNameChange(activeDayTab, e.target.value)}
+          />
+        </div>
 
-      <div className="flex items-center justify-between pt-1">
-        <span className="text-xs font-bold text-slate-300">
-          Ejercicios ({exercises.length})
-        </span>
-        <button
-          type="button"
-          onClick={onOpenExerciseSelector}
-          className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all"
-        >
-          <Plus className="w-4 h-4" /> Agregar Ejercicio
-        </button>
-      </div>
+        <div className="flex items-center justify-between pt-1">
+          <span className="text-xs font-bold">
+            Ejercicios ({exercises.length})
+          </span>
+          <Button
+            variant="primary"
+            size="sm"
+            onPress={onOpenExerciseSelector}
+          >
+            <Plus className="w-4 h-4" />
+            <span>Agregar Ejercicio</span>
+          </Button>
+        </div>
 
-      <div className="space-y-2">
-        {exercises.length === 0 ? (
-          <div className="text-center py-6 text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl">
-            Presiona "Agregar Ejercicio" para armar la rutina de este día.
-          </div>
-        ) : (
-          exercises.map((ex, idx) => (
-            <ExerciseParamRow
-              key={idx}
-              ex={ex}
-              idx={idx}
-              totalExercises={exercises.length}
-              onUpdateParam={(index, key, val) => onUpdateExerciseParam(activeDayTab, index, key, val)}
-              onRemove={(index) => onRemoveExercise(activeDayTab, index)}
-              onMove={(from, to) => onMoveExercise(activeDayTab, from, to)}
-              onDragStart={onDragStart}
-              onDrop={onDrop}
-            />
-          ))
-        )}
-      </div>
-    </div>
+        <div className="space-y-2.5">
+          {exercises.length === 0 ? (
+            <div className="text-center py-6 text-xs border border-dashed rounded-xl opacity-60">
+              Presiona "Agregar Ejercicio" para armar la rutina de este día.
+            </div>
+          ) : (
+            exercises.map((ex, idx) => (
+              <ExerciseParamRow
+                key={idx}
+                ex={ex}
+                idx={idx}
+                totalExercises={exercises.length}
+                onUpdateParam={(index, key, val) => onUpdateExerciseParam(activeDayTab, index, key, val)}
+                onRemove={(index) => onRemoveExercise(activeDayTab, index)}
+                onMove={(from, to) => onMoveExercise(activeDayTab, from, to)}
+                onDragStart={onDragStart}
+                onDrop={onDrop}
+              />
+            ))
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

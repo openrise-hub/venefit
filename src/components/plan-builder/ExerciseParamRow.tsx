@@ -1,4 +1,5 @@
 import React, { memo } from 'react';
+import { Card, CardContent, Input, Button } from '@heroui/react';
 import { GripVertical, ArrowUp, ArrowDown, Trash2 } from 'lucide-react';
 
 interface ExerciseParamRowProps {
@@ -28,117 +29,116 @@ function ExerciseParamRow({
       onDragStart={(e) => onDragStart(e, idx)}
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) => onDrop(e, idx)}
-      className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl p-3 space-y-2.5 transition-all shadow-sm"
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="cursor-grab text-slate-500 hover:text-slate-300 p-1" title="Arrastrar para ordenar">
-            <GripVertical className="w-4 h-4" />
-          </span>
-          <span className="w-5 h-5 rounded-md bg-slate-800 text-emerald-400 text-xs font-bold flex items-center justify-center">
-            {idx + 1}
-          </span>
-          <h5 className="text-xs sm:text-sm font-bold text-white">{ex.name}</h5>
-        </div>
+      <Card className="p-2 sm:p-3">
+        <CardContent className="p-0 space-y-2.5">
+          <div className="flex items-center justify-between gap-2 border-b pb-2">
+            <div className="flex items-center gap-2">
+              <span className="cursor-grab opacity-60 hover:opacity-100 p-1">
+                <GripVertical className="w-4 h-4" />
+              </span>
+              <span className="w-5 h-5 rounded-md text-xs font-bold flex items-center justify-center border">
+                {idx + 1}
+              </span>
+              <h5 className="text-xs sm:text-sm font-bold">{ex.name}</h5>
+            </div>
 
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => onMove(idx, idx - 1)}
-            disabled={idx === 0}
-            className="p-1 text-slate-500 hover:text-slate-300 disabled:opacity-30"
-            title="Subir orden"
-          >
-            <ArrowUp className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onMove(idx, idx + 1)}
-            disabled={idx === totalExercises - 1}
-            className="p-1 text-slate-500 hover:text-slate-300 disabled:opacity-30"
-            title="Bajar orden"
-          >
-            <ArrowDown className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onRemove(idx)}
-            className="p-1 text-slate-500 hover:text-rose-400"
-            title="Eliminar de rutina"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs bg-slate-950 p-2 rounded-lg border border-slate-800/80">
-        <div>
-          <label className="text-[10px] text-slate-400 block mb-0.5">Series</label>
-          <input
-            type="number"
-            min="1"
-            value={ex.target_sets}
-            onChange={(e) => onUpdateParam(idx, 'target_sets', e.target.value)}
-            className="w-full bg-slate-900 text-slate-200 px-2 py-1 rounded border border-slate-800"
-          />
-        </div>
-
-        <div>
-          <label className="text-[10px] text-slate-400 block mb-0.5">Reps Meta</label>
-          <input
-            type="text"
-            value={ex.target_reps}
-            onChange={(e) => onUpdateParam(idx, 'target_reps', e.target.value)}
-            className="w-full bg-slate-900 text-slate-200 px-2 py-1 rounded border border-slate-800"
-          />
-        </div>
-
-        <div>
-          <label className="text-[10px] text-slate-400 block mb-0.5">RIR Meta</label>
-          <select
-            value={ex.target_rir}
-            onChange={(e) => onUpdateParam(idx, 'target_rir', e.target.value)}
-            className="w-full bg-slate-900 text-slate-200 px-1 py-1 rounded border border-slate-800"
-          >
-            <option value="0">RIR 0 (Fallo)</option>
-            <option value="1">RIR 1</option>
-            <option value="2">RIR 2</option>
-            <option value="3">RIR 3</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="text-[10px] text-slate-400 block mb-0.5">Descanso (s)</label>
-          <input
-            type="number"
-            step="15"
-            value={ex.target_rest_sec}
-            onChange={(e) => onUpdateParam(idx, 'target_rest_sec', e.target.value)}
-            className="w-full bg-slate-900 text-slate-200 px-2 py-1 rounded border border-slate-800"
-          />
-        </div>
-
-        <div>
-          <label className="text-[10px] text-slate-400 block mb-0.5">Peso & Unidad</label>
-          <div className="flex gap-1">
-            <input
-              type="number"
-              step="0.5"
-              value={ex.target_weight}
-              onChange={(e) => onUpdateParam(idx, 'target_weight', e.target.value)}
-              className="w-full bg-slate-900 text-slate-200 px-2 py-1 rounded border border-slate-800"
-            />
-            <select
-              value={ex.weight_unit}
-              onChange={(e) => onUpdateParam(idx, 'weight_unit', e.target.value)}
-              className="bg-slate-900 text-emerald-400 font-bold px-1 rounded border border-slate-800"
-            >
-              <option value="kg">kg</option>
-              <option value="lb">lb</option>
-            </select>
+            <div className="flex items-center gap-1">
+              <Button
+                isIconOnly
+                size="sm"
+                variant="ghost"
+                isDisabled={idx === 0}
+                onPress={() => onMove(idx, idx - 1)}
+              >
+                <ArrowUp className="w-3.5 h-3.5" />
+              </Button>
+              <Button
+                isIconOnly
+                size="sm"
+                variant="ghost"
+                isDisabled={idx === totalExercises - 1}
+                onPress={() => onMove(idx, idx + 1)}
+              >
+                <ArrowDown className="w-3.5 h-3.5" />
+              </Button>
+              <Button
+                isIconOnly
+                size="sm"
+                variant="danger-soft"
+                onPress={() => onRemove(idx)}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </Button>
+            </div>
           </div>
-        </div>
-      </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-xs p-2 rounded-xl border">
+            <div className="space-y-1">
+              <label className="text-[10px] font-medium opacity-70 block">Series</label>
+              <Input
+                type="number"
+                min="1"
+                value={ex.target_sets ? Number(ex.target_sets) : undefined}
+                onChange={(e) => onUpdateParam(idx, 'target_sets', e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-medium opacity-70 block">Reps Meta</label>
+              <Input
+                type="text"
+                value={ex.target_reps}
+                onChange={(e) => onUpdateParam(idx, 'target_reps', e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-medium opacity-70 block">RIR Meta</label>
+              <select
+                value={ex.target_rir}
+                onChange={(e) => onUpdateParam(idx, 'target_rir', e.target.value)}
+                className="w-full h-9 rounded-xl border px-2 text-xs focus:outline-none bg-transparent"
+              >
+                <option value="0">RIR 0 (Fallo)</option>
+                <option value="1">RIR 1</option>
+                <option value="2">RIR 2</option>
+                <option value="3">RIR 3</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-medium opacity-70 block">Descanso (s)</label>
+              <Input
+                type="number"
+                step="15"
+                value={ex.target_rest_sec ? Number(ex.target_rest_sec) : undefined}
+                onChange={(e) => onUpdateParam(idx, 'target_rest_sec', e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-medium opacity-70 block">Peso & Unidad</label>
+              <div className="flex gap-1.5 items-center">
+                <Input
+                  type="number"
+                  step="0.5"
+                  value={ex.target_weight ? Number(ex.target_weight) : undefined}
+                  onChange={(e) => onUpdateParam(idx, 'target_weight', e.target.value)}
+                />
+                <select
+                  value={ex.weight_unit}
+                  onChange={(e) => onUpdateParam(idx, 'weight_unit', e.target.value)}
+                  className="h-9 rounded-xl border px-2 text-xs font-bold focus:outline-none bg-transparent"
+                >
+                  <option value="kg">kg</option>
+                  <option value="lb">lb</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

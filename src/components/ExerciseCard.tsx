@@ -47,10 +47,10 @@ function ExerciseCard({
       onDragOver={(e: any) => e.preventDefault()}
       onDrop={(e: any) => onDrop(e, exIdx)}
     >
-      <CardContent className="p-4 space-y-3">
+      <CardContent className="p-3 sm:p-4 space-y-3">
         <div className="flex items-start justify-between gap-2 border-b pb-3">
           <div className="flex items-start gap-2.5">
-            <span className="cursor-grab text-slate-500 hover:text-slate-300 p-1 mt-0.5" title="Arrastrar para ordenar">
+            <span className="cursor-grab opacity-60 hover:opacity-100 p-1 mt-0.5">
               <GripVertical className="w-4 h-4" />
             </span>
             <div>
@@ -58,10 +58,10 @@ function ExerciseCard({
                 <Chip variant="soft" size="sm">
                   #{exIdx + 1}
                 </Chip>
-                <h4 className="text-base font-bold">{exercise.name}</h4>
+                <h4 className="text-sm sm:text-base font-bold">{exercise.name}</h4>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 mt-2">
+              <div className="flex flex-wrap items-center gap-1.5 mt-2">
                 {muscleGroups.length > 0 && (
                   <Chip size="sm" variant="soft">
                     💪 {muscleGroups.join(', ')}
@@ -84,29 +84,25 @@ function ExerciseCard({
               <span>{exItem.target_rest_sec || 90}s</span>
             </Button>
 
-            <div className="flex items-center gap-0.5 p-1 rounded-xl border">
-              <div title="Subir">
-                <Button
-                  isIconOnly
-                  size="sm"
-                  variant="ghost"
-                  isDisabled={exIdx === 0}
-                  onPress={() => onMoveExercise(exIdx, exIdx - 1)}
-                >
-                  <ArrowUp className="w-3.5 h-3.5" />
-                </Button>
-              </div>
-              <div title="Bajar">
-                <Button
-                  isIconOnly
-                  size="sm"
-                  variant="ghost"
-                  isDisabled={exIdx === totalExercises - 1}
-                  onPress={() => onMoveExercise(exIdx, exIdx + 1)}
-                >
-                  <ArrowDown className="w-3.5 h-3.5" />
-                </Button>
-              </div>
+            <div className="flex items-center gap-0.5 p-0.5 rounded-xl border">
+              <Button
+                isIconOnly
+                size="sm"
+                variant="ghost"
+                isDisabled={exIdx === 0}
+                onPress={() => onMoveExercise(exIdx, exIdx - 1)}
+              >
+                <ArrowUp className="w-3.5 h-3.5" />
+              </Button>
+              <Button
+                isIconOnly
+                size="sm"
+                variant="ghost"
+                isDisabled={exIdx === totalExercises - 1}
+                onPress={() => onMoveExercise(exIdx, exIdx + 1)}
+              >
+                <ArrowDown className="w-3.5 h-3.5" />
+              </Button>
             </div>
           </div>
         </div>
@@ -114,12 +110,12 @@ function ExerciseCard({
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
             <thead>
-              <tr className="text-[10px] font-bold uppercase border-b">
-                <th className="py-2 px-2">Serie</th>
-                <th className="py-2 px-2">Peso Usado</th>
-                <th className="py-2 px-2">Reps</th>
-                <th className="py-2 px-2">RIR</th>
-                <th className="py-2 px-2 text-center">Estado</th>
+              <tr className="text-[10px] font-bold uppercase border-b opacity-70">
+                <th className="py-2 px-1.5">Serie</th>
+                <th className="py-2 px-1.5 min-w-[120px]">Peso Usado</th>
+                <th className="py-2 px-1.5 min-w-[80px]">Reps</th>
+                <th className="py-2 px-1.5 min-w-[90px]">RIR</th>
+                <th className="py-2 px-1.5 text-center">Estado</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -133,12 +129,12 @@ function ExerciseCard({
 
                 return (
                   <tr key={setNum}>
-                    <td className="py-2 px-2 font-bold">
+                    <td className="py-2 px-1.5 font-bold">
                       SET {setNum}
                     </td>
 
-                    <td className="py-2 px-2">
-                      <div className="flex items-center gap-1">
+                    <td className="py-2 px-1.5">
+                      <div className="flex items-center gap-1.5">
                         <Input
                           type="number"
                           step={0.5}
@@ -146,19 +142,17 @@ function ExerciseCard({
                           value={Number(weightVal) || undefined}
                           onChange={(e) => onSetChange(exItem.id, setNum, 'weight', e.target.value)}
                         />
-                        <div title="Cambiar unidad (kg <-> lb)">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onPress={() => onToggleUnit(exItem.id, setNum)}
-                          >
-                            {unitVal}
-                          </Button>
-                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onPress={() => onToggleUnit(exItem.id, setNum)}
+                        >
+                          {unitVal}
+                        </Button>
                       </div>
                     </td>
 
-                    <td className="py-2 px-2">
+                    <td className="py-2 px-1.5">
                       <Input
                         type="number"
                         placeholder="Reps"
@@ -167,11 +161,11 @@ function ExerciseCard({
                       />
                     </td>
 
-                    <td className="py-2 px-2">
+                    <td className="py-2 px-1.5">
                       <select
                         value={String(rirVal)}
                         onChange={(e) => onSetChange(exItem.id, setNum, 'rir', e.target.value)}
-                        className="px-2 py-1.5 rounded-xl border text-xs focus:outline-none"
+                        className="w-full h-9 rounded-xl border px-2 text-xs focus:outline-none bg-transparent"
                       >
                         {RIR_OPTIONS.map(opt => (
                           <option key={opt.key} value={opt.key}>{opt.label}</option>
@@ -179,17 +173,15 @@ function ExerciseCard({
                       </select>
                     </td>
 
-                    <td className="py-2 px-2 text-center">
-                      <div title={isCompleted ? "Serie completada" : "Marcar serie completada"}>
-                        <Button
-                          isIconOnly
-                          size="sm"
-                          variant={isCompleted ? "primary" : "outline"}
-                          onPress={() => onSetChange(exItem.id, setNum, 'completed', !isCompleted)}
-                        >
-                          {isCompleted ? <Check className="w-4 h-4 stroke-[3]" /> : null}
-                        </Button>
-                      </div>
+                    <td className="py-2 px-1.5 text-center">
+                      <Button
+                        isIconOnly
+                        size="sm"
+                        variant={isCompleted ? "primary" : "outline"}
+                        onPress={() => onSetChange(exItem.id, setNum, 'completed', !isCompleted)}
+                      >
+                        {isCompleted ? <Check className="w-4 h-4 stroke-[3]" /> : null}
+                      </Button>
                     </td>
                   </tr>
                 );
