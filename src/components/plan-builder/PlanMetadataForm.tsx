@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Input, Button } from '@heroui/react';
+import { Card, CardContent, Input, Button } from '@heroui/react';
 
 const DURATION_PRESETS = [
   { label: '1 Semana', days: 7 },
@@ -28,54 +28,56 @@ function PlanMetadataForm({
   onPresetSelect
 }: PlanMetadataFormProps) {
   return (
-    <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 space-y-3">
-      <div className="space-y-1">
-        <label className="text-xs text-slate-400 font-medium">Nombre del Plan</label>
-        <Input
-          placeholder="Ej. Hipertrofia 12 Semanas"
-          value={planName}
-          onChange={(e) => onPlanNameChange(e.target.value)}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <Card className="p-3.5 sm:p-4">
+      <CardContent className="p-0 space-y-3.5">
         <div className="space-y-1">
-          <label className="text-xs text-slate-400 font-medium">Fecha de Inicio</label>
+          <label className="text-xs font-medium opacity-80">Nombre del Plan</label>
           <Input
-            type="date"
-            value={startDateStr}
-            onChange={(e) => onStartDateChange(e.target.value)}
+            placeholder="Ej. Hipertrofia 12 Semanas"
+            value={planName}
+            onChange={(e) => onPlanNameChange(e.target.value)}
           />
         </div>
 
-        <div className="space-y-1">
-          <label className="text-xs text-slate-400 font-medium">Fecha Final</label>
-          <Input
-            type="date"
-            value={endDateStr}
-            onChange={(e) => onEndDateChange(e.target.value)}
-          />
-        </div>
-      </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <label className="text-xs font-medium opacity-80">Fecha de Inicio</label>
+            <Input
+              type="date"
+              value={startDateStr}
+              onChange={(e) => onStartDateChange(e.target.value)}
+            />
+          </div>
 
-      <div>
-        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
-          Atajos de Duración:
-        </span>
-        <div className="flex flex-wrap gap-1.5">
-          {DURATION_PRESETS.map((preset) => (
-            <Button
-              key={preset.label}
-              size="sm"
-              variant="ghost"
-              onPress={() => onPresetSelect(preset.days)}
-            >
-              {preset.label}
-            </Button>
-          ))}
+          <div className="space-y-1">
+            <label className="text-xs font-medium opacity-80">Fecha Final</label>
+            <Input
+              type="date"
+              value={endDateStr}
+              onChange={(e) => onEndDateChange(e.target.value)}
+            />
+          </div>
         </div>
-      </div>
-    </div>
+
+        <div>
+          <span className="text-[11px] font-bold uppercase tracking-wider block mb-1.5 opacity-70">
+            Atajos de Duración:
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {DURATION_PRESETS.map((preset) => (
+              <Button
+                key={preset.label}
+                size="sm"
+                variant="ghost"
+                onPress={() => onPresetSelect(preset.days)}
+              >
+                {preset.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
