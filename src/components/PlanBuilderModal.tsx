@@ -202,20 +202,20 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
 
   return (
     <ModalBackdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <ModalContainer size="lg">
+      <ModalContainer size="lg" placement="center">
         <ModalDialog>
-          <ModalHeader className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Calendar />
+          <ModalHeader className="flex items-center justify-between border-b pb-4">
+            <div className="flex items-center gap-3">
+              <Calendar className="w-5 h-5 text-emerald-400" />
               <div>
-                <ModalHeading>Creador de Planes</ModalHeading>
-                <p className="text-xs font-normal">Diseña rutinas y replícalas en el rango de fechas</p>
+                <ModalHeading className="text-base font-bold">Creador de Planes</ModalHeading>
+                <p className="text-xs font-normal opacity-70">Diseña rutinas y replícalas en el rango de fechas</p>
               </div>
             </div>
             <ModalCloseTrigger onClick={onClose} />
           </ModalHeader>
 
-          <ModalBody className="gap-4">
+          <ModalBody className="py-5 space-y-4">
             <PlanMetadataForm
               planName={planName}
               onPlanNameChange={setPlanName}
@@ -248,7 +248,7 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
             )}
           </ModalBody>
 
-          <ModalFooter className="flex justify-end gap-2">
+          <ModalFooter className="border-t pt-4 flex justify-end gap-2.5">
             <Button variant="ghost" size="sm" onPress={onClose}>
               Cancelar
             </Button>
@@ -258,7 +258,7 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
               isDisabled={saving}
               onPress={handleSaveAndReplicate}
             >
-              <CheckCircle2 />
+              <CheckCircle2 className="w-4 h-4" />
               <span>Guardar y Replicar Plan</span>
             </Button>
           </ModalFooter>
