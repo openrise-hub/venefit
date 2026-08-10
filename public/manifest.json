@@ -1,0 +1,21 @@
+{
+  "name": "Venefit - Personal Trainer Platform",
+  "short_name": "Venefit",
+  "description": "Plataforma Mobile-First para Personal Trainers",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#090d16",
+  "icons": [
+    {
+      "src": "/manifest-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/manifest-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
