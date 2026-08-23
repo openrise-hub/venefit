@@ -5,20 +5,21 @@ import Navigation from './components/Navigation';
 import ClientHeader from './components/ClientHeader';
 import WeekStrip from './components/WeekStrip';
 import DailyWorkoutView from './components/DailyWorkoutView';
+import AuthView from './components/AuthView';
 import PwaPrompt from './components/PwaPrompt';
 import ToastContainer from './components/ToastContainer';
 import { getClients, deleteClient, getClientPlans } from './lib/api';
 import { formatDateISO } from './lib/utils';
-import { subscribeAuthChange } from './lib/pocketbase';
+import { subscribeAuthChange, isTrainerAuthenticated } from './lib/pocketbase';
 import { showToast } from './lib/toastStore';
 import { Users, Plus } from 'lucide-react';
 import { Client, ClientPlan } from './types';
 
 const PlanBuilderModal = lazy(() => import('./components/PlanBuilderModal'));
 const ClientManagerModal = lazy(() => import('./components/ClientManagerModal'));
-const LoginModal = lazy(() => import('./components/LoginModal'));
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(() => isTrainerAuthenticated());
   const [activeTab, setActiveTab] = useState('workout');
   const [selectedDateStr, setSelectedDateStr] = useState(() => formatDateISO(new Date()));
 
@@ -29,7 +30,6 @@ export default function App() {
 
   const [isPlanBuilderOpen, setIsPlanBuilderOpen] = useState(false);
   const [isNewClientOpen, setIsNewClientOpen] = useState(false);
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
 
   const fetchClientPlans = useCallback(async (clientId: string) => {
     try {
@@ -41,6 +41,14 @@ export default function App() {
   }, []);
 
   const loadClientsData = useCallback(async () => {
+    if (!isTrainerAuthenticated()) {
+      setClients([]);
+      setSelectedClient(null);
+      setClientPlans([]);
+      setLoadingClients(false);
+      return;
+    }
+
     try {
       setLoadingClients(true);
       const data = await getClients();
@@ -69,7 +77,15 @@ export default function App() {
     loadClientsData();
 
     const unsubscribe = subscribeAuthChange(() => {
-      loadClientsData();
+      const auth = isTrainerAuthenticated();
+      setIsAuthenticated(auth);
+      if (auth) {
+        loadClientsData();
+      } else {
+        setClients([]);
+        setSelectedClient(null);
+        setClientPlans([]);
+      }
     });
 
     return () => unsubscribe();
@@ -89,6 +105,28 @@ export default function App() {
     }
   }, [loadClientsData]);
 
+  const handleOpenNewClient = useCallback(() => {
+    setIsNewClientOpen(true);
+  }, []);
+
+  const handleOpenPlanBuilder = useCallback(() => {
+    if (!selectedClient) {
+      showToast('Por favor selecciona o crea un cliente primero', 'info');
+      setIsNewClientOpen(true);
+      return;
+    }
+    setIsPlanBuilderOpen(true);
+  }, [selectedClient]);
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen font-sans antialiased">
+        <ToastContainer />
+        <AuthView onLoginSuccess={() => setIsAuthenticated(true)} />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col font-sans antialiased pb-24 md:pb-12">
       <ToastContainer />
@@ -97,38 +135,30 @@ export default function App() {
         clients={clients}
         selectedClient={selectedClient}
         onSelectClient={handleSelectClient}
-        onOpenNewClientModal={() => setIsNewClientOpen(true)}
-        onOpenLoginModal={() => setIsLoginOpen(true)}
+        onOpenNewClientModal={handleOpenNewClient}
       />
 
       <Navigation
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        onOpenPlanBuilder={() => {
-          if (!selectedClient) {
-            showToast('Por favor selecciona o crea un cliente primero', 'info');
-            setIsNewClientOpen(true);
-            return;
-          }
-          setIsPlanBuilderOpen(true);
-        }}
+        onOpenPlanBuilder={handleOpenPlanBuilder}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-4 py-4 sm:py-6">
         {!loadingClients && clients.length === 0 && (
           <Card className="my-6">
-            <CardContent className="p-8 text-center">
-              <Users className="w-12 h-12 mx-auto mb-3" />
+            <CardContent className="p-8 flex flex-col items-center justify-center text-center">
+              <Users className="w-12 h-12 mb-3 opacity-60 text-emerald-400" />
               <h3 className="text-lg font-bold mb-1">Bienvenido a Venefit</h3>
-              <p className="text-xs opacity-70 max-w-sm mx-auto mb-4">
+              <p className="text-xs opacity-70 max-w-sm mb-4">
                 Agrega un cliente para comenzar a crear planes de entrenamiento y registrar rutinas.
               </p>
               <Button
                 variant="primary"
                 size="sm"
-                onPress={() => setIsNewClientOpen(true)}
+                onPress={handleOpenNewClient}
               >
-                <Plus />
+                <Plus className="w-4 h-4" />
                 <span>Agregar Primer Cliente</span>
               </Button>
             </CardContent>
@@ -140,7 +170,7 @@ export default function App() {
             <ClientHeader
               client={selectedClient}
               plans={clientPlans}
-              onOpenPlanBuilder={() => setIsPlanBuilderOpen(true)}
+              onOpenPlanBuilder={handleOpenPlanBuilder}
               onDeleteClient={handleDeleteClient}
             />
 
@@ -152,7 +182,7 @@ export default function App() {
             <DailyWorkoutView
               clientId={selectedClient.id}
               dateStr={selectedDateStr}
-              onOpenPlanBuilder={() => setIsPlanBuilderOpen(true)}
+              onOpenPlanBuilder={handleOpenPlanBuilder}
             />
           </div>
         )}
@@ -164,9 +194,9 @@ export default function App() {
               <Button
                 variant="primary"
                 size="sm"
-                onPress={() => setIsNewClientOpen(true)}
+                onPress={handleOpenNewClient}
               >
-                <Plus />
+                <Plus className="w-4 h-4" />
                 <span>Nuevo Cliente</span>
               </Button>
             </div>
@@ -226,14 +256,6 @@ export default function App() {
               loadClientsData();
               handleSelectClient(newClient);
             }}
-          />
-        )}
-
-        {isLoginOpen && (
-          <LoginModal
-            isOpen={isLoginOpen}
-            onClose={() => setIsLoginOpen(false)}
-            onLoginSuccess={() => loadClientsData()}
           />
         )}
       </Suspense>

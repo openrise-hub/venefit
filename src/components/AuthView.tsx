@@ -1,33 +1,40 @@
 import React, { useState } from 'react';
-import { ModalBackdrop, ModalContainer, ModalDialog, ModalHeader, ModalHeading, ModalBody, ModalFooter, ModalCloseTrigger, Input, Button } from '@heroui/react';
+import { Card, CardContent, Input, Button } from '@heroui/react';
 import { Dumbbell, LogIn, UserPlus } from 'lucide-react';
 import { loginTrainer, registerTrainer } from '../lib/pocketbase';
 import { showToast } from '../lib/toastStore';
 
-interface LoginModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+interface AuthViewProps {
   onLoginSuccess: () => void;
 }
 
-export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginModalProps) {
+export default function AuthView({ onLoginSuccess }: AuthViewProps) {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
 
-  if (!isOpen) return null;
-
-  const handleSubmit = async () => {
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!email.trim() || !password.trim()) {
-      showToast('Por favor completa tu email y contraseña', 'info');
+      showToast('Por favor completa tu correo y contraseña', 'info');
+      return;
+    }
+
+    if (password.length < 8) {
+      showToast('La contraseña debe tener al menos 8 caracteres', 'info');
       return;
     }
 
     try {
       setLoading(true);
       if (isRegister) {
+        if (!name.trim()) {
+          showToast('Ingresa tu nombre completo', 'info');
+          setLoading(false);
+          return;
+        }
         await registerTrainer(email.trim(), password.trim(), name.trim());
         showToast('¡Cuenta creada exitosamente!', 'success');
       } else {
@@ -36,40 +43,41 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
       }
 
       onLoginSuccess();
-      onClose();
-    } catch (err) {
-      console.error('[LoginModal] Auth error:', err);
-      showToast(
-        isRegister
-          ? 'Error al crear la cuenta. Verifica el email.'
-          : 'Credenciales incorrectas.',
-        'error'
-      );
+    } catch (err: any) {
+      console.error('[AuthView] Auth error:', err);
+      const errorMessage =
+        err?.data?.message ||
+        err?.message ||
+        (isRegister
+          ? 'Error al registrarte. Verifica el correo.'
+          : 'Correo o contraseña incorrectos.');
+      showToast(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ModalBackdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <ModalContainer size="sm" placement="center" className="p-3 sm:p-4 my-auto flex items-center justify-center">
-        <ModalDialog className="w-full max-w-sm mx-auto my-auto overflow-hidden">
-          <ModalHeader className="flex items-center justify-between border-b pb-4">
-            <div className="flex flex-col items-center gap-1 text-center w-full">
-              <Dumbbell className="w-8 h-8 text-emerald-400" />
-              <ModalHeading className="text-base font-bold">{isRegister ? 'Crear Cuenta' : 'Iniciar Sesión'}</ModalHeading>
-              <p className="text-xs font-normal opacity-70">
-                {isRegister
-                  ? 'Registra tu perfil para gestionar tus clientes'
-                  : 'Ingresa para acceder a tus clientes y rutinas'}
-              </p>
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <Card className="w-full max-w-sm">
+        <CardContent className="p-6 sm:p-8 space-y-5">
+          <div className="flex flex-col items-center text-center space-y-2">
+            <div className="w-14 h-14 rounded-2xl border flex items-center justify-center">
+              <Dumbbell className="w-7 h-7 text-emerald-400" />
             </div>
-            <ModalCloseTrigger onClick={onClose} />
-          </ModalHeader>
+            <h2 className="text-xl font-black font-heading tracking-tight">
+              {isRegister ? 'Crear Cuenta' : 'Bienvenido a Venefit'}
+            </h2>
+            <p className="text-xs opacity-70">
+              {isRegister
+                ? 'Registra tu perfil para gestionar tus clientes y planes'
+                : 'Ingresa tus credenciales para acceder al portal'}
+            </p>
+          </div>
 
-          <ModalBody className="py-5 space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {isRegister && (
-              <div className="space-y-1.5 min-w-0">
+              <div className="space-y-1.5">
                 <label className="text-xs font-semibold block opacity-80">Nombre Completo</label>
                 <Input
                   placeholder="Ej. Carlos Entrenador"
@@ -79,7 +87,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
               </div>
             )}
 
-            <div className="space-y-1.5 min-w-0">
+            <div className="space-y-1.5">
               <label className="text-xs font-semibold block opacity-80">Correo Electrónico</label>
               <Input
                 type="email"
@@ -89,27 +97,29 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
               />
             </div>
 
-            <div className="space-y-1.5 min-w-0">
+            <div className="space-y-1.5">
               <label className="text-xs font-semibold block opacity-80">Contraseña</label>
               <Input
                 type="password"
-                placeholder="••••••••"
+                placeholder="Mínimo 8 caracteres"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-          </ModalBody>
 
-          <ModalFooter className="border-t pt-4 flex flex-col gap-2.5">
             <Button
+              type="submit"
               variant="primary"
+              className="w-full mt-2"
               isDisabled={loading}
-              onPress={handleSubmit}
+              onPress={() => handleSubmit()}
             >
               {isRegister ? <UserPlus className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
               <span>{isRegister ? 'Registrarse' : 'Iniciar Sesión'}</span>
             </Button>
+          </form>
 
+          <div className="border-t pt-4 text-center">
             <Button
               variant="ghost"
               size="sm"
@@ -117,11 +127,11 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
             >
               {isRegister
                 ? '¿Ya tienes cuenta? Inicia sesión'
-                : '¿No tienes cuenta? Registrate gratis'}
+                : '¿No tienes cuenta? Regístrate'}
             </Button>
-          </ModalFooter>
-        </ModalDialog>
-      </ModalContainer>
-    </ModalBackdrop>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
