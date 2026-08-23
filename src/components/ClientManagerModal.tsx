@@ -51,8 +51,8 @@ export default function ClientManagerModal({ isOpen, onClose, onClientCreated }:
 
   return (
     <ModalBackdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <ModalContainer size="md" placement="center" className="p-3 sm:p-4 my-auto flex items-center justify-center">
-        <ModalDialog className="w-full max-w-md mx-auto my-auto overflow-hidden">
+      <ModalContainer size="md" placement="center">
+        <ModalDialog className="w-full max-w-md">
           <ModalHeader className="flex items-center justify-between border-b pb-4">
             <div className="flex items-center gap-3 min-w-0">
               <UserPlus className="w-5 h-5 text-emerald-400 shrink-0" />
@@ -64,7 +64,7 @@ export default function ClientManagerModal({ isOpen, onClose, onClientCreated }:
             <ModalCloseTrigger onClick={onClose} />
           </ModalHeader>
 
-          <ModalBody className="py-5 space-y-4 max-h-[75vh] overflow-y-auto overflow-x-hidden">
+          <ModalBody className="py-5 space-y-4">
             <div className="space-y-1.5 min-w-0">
               <label className="text-xs font-semibold block opacity-80">Nombre Completo *</label>
               <Input
