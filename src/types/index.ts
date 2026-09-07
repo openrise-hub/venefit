@@ -9,6 +9,7 @@ export interface Client {
   current_weight?: number;
   height?: number;
   notes?: string;
+  trainer?: string;
   created?: string;
   updated?: string;
 }
@@ -24,8 +25,10 @@ export interface Exercise {
 
 export interface RoutineExercise {
   id: string;
-  routine_id: string;
-  exercise_id: string;
+  routine: string;
+  routine_id?: string;
+  exercise: string;
+  exercise_id?: string;
   target_sets: number;
   target_reps: string;
   target_rir: number;
@@ -33,13 +36,14 @@ export interface RoutineExercise {
   target_weight: number;
   weight_unit: 'kg' | 'lb';
   sort_order: number;
-  exercise?: Exercise;
+  expandedExercise?: Exercise;
   setResults?: Record<number, ExerciseSetResult>;
 }
 
 export interface ExerciseSetResult {
   id?: string;
-  routine_exercise_id: string;
+  routine_exercise: string;
+  routine_exercise_id?: string;
   date: string;
   set_number: number;
   completed_reps?: number | string;
@@ -55,18 +59,25 @@ export interface ExerciseSetResult {
 
 export interface ClientPlan {
   id: string;
-  client_id: string;
-  plan_name: string;
+  client: string;
+  client_id?: string;
+  name: string;
+  plan_name?: string;
   start_date: string;
   end_date: string;
+  notes?: string;
   created?: string;
 }
 
 export interface DayRoutine {
   id: string;
+  plan?: string;
   plan_id?: string;
-  client_id: string;
-  date_iso: string;
+  client: string;
+  client_id?: string;
+  date: string;
+  date_iso?: string;
+  day_of_week?: number;
   routine_name: string;
   muscle_groups?: string[];
 }

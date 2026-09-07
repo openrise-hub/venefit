@@ -36,7 +36,7 @@ function ExerciseCard({
   onDragStart,
   onDrop
 }: ExerciseCardProps) {
-  const exercise = exItem.exercise || { name: 'Ejercicio', muscle_groups: [] };
+  const exercise = exItem.expandedExercise || (typeof exItem.exercise === 'object' ? exItem.exercise : null) || { name: 'Ejercicio', muscle_groups: [] };
   const muscleGroups = exercise.muscle_groups || [];
   const numSets = exItem.target_sets || 3;
 
