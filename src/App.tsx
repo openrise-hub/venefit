@@ -16,7 +16,7 @@ import { Users, Plus } from 'lucide-react';
 import { Client, ClientPlan } from './types';
 
 const PlanBuilderModal = lazy(() => import('./components/PlanBuilderModal'));
-const ClientManagerModal = lazy(() => import('./components/ClientManagerModal'));
+const ClientOnboardingModal = lazy(() => import('./components/ClientOnboardingModal'));
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => isTrainerAuthenticated());
@@ -40,7 +40,7 @@ export default function App() {
     }
   }, []);
 
-  const loadClientsData = useCallback(async () => {
+  const loadClientsData = useCallback(async (targetClientId?: string) => {
     if (!isTrainerAuthenticated()) {
       setClients([]);
       setSelectedClient(null);
@@ -55,13 +55,10 @@ export default function App() {
       setClients(data);
 
       if (data && data.length > 0) {
-        setSelectedClient(prev => {
-          if (!prev || !data.some(c => c.id === prev.id)) {
-            fetchClientPlans(data[0].id);
-            return data[0];
-          }
-          return prev;
-        });
+        const found = targetClientId ? data.find(c => c.id === targetClientId) : null;
+        const toSelect = found || data[0];
+        setSelectedClient(toSelect);
+        fetchClientPlans(toSelect.id);
       } else {
         setSelectedClient(null);
         setClientPlans([]);
@@ -249,12 +246,12 @@ export default function App() {
         )}
 
         {isNewClientOpen && (
-          <ClientManagerModal
+          <ClientOnboardingModal
             isOpen={isNewClientOpen}
             onClose={() => setIsNewClientOpen(false)}
             onClientCreated={(newClient) => {
-              loadClientsData();
-              handleSelectClient(newClient);
+              loadClientsData(newClient.id);
+              setActiveTab('workout');
             }}
           />
         )}

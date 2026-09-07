@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Tabs, Tab, Button } from '@heroui/react';
+import { Button } from '@heroui/react';
 
 const DAYS_OF_WEEK = [
   { id: 1, name: 'Lunes', short: 'Lun' },
@@ -27,7 +27,7 @@ function DayTabSelector({
   return (
     <div className="space-y-3">
       <div>
-        <label className="text-xs font-bold text-slate-300 block mb-2">
+        <label className="text-xs font-bold block mb-2 opacity-80">
           Días de la semana a entrenar:
         </label>
         <div className="grid grid-cols-7 gap-1.5">
@@ -48,20 +48,22 @@ function DayTabSelector({
       </div>
 
       {selectedDaysOfWeek.length > 0 && (
-        <div className="pt-1 overflow-x-auto">
-          <Tabs
-            selectedKey={String(activeDayTab)}
-            onSelectionChange={(key) => onSelectActiveTab(Number(key))}
-          >
-            {selectedDaysOfWeek.map((dayId) => {
-              const dayObj = DAYS_OF_WEEK.find(d => d.id === dayId);
-              return (
-                <Tab key={String(dayId)}>
-                  {dayObj ? dayObj.name : 'Día'}
-                </Tab>
-              );
-            })}
-          </Tabs>
+        <div className="flex items-center gap-1.5 p-1 rounded-2xl border overflow-x-auto">
+          {selectedDaysOfWeek.map((dayId) => {
+            const dayObj = DAYS_OF_WEEK.find(d => d.id === dayId);
+            const isActive = activeDayTab === dayId;
+            return (
+              <Button
+                key={dayId}
+                size="sm"
+                variant={isActive ? "primary" : "ghost"}
+                className="shrink-0 font-bold text-xs"
+                onPress={() => onSelectActiveTab(dayId)}
+              >
+                {dayObj ? dayObj.name : `Día ${dayId}`}
+              </Button>
+            );
+          })}
         </div>
       )}
     </div>

@@ -5,6 +5,12 @@ export function formatDateISO(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+export function getUpcomingDateISO(daysAhead: number = 28): string {
+  const date = new Date();
+  date.setDate(date.getDate() + daysAhead);
+  return formatDateISO(date);
+}
+
 export function formatDisplayDate(dateStr: string): string {
   if (!dateStr) return '';
   const parts = dateStr.split('-');
