@@ -27,8 +27,14 @@ export async function createClient(clientData: Partial<Client>): Promise<Client>
   try {
     const currentTrainer = getCurrentTrainer();
     const payload = {
-      ...clientData,
-      trainer_id: currentTrainer ? currentTrainer.id : null
+      name: clientData.name,
+      email: clientData.email || '',
+      phone: clientData.phone || '',
+      goal: clientData.goal || '',
+      current_weight: clientData.current_weight || 0,
+      height: clientData.height || 0,
+      notes: clientData.notes || '',
+      trainer: currentTrainer ? currentTrainer.id : null
     };
 
     const record = await pb.collection('clients').create(payload);
@@ -94,8 +100,8 @@ export async function getRoutineForDay(clientId: string, dateStr: string): Promi
     const sanitizedClientId = sanitizeFilter(clientId);
     const sanitizedDate = sanitizeFilter(dateStr);
 
-    const routineRecord = await pb.collection('routines').getFirstListItem(
-      `client_id = "${sanitizedClientId}" && date_iso = "${sanitizedDate}"`
+    const routineRecord = await pb.collection('plan_routines').getFirstListItem(
+      `client = "${sanitizedClientId}" && date = "${sanitizedDate}"`
     ).catch(() => null);
 
     if (!routineRecord) {
@@ -105,18 +111,18 @@ export async function getRoutineForDay(clientId: string, dateStr: string): Promi
     const sanitizedRoutineId = sanitizeFilter(routineRecord.id);
 
     const exercisesList = await pb.collection('routine_exercises').getFullList({
-      filter: `routine_id = "${sanitizedRoutineId}"`,
-      expand: 'exercise_id',
+      filter: `routine = "${sanitizedRoutineId}"`,
+      expand: 'exercise',
       sort: 'sort_order'
     });
 
-    const setResultsList = await pb.collection('set_results').getFullList({
+    const setResultsList = await pb.collection('daily_set_results').getFullList({
       filter: `date = "${sanitizedDate}"`
     });
 
     const setResultsByExercise: Record<string, Record<number, ExerciseSetResult>> = {};
     setResultsList.forEach(sr => {
-      const exId = sr.routine_exercise_id;
+      const exId = sr.routine_exercise || sr.routine_exercise_id;
       if (!setResultsByExercise[exId]) {
         setResultsByExercise[exId] = {};
       }
@@ -124,11 +130,13 @@ export async function getRoutineForDay(clientId: string, dateStr: string): Promi
     });
 
     const formattedExercises: RoutineExercise[] = exercisesList.map(re => {
-      const expandedExercise = re.expand && re.expand.exercise_id ? re.expand.exercise_id : null;
+      const expandedExercise = re.expand && (re.expand.exercise || re.expand.exercise_id) ? (re.expand.exercise || re.expand.exercise_id) : null;
       return {
         id: re.id,
-        routine_id: re.routine_id,
-        exercise_id: re.exercise_id,
+        routine: re.routine || re.routine_id,
+        routine_id: re.routine || re.routine_id,
+        exercise: re.exercise || re.exercise_id,
+        exercise_id: re.exercise || re.exercise_id,
         target_sets: re.target_sets,
         target_reps: re.target_reps,
         target_rir: re.target_rir,
@@ -136,7 +144,7 @@ export async function getRoutineForDay(clientId: string, dateStr: string): Promi
         target_weight: re.target_weight,
         weight_unit: re.weight_unit || 'kg',
         sort_order: re.sort_order,
-        exercise: expandedExercise ? {
+        expandedExercise: expandedExercise ? {
           id: expandedExercise.id,
           name: expandedExercise.name,
           muscle_groups: expandedExercise.muscle_groups,
@@ -147,7 +155,18 @@ export async function getRoutineForDay(clientId: string, dateStr: string): Promi
     });
 
     return {
-      routine: routineRecord as unknown as DayRoutine,
+      routine: {
+        id: routineRecord.id,
+        plan: routineRecord.plan,
+        plan_id: routineRecord.plan,
+        client: routineRecord.client,
+        client_id: routineRecord.client,
+        date: routineRecord.date,
+        date_iso: routineRecord.date,
+        day_of_week: routineRecord.day_of_week,
+        routine_name: routineRecord.routine_name,
+        muscle_groups: routineRecord.muscle_groups || []
+      },
       exercises: formattedExercises
     };
   } catch (e) {
@@ -156,33 +175,42 @@ export async function getRoutineForDay(clientId: string, dateStr: string): Promi
   }
 }
 
-export async function saveSetResult(setData: Partial<ExerciseSetResult>): Promise<ExerciseSetResult | null> {
+export async function saveSetResult(setData: {
+  routine_exercise_id: string;
+  date: string;
+  set_number: number;
+  completed_reps?: number | string;
+  weight_used?: number | string;
+  weight_unit?: string;
+  actual_rir?: number;
+  completed?: boolean;
+}): Promise<ExerciseSetResult | null> {
   const pb = getPocketBaseClient();
   try {
     const sanitizedExId = sanitizeFilter(setData.routine_exercise_id);
     const sanitizedDate = sanitizeFilter(setData.date);
     const setNum = setData.set_number;
 
-    const existingRecord = await pb.collection('set_results').getFirstListItem(
-      `routine_exercise_id = "${sanitizedExId}" && date = "${sanitizedDate}" && set_number = ${setNum}`
+    const existingRecord = await pb.collection('daily_set_results').getFirstListItem(
+      `routine_exercise = "${sanitizedExId}" && date = "${sanitizedDate}" && set_number = ${setNum}`
     ).catch(() => null);
 
     const payload = {
-      routine_exercise_id: setData.routine_exercise_id,
+      routine_exercise: setData.routine_exercise_id,
       date: setData.date,
       set_number: setData.set_number,
-      completed_reps: setData.completed_reps !== '' ? parseInt(String(setData.completed_reps), 10) : 0,
-      weight_used: setData.weight_used !== '' ? parseFloat(String(setData.weight_used)) : 0,
+      completed_reps: setData.completed_reps !== '' && setData.completed_reps != null ? parseInt(String(setData.completed_reps), 10) : 0,
+      weight_used: setData.weight_used !== '' && setData.weight_used != null ? parseFloat(String(setData.weight_used)) : 0,
       weight_unit: setData.weight_unit || 'kg',
       actual_rir: parseInt(String(setData.actual_rir || 2), 10),
       completed: setData.completed === true
     };
 
     if (existingRecord) {
-      const updated = await pb.collection('set_results').update(existingRecord.id, payload);
+      const updated = await pb.collection('daily_set_results').update(existingRecord.id, payload);
       return updated as unknown as ExerciseSetResult;
     } else {
-      const created = await pb.collection('set_results').create(payload);
+      const created = await pb.collection('daily_set_results').create(payload);
       return created as unknown as ExerciseSetResult;
     }
   } catch (e) {
@@ -208,11 +236,12 @@ export async function createAndReplicatePlan({
 }): Promise<ClientPlan> {
   const pb = getPocketBaseClient();
   try {
-    const planRecord = await pb.collection('client_plans').create({
-      client_id: clientId,
-      plan_name: planName,
+    const planRecord = await pb.collection('workout_plans').create({
+      client: clientId,
+      name: planName,
       start_date: startDateStr,
-      end_date: endDateStr
+      end_date: endDateStr,
+      notes: ''
     });
 
     const datesToReplicate = generateReplicatedDates(startDateStr, endDateStr, selectedDaysOfWeek);
@@ -224,10 +253,11 @@ export async function createAndReplicatePlan({
 
       if (!config) continue;
 
-      const routineRecord = await pb.collection('routines').create({
-        plan_id: planRecord.id,
-        client_id: clientId,
-        date_iso: dateIso,
+      const routineRecord = await pb.collection('plan_routines').create({
+        plan: planRecord.id,
+        client: clientId,
+        date: dateIso,
+        day_of_week: dayOfWeek,
         routine_name: config.routineName || 'Rutina del Día',
         muscle_groups: config.muscleGroups || []
       });
@@ -236,8 +266,8 @@ export async function createAndReplicatePlan({
         for (let idx = 0; idx < config.exercises.length; idx++) {
           const ex = config.exercises[idx];
           await pb.collection('routine_exercises').create({
-            routine_id: routineRecord.id,
-            exercise_id: ex.exercise_id,
+            routine: routineRecord.id,
+            exercise: ex.exercise_id,
             target_sets: parseInt(String(ex.target_sets || 3), 10),
             target_reps: String(ex.target_reps || '10-12'),
             target_rir: parseInt(String(ex.target_rir || 2), 10),
@@ -251,7 +281,16 @@ export async function createAndReplicatePlan({
     }
 
     showToast(`Plan "${planName}" creado y replicado en ${datesToReplicate.length} días.`, 'success');
-    return planRecord as unknown as ClientPlan;
+    return {
+      id: planRecord.id,
+      client: planRecord.client,
+      client_id: planRecord.client,
+      name: planRecord.name,
+      plan_name: planRecord.name,
+      start_date: planRecord.start_date,
+      end_date: planRecord.end_date,
+      created: planRecord.created
+    };
   } catch (e) {
     console.error('[API:createAndReplicatePlan] Failed to replicate plan:', e);
     showToast('Error al crear y replicar el plan de entrenamiento', 'error');
@@ -263,11 +302,20 @@ export async function getClientPlans(clientId: string): Promise<ClientPlan[]> {
   const pb = getPocketBaseClient();
   try {
     const sanitizedId = sanitizeFilter(clientId);
-    const list = await pb.collection('client_plans').getFullList({
-      filter: `client_id = "${sanitizedId}"`,
+    const list = await pb.collection('workout_plans').getFullList({
+      filter: `client = "${sanitizedId}"`,
       sort: '-created'
     });
-    return list as unknown as ClientPlan[];
+    return list.map(p => ({
+      id: p.id,
+      client: p.client,
+      client_id: p.client,
+      name: p.name,
+      plan_name: p.name,
+      start_date: p.start_date,
+      end_date: p.end_date,
+      created: p.created
+    }));
   } catch (e) {
     console.error('[API:getClientPlans] Failed to fetch client plans from PocketBase:', e);
     return [];
