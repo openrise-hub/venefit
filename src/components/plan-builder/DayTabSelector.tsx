@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { Button } from '@heroui/react';
 
-const DAYS_OF_WEEK = [
+export const DAYS_OF_WEEK = [
   { id: 1, name: 'Lunes', short: 'Lun' },
   { id: 2, name: 'Martes', short: 'Mar' },
   { id: 3, name: 'Miércoles', short: 'Mié' },
@@ -13,16 +13,18 @@ const DAYS_OF_WEEK = [
 
 interface DayTabSelectorProps {
   selectedDaysOfWeek: number[];
-  activeDayTab: number;
+  activeDayTab?: number;
   onToggleDay: (dayId: number) => void;
-  onSelectActiveTab: (dayId: number) => void;
+  onSelectActiveTab?: (dayId: number) => void;
+  hideActiveTabs?: boolean;
 }
 
 function DayTabSelector({
   selectedDaysOfWeek,
   activeDayTab,
   onToggleDay,
-  onSelectActiveTab
+  onSelectActiveTab,
+  hideActiveTabs = false
 }: DayTabSelectorProps) {
   return (
     <div className="space-y-3">
@@ -47,7 +49,7 @@ function DayTabSelector({
         </div>
       </div>
 
-      {selectedDaysOfWeek.length > 0 && (
+      {!hideActiveTabs && onSelectActiveTab && selectedDaysOfWeek.length > 0 && (
         <div className="flex items-center gap-1.5 p-1 rounded-2xl border overflow-x-auto">
           {selectedDaysOfWeek.map((dayId) => {
             const dayObj = DAYS_OF_WEEK.find(d => d.id === dayId);

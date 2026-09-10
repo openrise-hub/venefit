@@ -16,15 +16,12 @@ import {
   UserPlus,
   ArrowRight,
   ArrowLeft,
-  Calendar,
-  Dumbbell,
-  CheckCircle2,
-  Plus
+  CheckCircle2
 } from 'lucide-react';
 import { createClient, createAndReplicatePlan } from '../lib/api';
 import { formatDateISO, getUpcomingDateISO } from '../lib/utils';
 import { showToast } from '../lib/toastStore';
-import DayTabSelector from './plan-builder/DayTabSelector';
+import DayTabSelector, { DAYS_OF_WEEK } from './plan-builder/DayTabSelector';
 import DayRoutineEditor from './plan-builder/DayRoutineEditor';
 import ExerciseSelectorModal from './ExerciseSelectorModal';
 import { DayRoutineConfig, Exercise } from '../types';
@@ -50,15 +47,15 @@ export default function ClientOnboardingModal({
   const [height, setHeight] = useState('175.0');
   const [notes, setNotes] = useState('');
 
-  const [planName, setPlanName] = useState('Plan Inicial');
+  const [planName, setPlanName] = useState('Fase 1: Mesociclo de Hipertrofia');
   const [startDateStr, setStartDateStr] = useState(() => formatDateISO(new Date()));
   const [endDateStr, setEndDateStr] = useState(() => getUpcomingDateISO(28));
   const [selectedDaysOfWeek, setSelectedDaysOfWeek] = useState<number[]>([1, 3, 5]);
 
   const [dayRoutinesConfig, setDayRoutinesConfig] = useState<Record<number, DayRoutineConfig>>({
-    1: { routineName: 'Día 1: Empuje (Pecho, Hombro, Tríceps)', muscleGroups: ['Pecho', 'Hombro', 'Tríceps'], exercises: [] },
-    3: { routineName: 'Día 2: Tracción (Espalda, Bíceps)', muscleGroups: ['Espalda', 'Bíceps'], exercises: [] },
-    5: { routineName: 'Día 3: Pierna y Core', muscleGroups: ['Pierna', 'Core'], exercises: [] }
+    1: { routineName: 'Empuje (Pecho, Hombro, Tríceps)', muscleGroups: ['Pecho', 'Hombro', 'Tríceps'], exercises: [] },
+    3: { routineName: 'Tracción (Espalda, Bíceps)', muscleGroups: ['Espalda', 'Bíceps'], exercises: [] },
+    5: { routineName: 'Pierna (Cuádriceps, Isquios, Glúteos)', muscleGroups: ['Pierna'], exercises: [] }
   });
   const [activeDayTab, setActiveDayTab] = useState<number>(1);
 
@@ -66,7 +63,7 @@ export default function ClientOnboardingModal({
   const [saving, setSaving] = useState(false);
 
   const activeConfig = useMemo(() => {
-    return dayRoutinesConfig[activeDayTab] || { routineName: 'Rutina del Día', muscleGroups: [], exercises: [] };
+    return dayRoutinesConfig[activeDayTab] || { routineName: 'Empuje (Pecho, Hombro, Tríceps)', muscleGroups: [], exercises: [] };
   }, [dayRoutinesConfig, activeDayTab]);
 
   const toggleDayOfWeek = useCallback((dayId: number) => {
@@ -86,7 +83,7 @@ export default function ClientOnboardingModal({
         const next = { ...oldConfigs };
         if (!next[dayId]) {
           next[dayId] = {
-            routineName: `Rutina Día ${dayId === 0 ? 'Domingo' : dayId}`,
+            routineName: 'Empuje (Pecho, Hombro, Tríceps)',
             muscleGroups: [],
             exercises: []
           };
@@ -114,7 +111,7 @@ export default function ClientOnboardingModal({
 
   const handleAddExercisesToActiveDay = useCallback((selectedExercises: Exercise[]) => {
     setDayRoutinesConfig(prev => {
-      const current = prev[activeDayTab] || { routineName: 'Rutina del Día', muscleGroups: [], exercises: [] };
+      const current = prev[activeDayTab] || { routineName: 'Empuje (Pecho, Hombro, Tríceps)', muscleGroups: [], exercises: [] };
       const newItems = selectedExercises.map(ex => ({
         exercise_id: ex.id,
         name: ex.name,
@@ -199,7 +196,7 @@ export default function ClientOnboardingModal({
       setCurrentStep(2);
     } else if (currentStep === 2) {
       if (!planName.trim()) {
-        showToast('Ingresa el nombre del plan', 'info');
+        showToast('Ingresa el nombre del mesociclo', 'info');
         return;
       }
       if (selectedDaysOfWeek.length === 0) {
@@ -238,7 +235,7 @@ export default function ClientOnboardingModal({
         dayRoutinesConfig
       });
 
-      showToast(`Cliente "${newClient.name}" y plan creados exitosamente`, 'success');
+      showToast(`Cliente "${newClient.name}" y mesociclo creados exitosamente`, 'success');
       onClientCreated(newClient);
       onClose();
     } catch (err) {
@@ -263,7 +260,7 @@ export default function ClientOnboardingModal({
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <ModalHeading className="text-base font-bold truncate">
-                      Nuevo Cliente y Plan de Entrenamiento
+                      Nuevo Cliente y Mesociclo
                     </ModalHeading>
                     <Chip size="sm" variant="soft">
                       Paso {currentStep} de 3
@@ -271,8 +268,8 @@ export default function ClientOnboardingModal({
                   </div>
                   <p className="text-xs font-normal opacity-70 truncate">
                     {currentStep === 1 && 'Datos personales y perfil del cliente'}
-                    {currentStep === 2 && 'Configuración del plan y días de entrenamiento'}
-                    {currentStep === 3 && 'Armado de rutinas y ejercicios por día'}
+                    {currentStep === 2 && 'Duración del mesociclo y días de entrenamiento'}
+                    {currentStep === 3 && 'Selección de splits y armado de ejercicios por día'}
                   </p>
                 </div>
               </div>
@@ -358,9 +355,9 @@ export default function ClientOnboardingModal({
               {currentStep === 2 && (
                 <div className="space-y-4">
                   <div className="space-y-1.5 min-w-0">
-                    <label className="text-xs font-semibold block opacity-80">Nombre del Plan *</label>
+                    <label className="text-xs font-semibold block opacity-80">Nombre del Mesociclo / Plan *</label>
                     <Input
-                      placeholder="Ej. Fase 1: Hipertrofia 8 Semanas"
+                      placeholder="Ej. Fase 1: Mesociclo de Hipertrofia 8 Semanas"
                       value={planName}
                       onChange={(e) => setPlanName(e.target.value)}
                     />
@@ -368,7 +365,7 @@ export default function ClientOnboardingModal({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
                     <div className="space-y-1.5 min-w-0">
-                      <label className="text-xs font-semibold block opacity-80">Fecha de Inicio</label>
+                      <label className="text-xs font-semibold block opacity-80">Inicio del Mesociclo</label>
                       <Input
                         type="date"
                         value={startDateStr}
@@ -377,7 +374,7 @@ export default function ClientOnboardingModal({
                     </div>
 
                     <div className="space-y-1.5 min-w-0">
-                      <label className="text-xs font-semibold block opacity-80">Fecha de Término</label>
+                      <label className="text-xs font-semibold block opacity-80">Término del Mesociclo</label>
                       <Input
                         type="date"
                         value={endDateStr}
@@ -388,21 +385,36 @@ export default function ClientOnboardingModal({
 
                   <DayTabSelector
                     selectedDaysOfWeek={selectedDaysOfWeek}
-                    activeDayTab={activeDayTab}
                     onToggleDay={toggleDayOfWeek}
-                    onSelectActiveTab={setActiveDayTab}
+                    hideActiveTabs={true}
                   />
                 </div>
               )}
 
               {currentStep === 3 && (
                 <div className="space-y-4">
-                  <DayTabSelector
-                    selectedDaysOfWeek={selectedDaysOfWeek}
-                    activeDayTab={activeDayTab}
-                    onToggleDay={toggleDayOfWeek}
-                    onSelectActiveTab={setActiveDayTab}
-                  />
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold block opacity-80">
+                      Selecciona el día para configurar su rutina:
+                    </label>
+                    <div className="flex items-center gap-1.5 p-1 rounded-2xl border overflow-x-auto">
+                      {selectedDaysOfWeek.map((dayId) => {
+                        const dayObj = DAYS_OF_WEEK.find(d => d.id === dayId);
+                        const isActive = activeDayTab === dayId;
+                        return (
+                          <Button
+                            key={dayId}
+                            size="sm"
+                            variant={isActive ? "primary" : "ghost"}
+                            className="shrink-0 font-bold text-xs"
+                            onPress={() => setActiveDayTab(dayId)}
+                          >
+                            {dayObj ? dayObj.name : `Día ${dayId}`}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
 
                   <DayRoutineEditor
                     activeDayTab={activeDayTab}
@@ -447,7 +459,7 @@ export default function ClientOnboardingModal({
                     onPress={handleSubmit}
                   >
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>{saving ? 'Guardando...' : 'Crear Cliente y Rutinas'}</span>
+                    <span>{saving ? 'Guardando...' : 'Crear Cliente y Mesociclo'}</span>
                   </Button>
                 )}
               </div>
