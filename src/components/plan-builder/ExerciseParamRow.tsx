@@ -75,7 +75,7 @@ function ExerciseParamRow({
 
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-xs p-2 rounded-xl border">
             <div className="space-y-1">
-              <label className="text-[10px] font-medium opacity-70 block">Series</label>
+              <label className="text-[10px] font-bold text-foreground block">Series</label>
               <Input
                 type="number"
                 min="1"
@@ -85,7 +85,7 @@ function ExerciseParamRow({
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-medium opacity-70 block">Reps Meta</label>
+              <label className="text-[10px] font-bold text-foreground block">Reps Meta</label>
               <Input
                 type="text"
                 value={ex.target_reps}
@@ -94,11 +94,11 @@ function ExerciseParamRow({
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-medium opacity-70 block">RIR Meta</label>
+              <label className="text-[10px] font-bold text-foreground block">RIR Meta</label>
               <select
                 value={ex.target_rir}
                 onChange={(e) => onUpdateParam(idx, 'target_rir', e.target.value)}
-                className="w-full h-9 rounded-xl border px-2 text-xs focus:outline-none bg-transparent"
+                className="w-full h-9 rounded-xl border px-2 text-xs font-semibold focus:outline-none bg-background text-foreground"
               >
                 <option value="0">RIR 0 (Fallo)</option>
                 <option value="1">RIR 1</option>
@@ -108,7 +108,7 @@ function ExerciseParamRow({
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-medium opacity-70 block">Descanso (s)</label>
+              <label className="text-[10px] font-bold text-foreground block">Descanso (s)</label>
               <Input
                 type="number"
                 step="15"
@@ -118,7 +118,7 @@ function ExerciseParamRow({
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-medium opacity-70 block">Peso & Unidad</label>
+              <label className="text-[10px] font-bold text-foreground block">Peso & Unidad</label>
               <div className="flex gap-1.5 items-center">
                 <Input
                   type="number"
@@ -129,7 +129,7 @@ function ExerciseParamRow({
                 <select
                   value={ex.weight_unit}
                   onChange={(e) => onUpdateParam(idx, 'weight_unit', e.target.value)}
-                  className="h-9 rounded-xl border px-2 text-xs font-bold focus:outline-none bg-transparent"
+                  className="h-9 rounded-xl border px-2 text-xs font-bold focus:outline-none bg-background text-foreground"
                 >
                   <option value="kg">kg</option>
                   <option value="lb">lb</option>

@@ -52,16 +52,16 @@ function DayRoutineEditor({
     <Card className="p-3.5 sm:p-4">
       <CardContent className="p-0 space-y-3.5">
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold opacity-80 block">
+          <label className="text-xs font-bold text-foreground block">
             Tipo de Rutina / Split del Día
           </label>
           <select
             value={activeConfig.routineName || ROUTINE_SPLIT_OPTIONS[0]}
             onChange={(e) => onRoutineNameChange(activeDayTab, e.target.value)}
-            className="w-full h-10 rounded-xl border px-3 text-xs font-medium focus:outline-none bg-transparent cursor-pointer"
+            className="w-full h-10 rounded-xl border px-3 text-xs font-semibold focus:outline-none bg-background text-foreground cursor-pointer"
           >
             {ROUTINE_SPLIT_OPTIONS.map((opt) => (
-              <option key={opt} value={opt}>
+              <option key={opt} value={opt} className="bg-background text-foreground font-medium">
                 {opt}
               </option>
             ))}
@@ -69,12 +69,13 @@ function DayRoutineEditor({
         </div>
 
         <div className="flex items-center justify-between pt-1">
-          <span className="text-xs font-bold">
+          <span className="text-xs font-bold text-foreground">
             Ejercicios ({exercises.length})
           </span>
           <Button
             variant="primary"
             size="sm"
+            className="font-bold text-xs"
             onPress={onOpenExerciseSelector}
           >
             <Plus className="w-4 h-4" />

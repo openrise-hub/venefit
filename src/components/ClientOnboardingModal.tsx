@@ -19,12 +19,20 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { createClient, createAndReplicatePlan } from '../lib/api';
-import { formatDateISO, getUpcomingDateISO } from '../lib/utils';
+import { formatDateISO } from '../lib/utils';
 import { showToast } from '../lib/toastStore';
 import DayTabSelector, { DAYS_OF_WEEK } from './plan-builder/DayTabSelector';
 import DayRoutineEditor from './plan-builder/DayRoutineEditor';
 import ExerciseSelectorModal from './ExerciseSelectorModal';
 import { DayRoutineConfig, Exercise } from '../types';
+
+export const MESOCYCLE_DURATIONS = [
+  { id: '4w', label: '4 Semanas', days: 28 },
+  { id: '8w', label: '8 Semanas', days: 56 },
+  { id: '12w', label: '12 Semanas', days: 84 },
+  { id: '16w', label: '16 Semanas', days: 112 },
+  { id: 'custom', label: 'Personalizado', days: 0 }
+];
 
 interface ClientOnboardingModalProps {
   isOpen: boolean;
@@ -48,8 +56,13 @@ export default function ClientOnboardingModal({
   const [notes, setNotes] = useState('');
 
   const [planName, setPlanName] = useState('Fase 1: Mesociclo de Hipertrofia');
+  const [durationId, setDurationId] = useState('8w');
   const [startDateStr, setStartDateStr] = useState(() => formatDateISO(new Date()));
-  const [endDateStr, setEndDateStr] = useState(() => getUpcomingDateISO(28));
+  const [endDateStr, setEndDateStr] = useState(() => {
+    const end = new Date();
+    end.setDate(end.getDate() + 56);
+    return formatDateISO(end);
+  });
   const [selectedDaysOfWeek, setSelectedDaysOfWeek] = useState<number[]>([1, 3, 5]);
 
   const [dayRoutinesConfig, setDayRoutinesConfig] = useState<Record<number, DayRoutineConfig>>({
@@ -65,6 +78,27 @@ export default function ClientOnboardingModal({
   const activeConfig = useMemo(() => {
     return dayRoutinesConfig[activeDayTab] || { routineName: 'Empuje (Pecho, Hombro, Tríceps)', muscleGroups: [], exercises: [] };
   }, [dayRoutinesConfig, activeDayTab]);
+
+  const handleDurationSelect = (preset: typeof MESOCYCLE_DURATIONS[number]) => {
+    setDurationId(preset.id);
+    if (preset.days > 0) {
+      const start = new Date(startDateStr + 'T00:00:00');
+      const end = new Date(start);
+      end.setDate(start.getDate() + preset.days);
+      setEndDateStr(formatDateISO(end));
+    }
+  };
+
+  const handleStartDateChange = (date: string) => {
+    setStartDateStr(date);
+    const selected = MESOCYCLE_DURATIONS.find(d => d.id === durationId);
+    if (selected && selected.days > 0) {
+      const start = new Date(date + 'T00:00:00');
+      const end = new Date(start);
+      end.setDate(start.getDate() + selected.days);
+      setEndDateStr(formatDateISO(end));
+    }
+  };
 
   const toggleDayOfWeek = useCallback((dayId: number) => {
     setSelectedDaysOfWeek(prev => {
@@ -259,14 +293,14 @@ export default function ClientOnboardingModal({
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <ModalHeading className="text-base font-bold truncate">
+                    <ModalHeading className="text-base font-extrabold text-foreground tracking-tight truncate">
                       Nuevo Cliente y Mesociclo
                     </ModalHeading>
-                    <Chip size="sm" variant="soft">
+                    <Chip size="sm" variant="soft" className="font-bold">
                       Paso {currentStep} de 3
                     </Chip>
                   </div>
-                  <p className="text-xs font-normal opacity-70 truncate">
+                  <p className="text-xs font-medium text-foreground/80 truncate">
                     {currentStep === 1 && 'Datos personales y perfil del cliente'}
                     {currentStep === 2 && 'Duración del mesociclo y días de entrenamiento'}
                     {currentStep === 3 && 'Selección de splits y armado de ejercicios por día'}
@@ -280,7 +314,7 @@ export default function ClientOnboardingModal({
               {currentStep === 1 && (
                 <div className="space-y-4">
                   <div className="space-y-1.5 min-w-0">
-                    <label className="text-xs font-semibold block opacity-80">Nombre Completo *</label>
+                    <label className="text-xs font-bold text-foreground block">Nombre Completo *</label>
                     <Input
                       placeholder="Ej. Juan Pérez"
                       value={name}
@@ -290,7 +324,7 @@ export default function ClientOnboardingModal({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
                     <div className="space-y-1.5 min-w-0">
-                      <label className="text-xs font-semibold block opacity-80">Correo Electrónico</label>
+                      <label className="text-xs font-bold text-foreground block">Correo Electrónico</label>
                       <Input
                         type="email"
                         placeholder="juan@email.com"
@@ -300,7 +334,7 @@ export default function ClientOnboardingModal({
                     </div>
 
                     <div className="space-y-1.5 min-w-0">
-                      <label className="text-xs font-semibold block opacity-80">Teléfono</label>
+                      <label className="text-xs font-bold text-foreground block">Teléfono</label>
                       <Input
                         type="tel"
                         placeholder="+56 9 1234 5678"
@@ -311,7 +345,7 @@ export default function ClientOnboardingModal({
                   </div>
 
                   <div className="space-y-1.5 min-w-0">
-                    <label className="text-xs font-semibold block opacity-80">Objetivo Principal</label>
+                    <label className="text-xs font-bold text-foreground block">Objetivo Principal</label>
                     <Input
                       placeholder="Ej. Hipertrofia Muscular y Fuerza"
                       value={goal}
@@ -321,7 +355,7 @@ export default function ClientOnboardingModal({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
                     <div className="space-y-1.5 min-w-0">
-                      <label className="text-xs font-semibold block opacity-80">Peso Actual (kg)</label>
+                      <label className="text-xs font-bold text-foreground block">Peso Actual (kg)</label>
                       <Input
                         type="number"
                         placeholder="75.0"
@@ -331,7 +365,7 @@ export default function ClientOnboardingModal({
                     </div>
 
                     <div className="space-y-1.5 min-w-0">
-                      <label className="text-xs font-semibold block opacity-80">Altura (cm)</label>
+                      <label className="text-xs font-bold text-foreground block">Altura (cm)</label>
                       <Input
                         type="number"
                         placeholder="175.0"
@@ -342,7 +376,7 @@ export default function ClientOnboardingModal({
                   </div>
 
                   <div className="space-y-1.5 min-w-0">
-                    <label className="text-xs font-semibold block opacity-80">Notas / Observaciones</label>
+                    <label className="text-xs font-bold text-foreground block">Notas / Observaciones</label>
                     <Input
                       placeholder="Ej. Lesiones previas, disponibilidad..."
                       value={notes}
@@ -355,7 +389,7 @@ export default function ClientOnboardingModal({
               {currentStep === 2 && (
                 <div className="space-y-4">
                   <div className="space-y-1.5 min-w-0">
-                    <label className="text-xs font-semibold block opacity-80">Nombre del Mesociclo / Plan *</label>
+                    <label className="text-xs font-bold text-foreground block">Nombre del Mesociclo / Plan *</label>
                     <Input
                       placeholder="Ej. Fase 1: Mesociclo de Hipertrofia 8 Semanas"
                       value={planName}
@@ -363,24 +397,46 @@ export default function ClientOnboardingModal({
                     />
                   </div>
 
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-foreground block">Duración del Mesociclo</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                      {MESOCYCLE_DURATIONS.map((preset) => {
+                        const isSelected = durationId === preset.id;
+                        return (
+                          <Button
+                            key={preset.id}
+                            size="sm"
+                            variant={isSelected ? "primary" : "outline"}
+                            className="font-bold text-xs"
+                            onPress={() => handleDurationSelect(preset)}
+                          >
+                            {preset.label}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
                     <div className="space-y-1.5 min-w-0">
-                      <label className="text-xs font-semibold block opacity-80">Inicio del Mesociclo</label>
+                      <label className="text-xs font-bold text-foreground block">Inicio del Mesociclo</label>
                       <Input
                         type="date"
                         value={startDateStr}
-                        onChange={(e) => setStartDateStr(e.target.value)}
+                        onChange={(e) => handleStartDateChange(e.target.value)}
                       />
                     </div>
 
-                    <div className="space-y-1.5 min-w-0">
-                      <label className="text-xs font-semibold block opacity-80">Término del Mesociclo</label>
-                      <Input
-                        type="date"
-                        value={endDateStr}
-                        onChange={(e) => setEndDateStr(e.target.value)}
-                      />
-                    </div>
+                    {durationId === 'custom' && (
+                      <div className="space-y-1.5 min-w-0">
+                        <label className="text-xs font-bold text-foreground block">Término del Mesociclo</label>
+                        <Input
+                          type="date"
+                          value={endDateStr}
+                          onChange={(e) => setEndDateStr(e.target.value)}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <DayTabSelector
@@ -394,7 +450,7 @@ export default function ClientOnboardingModal({
               {currentStep === 3 && (
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold block opacity-80">
+                    <label className="text-xs font-bold text-foreground block">
                       Selecciona el día para configurar su rutina:
                     </label>
                     <div className="flex items-center gap-1.5 p-1 rounded-2xl border overflow-x-auto">
@@ -405,7 +461,7 @@ export default function ClientOnboardingModal({
                           <Button
                             key={dayId}
                             size="sm"
-                            variant={isActive ? "primary" : "ghost"}
+                            variant={isActive ? "primary" : "outline"}
                             className="shrink-0 font-bold text-xs"
                             onPress={() => setActiveDayTab(dayId)}
                           >
@@ -434,7 +490,7 @@ export default function ClientOnboardingModal({
             <ModalFooter className="border-t pt-4 flex items-center justify-between">
               <div>
                 {currentStep > 1 && (
-                  <Button variant="ghost" size="sm" onPress={handleBack}>
+                  <Button variant="ghost" size="sm" onPress={handleBack} className="font-bold">
                     <ArrowLeft className="w-4 h-4" />
                     <span>Atrás</span>
                   </Button>
@@ -442,12 +498,12 @@ export default function ClientOnboardingModal({
               </div>
 
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onPress={onClose}>
+                <Button variant="ghost" size="sm" onPress={onClose} className="font-bold">
                   Cancelar
                 </Button>
 
                 {currentStep < 3 ? (
-                  <Button variant="primary" size="sm" onPress={handleNext}>
+                  <Button variant="primary" size="sm" onPress={handleNext} className="font-bold">
                     <span>Siguiente</span>
                     <ArrowRight className="w-4 h-4" />
                   </Button>
@@ -457,6 +513,7 @@ export default function ClientOnboardingModal({
                     size="sm"
                     isDisabled={saving}
                     onPress={handleSubmit}
+                    className="font-bold"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     <span>{saving ? 'Guardando...' : 'Crear Cliente y Mesociclo'}</span>

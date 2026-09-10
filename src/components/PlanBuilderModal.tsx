@@ -49,13 +49,6 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
   const [isExerciseSelectorOpen, setIsExerciseSelectorOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const setPresetDuration = useCallback((days: number) => {
-    const start = new Date(startDateStr + 'T00:00:00');
-    const end = new Date(start);
-    end.setDate(end.getDate() + days);
-    setEndDateStr(formatDateISO(end));
-  }, [startDateStr]);
-
   const toggleDaySelection = useCallback((dayId: number) => {
     setSelectedDaysOfWeek(prev => {
       if (prev.includes(dayId)) {
@@ -223,7 +216,6 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
               onStartDateChange={setStartDateStr}
               endDateStr={endDateStr}
               onEndDateChange={setEndDateStr}
-              onPresetSelect={setPresetDuration}
             />
 
             <DayTabSelector

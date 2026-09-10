@@ -29,7 +29,7 @@ function DayTabSelector({
   return (
     <div className="space-y-3">
       <div>
-        <label className="text-xs font-bold block mb-2 opacity-80">
+        <label className="text-xs font-bold text-foreground block mb-2">
           Días de la semana a entrenar:
         </label>
         <div className="grid grid-cols-7 gap-1.5">
@@ -39,7 +39,8 @@ function DayTabSelector({
               <Button
                 key={d.id}
                 size="sm"
-                variant={isSelected ? "primary" : "ghost"}
+                variant={isSelected ? "primary" : "outline"}
+                className="font-bold text-xs"
                 onPress={() => onToggleDay(d.id)}
               >
                 {d.short}
