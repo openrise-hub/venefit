@@ -32,7 +32,7 @@ function DayTabSelector({
         <label className="text-xs font-bold text-foreground block mb-2">
           Días de la semana a entrenar:
         </label>
-        <div className="grid grid-cols-7 gap-1.5">
+        <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
           {DAYS_OF_WEEK.map((d) => {
             const isSelected = selectedDaysOfWeek.includes(d.id);
             return (
@@ -40,7 +40,7 @@ function DayTabSelector({
                 key={d.id}
                 size="sm"
                 variant={isSelected ? "primary" : "outline"}
-                className="font-bold text-xs"
+                className="font-bold text-[11px] sm:text-xs px-1 min-w-0"
                 onPress={() => onToggleDay(d.id)}
               >
                 {d.short}

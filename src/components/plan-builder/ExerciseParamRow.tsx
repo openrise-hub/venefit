@@ -117,7 +117,7 @@ function ExerciseParamRow({
               />
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-1 col-span-2 sm:col-span-1">
               <label className="text-[10px] font-bold text-foreground block">Peso & Unidad</label>
               <div className="flex gap-1.5 items-center">
                 <Input

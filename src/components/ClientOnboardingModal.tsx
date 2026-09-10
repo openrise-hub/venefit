@@ -284,33 +284,33 @@ export default function ClientOnboardingModal({
   return (
     <>
       <ModalBackdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <ModalContainer size="lg" placement="center">
-          <ModalDialog className="w-full max-w-2xl">
-            <ModalHeader className="flex items-center justify-between border-b pb-4">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="p-2 rounded-xl border flex items-center justify-center">
+        <ModalContainer size="lg" placement="center" className="p-2 sm:p-4">
+          <ModalDialog className="w-full max-w-2xl mx-auto overflow-hidden">
+            <ModalHeader className="flex items-start sm:items-center justify-between border-b pb-3.5 gap-2">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="p-2 rounded-xl border flex items-center justify-center shrink-0">
                   <UserPlus className="w-5 h-5 text-emerald-400 shrink-0" />
                 </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <ModalHeading className="text-base font-extrabold text-foreground tracking-tight truncate">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <ModalHeading className="text-sm sm:text-base font-extrabold text-foreground tracking-tight">
                       Nuevo Cliente y Mesociclo
                     </ModalHeading>
-                    <Chip size="sm" variant="soft" className="font-bold">
-                      Paso {currentStep} de 3
+                    <Chip size="sm" variant="soft" className="font-bold text-[11px] h-5 px-1.5">
+                      Paso {currentStep}/3
                     </Chip>
                   </div>
-                  <p className="text-xs font-medium text-foreground/80 truncate">
+                  <p className="text-[11px] sm:text-xs font-medium text-foreground/80 truncate">
                     {currentStep === 1 && 'Datos personales y perfil del cliente'}
                     {currentStep === 2 && 'Duración del mesociclo y días de entrenamiento'}
-                    {currentStep === 3 && 'Selección de splits y armado de ejercicios por día'}
+                    {currentStep === 3 && 'Selección de splits y armado de ejercicios'}
                   </p>
                 </div>
               </div>
               <ModalCloseTrigger onClick={onClose} />
             </ModalHeader>
 
-            <ModalBody className="py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+            <ModalBody className="py-4 sm:py-5 space-y-4 max-h-[70vh] overflow-y-auto">
               {currentStep === 1 && (
                 <div className="space-y-4">
                   <div className="space-y-1.5 min-w-0">
@@ -400,14 +400,14 @@ export default function ClientOnboardingModal({
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-foreground block">Duración del Mesociclo</label>
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
-                      {MESOCYCLE_DURATIONS.map((preset) => {
+                      {MESOCYCLE_DURATIONS.map((preset, idx) => {
                         const isSelected = durationId === preset.id;
                         return (
                           <Button
                             key={preset.id}
                             size="sm"
                             variant={isSelected ? "primary" : "outline"}
-                            className="font-bold text-xs"
+                            className={`font-bold text-xs ${idx === MESOCYCLE_DURATIONS.length - 1 ? 'col-span-2 sm:col-span-1' : ''}`}
                             onPress={() => handleDurationSelect(preset)}
                           >
                             {preset.label}
@@ -487,23 +487,22 @@ export default function ClientOnboardingModal({
               )}
             </ModalBody>
 
-            <ModalFooter className="border-t pt-4 flex items-center justify-between">
-              <div>
+            <ModalFooter className="border-t pt-3.5 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 {currentStep > 1 && (
-                  <Button variant="ghost" size="sm" onPress={handleBack} className="font-bold">
+                  <Button variant="ghost" size="sm" onPress={handleBack} className="font-bold flex-1 sm:flex-initial">
                     <ArrowLeft className="w-4 h-4" />
                     <span>Atrás</span>
                   </Button>
                 )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onPress={onClose} className="font-bold">
+                <Button variant="ghost" size="sm" onPress={onClose} className="font-bold flex-1 sm:flex-initial">
                   Cancelar
                 </Button>
+              </div>
 
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 {currentStep < 3 ? (
-                  <Button variant="primary" size="sm" onPress={handleNext} className="font-bold">
+                  <Button variant="primary" size="sm" onPress={handleNext} className="font-bold w-full sm:w-auto">
                     <span>Siguiente</span>
                     <ArrowRight className="w-4 h-4" />
                   </Button>
@@ -513,10 +512,10 @@ export default function ClientOnboardingModal({
                     size="sm"
                     isDisabled={saving}
                     onPress={handleSubmit}
-                    className="font-bold"
+                    className="font-bold w-full sm:w-auto min-w-0"
                   >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>{saving ? 'Guardando...' : 'Crear Cliente y Mesociclo'}</span>
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                    <span className="truncate">{saving ? 'Guardando...' : 'Crear Cliente y Mesociclo'}</span>
                   </Button>
                 )}
               </div>
