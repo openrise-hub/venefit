@@ -29,14 +29,14 @@ export default function PwaPrompt() {
   if (!showPrompt) return null;
 
   return (
-    <div className="fixed bottom-20 md:bottom-6 left-4 z-50 bg-slate-900 border border-emerald-500/40 rounded-2xl p-4 shadow-2xl backdrop-blur-md max-w-sm flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
-          <Download className="w-5 h-5" />
+    <div className="fixed bottom-20 md:bottom-6 left-3 right-3 sm:right-auto sm:left-4 sm:max-w-sm z-50 bg-slate-900 border border-emerald-500/40 rounded-2xl p-3.5 sm:p-4 shadow-2xl backdrop-blur-md flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4">
+      <div className="flex items-center gap-2.5 min-w-0">
+        <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+          <Download className="w-4 h-4" />
         </div>
-        <div>
-          <h4 className="text-xs font-bold text-white">Instalar Venefit App</h4>
-          <p className="text-[11px] text-slate-400">Instala la app en tu dispositivo para un acceso rápido y offline.</p>
+        <div className="min-w-0">
+          <h4 className="text-xs font-bold text-white truncate">Instalar Venefit App</h4>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 line-clamp-1">Acceso rápido y offline.</p>
         </div>
       </div>
 

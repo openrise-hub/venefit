@@ -49,13 +49,6 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
   const [isExerciseSelectorOpen, setIsExerciseSelectorOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const setPresetDuration = useCallback((days: number) => {
-    const start = new Date(startDateStr + 'T00:00:00');
-    const end = new Date(start);
-    end.setDate(end.getDate() + days);
-    setEndDateStr(formatDateISO(end));
-  }, [startDateStr]);
-
   const toggleDaySelection = useCallback((dayId: number) => {
     setSelectedDaysOfWeek(prev => {
       if (prev.includes(dayId)) {
@@ -202,20 +195,20 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
 
   return (
     <ModalBackdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <ModalContainer size="lg" placement="center">
-        <ModalDialog>
-          <ModalHeader className="flex items-center justify-between border-b pb-4">
-            <div className="flex items-center gap-3">
-              <Calendar className="w-5 h-5 text-emerald-400" />
-              <div>
-                <ModalHeading className="text-base font-bold">Creador de Planes</ModalHeading>
-                <p className="text-xs font-normal opacity-70">Diseña rutinas y replícalas en el rango de fechas</p>
+      <ModalContainer size="lg" placement="center" className="p-2 sm:p-4">
+        <ModalDialog className="w-full max-w-2xl mx-auto overflow-hidden">
+          <ModalHeader className="flex items-start sm:items-center justify-between border-b pb-3.5 gap-2">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Calendar className="w-5 h-5 text-emerald-400 shrink-0" />
+              <div className="min-w-0">
+                <ModalHeading className="text-sm sm:text-base font-bold text-foreground">Creador de Planes</ModalHeading>
+                <p className="text-[11px] sm:text-xs font-medium text-foreground/80 truncate">Diseña rutinas y replícalas en el rango de fechas</p>
               </div>
             </div>
             <ModalCloseTrigger onClick={onClose} />
           </ModalHeader>
 
-          <ModalBody className="py-5 space-y-4">
+          <ModalBody className="py-4 sm:py-5 space-y-4 max-h-[70vh] overflow-y-auto">
             <PlanMetadataForm
               planName={planName}
               onPlanNameChange={setPlanName}
@@ -223,7 +216,6 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
               onStartDateChange={setStartDateStr}
               endDateStr={endDateStr}
               onEndDateChange={setEndDateStr}
-              onPresetSelect={setPresetDuration}
             />
 
             <DayTabSelector
@@ -248,8 +240,8 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
             )}
           </ModalBody>
 
-          <ModalFooter className="border-t pt-4 flex justify-end gap-2.5">
-            <Button variant="ghost" size="sm" onPress={onClose}>
+          <ModalFooter className="border-t pt-3.5 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5">
+            <Button variant="ghost" size="sm" onPress={onClose} className="font-bold w-full sm:w-auto">
               Cancelar
             </Button>
             <Button
@@ -257,9 +249,10 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
               size="sm"
               isDisabled={saving}
               onPress={handleSaveAndReplicate}
+              className="font-bold w-full sm:w-auto min-w-0"
             >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Guardar y Replicar Plan</span>
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span className="truncate">{saving ? 'Guardando...' : 'Guardar y Replicar Plan'}</span>
             </Button>
           </ModalFooter>
         </ModalDialog>

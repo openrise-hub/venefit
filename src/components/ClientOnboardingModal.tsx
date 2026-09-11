@@ -16,18 +16,23 @@ import {
   UserPlus,
   ArrowRight,
   ArrowLeft,
-  Calendar,
-  Dumbbell,
-  CheckCircle2,
-  Plus
+  CheckCircle2
 } from 'lucide-react';
 import { createClient, createAndReplicatePlan } from '../lib/api';
-import { formatDateISO, getUpcomingDateISO } from '../lib/utils';
+import { formatDateISO } from '../lib/utils';
 import { showToast } from '../lib/toastStore';
-import DayTabSelector from './plan-builder/DayTabSelector';
+import DayTabSelector, { DAYS_OF_WEEK } from './plan-builder/DayTabSelector';
 import DayRoutineEditor from './plan-builder/DayRoutineEditor';
 import ExerciseSelectorModal from './ExerciseSelectorModal';
 import { DayRoutineConfig, Exercise } from '../types';
+
+export const MESOCYCLE_DURATIONS = [
+  { id: '4w', label: '4 Semanas', days: 28 },
+  { id: '8w', label: '8 Semanas', days: 56 },
+  { id: '12w', label: '12 Semanas', days: 84 },
+  { id: '16w', label: '16 Semanas', days: 112 },
+  { id: 'custom', label: 'Personalizado', days: 0 }
+];
 
 interface ClientOnboardingModalProps {
   isOpen: boolean;
@@ -50,15 +55,20 @@ export default function ClientOnboardingModal({
   const [height, setHeight] = useState('175.0');
   const [notes, setNotes] = useState('');
 
-  const [planName, setPlanName] = useState('Plan Inicial');
+  const [planName, setPlanName] = useState('Fase 1: Mesociclo de Hipertrofia');
+  const [durationId, setDurationId] = useState('8w');
   const [startDateStr, setStartDateStr] = useState(() => formatDateISO(new Date()));
-  const [endDateStr, setEndDateStr] = useState(() => getUpcomingDateISO(28));
+  const [endDateStr, setEndDateStr] = useState(() => {
+    const end = new Date();
+    end.setDate(end.getDate() + 56);
+    return formatDateISO(end);
+  });
   const [selectedDaysOfWeek, setSelectedDaysOfWeek] = useState<number[]>([1, 3, 5]);
 
   const [dayRoutinesConfig, setDayRoutinesConfig] = useState<Record<number, DayRoutineConfig>>({
-    1: { routineName: 'Día 1: Empuje (Pecho, Hombro, Tríceps)', muscleGroups: ['Pecho', 'Hombro', 'Tríceps'], exercises: [] },
-    3: { routineName: 'Día 2: Tracción (Espalda, Bíceps)', muscleGroups: ['Espalda', 'Bíceps'], exercises: [] },
-    5: { routineName: 'Día 3: Pierna y Core', muscleGroups: ['Pierna', 'Core'], exercises: [] }
+    1: { routineName: 'Empuje (Pecho, Hombro, Tríceps)', muscleGroups: ['Pecho', 'Hombro', 'Tríceps'], exercises: [] },
+    3: { routineName: 'Tracción (Espalda, Bíceps)', muscleGroups: ['Espalda', 'Bíceps'], exercises: [] },
+    5: { routineName: 'Pierna (Cuádriceps, Isquios, Glúteos)', muscleGroups: ['Pierna'], exercises: [] }
   });
   const [activeDayTab, setActiveDayTab] = useState<number>(1);
 
@@ -66,8 +76,29 @@ export default function ClientOnboardingModal({
   const [saving, setSaving] = useState(false);
 
   const activeConfig = useMemo(() => {
-    return dayRoutinesConfig[activeDayTab] || { routineName: 'Rutina del Día', muscleGroups: [], exercises: [] };
+    return dayRoutinesConfig[activeDayTab] || { routineName: 'Empuje (Pecho, Hombro, Tríceps)', muscleGroups: [], exercises: [] };
   }, [dayRoutinesConfig, activeDayTab]);
+
+  const handleDurationSelect = (preset: typeof MESOCYCLE_DURATIONS[number]) => {
+    setDurationId(preset.id);
+    if (preset.days > 0) {
+      const start = new Date(startDateStr + 'T00:00:00');
+      const end = new Date(start);
+      end.setDate(start.getDate() + preset.days);
+      setEndDateStr(formatDateISO(end));
+    }
+  };
+
+  const handleStartDateChange = (date: string) => {
+    setStartDateStr(date);
+    const selected = MESOCYCLE_DURATIONS.find(d => d.id === durationId);
+    if (selected && selected.days > 0) {
+      const start = new Date(date + 'T00:00:00');
+      const end = new Date(start);
+      end.setDate(start.getDate() + selected.days);
+      setEndDateStr(formatDateISO(end));
+    }
+  };
 
   const toggleDayOfWeek = useCallback((dayId: number) => {
     setSelectedDaysOfWeek(prev => {
@@ -86,7 +117,7 @@ export default function ClientOnboardingModal({
         const next = { ...oldConfigs };
         if (!next[dayId]) {
           next[dayId] = {
-            routineName: `Rutina Día ${dayId === 0 ? 'Domingo' : dayId}`,
+            routineName: 'Empuje (Pecho, Hombro, Tríceps)',
             muscleGroups: [],
             exercises: []
           };
@@ -114,7 +145,7 @@ export default function ClientOnboardingModal({
 
   const handleAddExercisesToActiveDay = useCallback((selectedExercises: Exercise[]) => {
     setDayRoutinesConfig(prev => {
-      const current = prev[activeDayTab] || { routineName: 'Rutina del Día', muscleGroups: [], exercises: [] };
+      const current = prev[activeDayTab] || { routineName: 'Empuje (Pecho, Hombro, Tríceps)', muscleGroups: [], exercises: [] };
       const newItems = selectedExercises.map(ex => ({
         exercise_id: ex.id,
         name: ex.name,
@@ -199,7 +230,7 @@ export default function ClientOnboardingModal({
       setCurrentStep(2);
     } else if (currentStep === 2) {
       if (!planName.trim()) {
-        showToast('Ingresa el nombre del plan', 'info');
+        showToast('Ingresa el nombre del mesociclo', 'info');
         return;
       }
       if (selectedDaysOfWeek.length === 0) {
@@ -238,7 +269,7 @@ export default function ClientOnboardingModal({
         dayRoutinesConfig
       });
 
-      showToast(`Cliente "${newClient.name}" y plan creados exitosamente`, 'success');
+      showToast(`Cliente "${newClient.name}" y mesociclo creados exitosamente`, 'success');
       onClientCreated(newClient);
       onClose();
     } catch (err) {
@@ -253,37 +284,37 @@ export default function ClientOnboardingModal({
   return (
     <>
       <ModalBackdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <ModalContainer size="lg" placement="center">
-          <ModalDialog className="w-full max-w-2xl">
-            <ModalHeader className="flex items-center justify-between border-b pb-4">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="p-2 rounded-xl border flex items-center justify-center">
+        <ModalContainer size="lg" placement="center" className="p-2 sm:p-4">
+          <ModalDialog className="w-full max-w-2xl mx-auto overflow-hidden">
+            <ModalHeader className="flex items-start sm:items-center justify-between border-b pb-3.5 gap-2">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="p-2 rounded-xl border flex items-center justify-center shrink-0">
                   <UserPlus className="w-5 h-5 text-emerald-400 shrink-0" />
                 </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <ModalHeading className="text-base font-bold truncate">
-                      Nuevo Cliente y Plan de Entrenamiento
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <ModalHeading className="text-sm sm:text-base font-extrabold text-foreground tracking-tight">
+                      Nuevo Cliente y Mesociclo
                     </ModalHeading>
-                    <Chip size="sm" variant="soft">
-                      Paso {currentStep} de 3
+                    <Chip size="sm" variant="soft" className="font-bold text-[11px] h-5 px-1.5">
+                      Paso {currentStep}/3
                     </Chip>
                   </div>
-                  <p className="text-xs font-normal opacity-70 truncate">
+                  <p className="text-[11px] sm:text-xs font-medium text-foreground/80 truncate">
                     {currentStep === 1 && 'Datos personales y perfil del cliente'}
-                    {currentStep === 2 && 'Configuración del plan y días de entrenamiento'}
-                    {currentStep === 3 && 'Armado de rutinas y ejercicios por día'}
+                    {currentStep === 2 && 'Duración del mesociclo y días de entrenamiento'}
+                    {currentStep === 3 && 'Selección de splits y armado de ejercicios'}
                   </p>
                 </div>
               </div>
               <ModalCloseTrigger onClick={onClose} />
             </ModalHeader>
 
-            <ModalBody className="py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+            <ModalBody className="py-4 sm:py-5 space-y-4 max-h-[70vh] overflow-y-auto">
               {currentStep === 1 && (
                 <div className="space-y-4">
                   <div className="space-y-1.5 min-w-0">
-                    <label className="text-xs font-semibold block opacity-80">Nombre Completo *</label>
+                    <label className="text-xs font-bold text-foreground block">Nombre Completo *</label>
                     <Input
                       placeholder="Ej. Juan Pérez"
                       value={name}
@@ -293,7 +324,7 @@ export default function ClientOnboardingModal({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
                     <div className="space-y-1.5 min-w-0">
-                      <label className="text-xs font-semibold block opacity-80">Correo Electrónico</label>
+                      <label className="text-xs font-bold text-foreground block">Correo Electrónico</label>
                       <Input
                         type="email"
                         placeholder="juan@email.com"
@@ -303,7 +334,7 @@ export default function ClientOnboardingModal({
                     </div>
 
                     <div className="space-y-1.5 min-w-0">
-                      <label className="text-xs font-semibold block opacity-80">Teléfono</label>
+                      <label className="text-xs font-bold text-foreground block">Teléfono</label>
                       <Input
                         type="tel"
                         placeholder="+56 9 1234 5678"
@@ -314,7 +345,7 @@ export default function ClientOnboardingModal({
                   </div>
 
                   <div className="space-y-1.5 min-w-0">
-                    <label className="text-xs font-semibold block opacity-80">Objetivo Principal</label>
+                    <label className="text-xs font-bold text-foreground block">Objetivo Principal</label>
                     <Input
                       placeholder="Ej. Hipertrofia Muscular y Fuerza"
                       value={goal}
@@ -324,7 +355,7 @@ export default function ClientOnboardingModal({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
                     <div className="space-y-1.5 min-w-0">
-                      <label className="text-xs font-semibold block opacity-80">Peso Actual (kg)</label>
+                      <label className="text-xs font-bold text-foreground block">Peso Actual (kg)</label>
                       <Input
                         type="number"
                         placeholder="75.0"
@@ -334,7 +365,7 @@ export default function ClientOnboardingModal({
                     </div>
 
                     <div className="space-y-1.5 min-w-0">
-                      <label className="text-xs font-semibold block opacity-80">Altura (cm)</label>
+                      <label className="text-xs font-bold text-foreground block">Altura (cm)</label>
                       <Input
                         type="number"
                         placeholder="175.0"
@@ -345,7 +376,7 @@ export default function ClientOnboardingModal({
                   </div>
 
                   <div className="space-y-1.5 min-w-0">
-                    <label className="text-xs font-semibold block opacity-80">Notas / Observaciones</label>
+                    <label className="text-xs font-bold text-foreground block">Notas / Observaciones</label>
                     <Input
                       placeholder="Ej. Lesiones previas, disponibilidad..."
                       value={notes}
@@ -358,51 +389,88 @@ export default function ClientOnboardingModal({
               {currentStep === 2 && (
                 <div className="space-y-4">
                   <div className="space-y-1.5 min-w-0">
-                    <label className="text-xs font-semibold block opacity-80">Nombre del Plan *</label>
+                    <label className="text-xs font-bold text-foreground block">Nombre del Mesociclo / Plan *</label>
                     <Input
-                      placeholder="Ej. Fase 1: Hipertrofia 8 Semanas"
+                      placeholder="Ej. Fase 1: Mesociclo de Hipertrofia 8 Semanas"
                       value={planName}
                       onChange={(e) => setPlanName(e.target.value)}
                     />
                   </div>
 
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-foreground block">Duración del Mesociclo</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                      {MESOCYCLE_DURATIONS.map((preset, idx) => {
+                        const isSelected = durationId === preset.id;
+                        return (
+                          <Button
+                            key={preset.id}
+                            size="sm"
+                            variant={isSelected ? "primary" : "outline"}
+                            className={`font-bold text-xs ${idx === MESOCYCLE_DURATIONS.length - 1 ? 'col-span-2 sm:col-span-1' : ''}`}
+                            onPress={() => handleDurationSelect(preset)}
+                          >
+                            {preset.label}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
                     <div className="space-y-1.5 min-w-0">
-                      <label className="text-xs font-semibold block opacity-80">Fecha de Inicio</label>
+                      <label className="text-xs font-bold text-foreground block">Inicio del Mesociclo</label>
                       <Input
                         type="date"
                         value={startDateStr}
-                        onChange={(e) => setStartDateStr(e.target.value)}
+                        onChange={(e) => handleStartDateChange(e.target.value)}
                       />
                     </div>
 
-                    <div className="space-y-1.5 min-w-0">
-                      <label className="text-xs font-semibold block opacity-80">Fecha de Término</label>
-                      <Input
-                        type="date"
-                        value={endDateStr}
-                        onChange={(e) => setEndDateStr(e.target.value)}
-                      />
-                    </div>
+                    {durationId === 'custom' && (
+                      <div className="space-y-1.5 min-w-0">
+                        <label className="text-xs font-bold text-foreground block">Término del Mesociclo</label>
+                        <Input
+                          type="date"
+                          value={endDateStr}
+                          onChange={(e) => setEndDateStr(e.target.value)}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <DayTabSelector
                     selectedDaysOfWeek={selectedDaysOfWeek}
-                    activeDayTab={activeDayTab}
                     onToggleDay={toggleDayOfWeek}
-                    onSelectActiveTab={setActiveDayTab}
+                    hideActiveTabs={true}
                   />
                 </div>
               )}
 
               {currentStep === 3 && (
                 <div className="space-y-4">
-                  <DayTabSelector
-                    selectedDaysOfWeek={selectedDaysOfWeek}
-                    activeDayTab={activeDayTab}
-                    onToggleDay={toggleDayOfWeek}
-                    onSelectActiveTab={setActiveDayTab}
-                  />
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-foreground block">
+                      Selecciona el día para configurar su rutina:
+                    </label>
+                    <div className="flex items-center gap-1.5 p-1 rounded-2xl border overflow-x-auto">
+                      {selectedDaysOfWeek.map((dayId) => {
+                        const dayObj = DAYS_OF_WEEK.find(d => d.id === dayId);
+                        const isActive = activeDayTab === dayId;
+                        return (
+                          <Button
+                            key={dayId}
+                            size="sm"
+                            variant={isActive ? "primary" : "outline"}
+                            className="shrink-0 font-bold text-xs"
+                            onPress={() => setActiveDayTab(dayId)}
+                          >
+                            {dayObj ? dayObj.name : `Día ${dayId}`}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
 
                   <DayRoutineEditor
                     activeDayTab={activeDayTab}
@@ -419,23 +487,22 @@ export default function ClientOnboardingModal({
               )}
             </ModalBody>
 
-            <ModalFooter className="border-t pt-4 flex items-center justify-between">
-              <div>
+            <ModalFooter className="border-t pt-3.5 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 {currentStep > 1 && (
-                  <Button variant="ghost" size="sm" onPress={handleBack}>
+                  <Button variant="ghost" size="sm" onPress={handleBack} className="font-bold flex-1 sm:flex-initial">
                     <ArrowLeft className="w-4 h-4" />
                     <span>Atrás</span>
                   </Button>
                 )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onPress={onClose}>
+                <Button variant="ghost" size="sm" onPress={onClose} className="font-bold flex-1 sm:flex-initial">
                   Cancelar
                 </Button>
+              </div>
 
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 {currentStep < 3 ? (
-                  <Button variant="primary" size="sm" onPress={handleNext}>
+                  <Button variant="primary" size="sm" onPress={handleNext} className="font-bold w-full sm:w-auto">
                     <span>Siguiente</span>
                     <ArrowRight className="w-4 h-4" />
                   </Button>
@@ -445,9 +512,10 @@ export default function ClientOnboardingModal({
                     size="sm"
                     isDisabled={saving}
                     onPress={handleSubmit}
+                    className="font-bold w-full sm:w-auto min-w-0"
                   >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>{saving ? 'Guardando...' : 'Crear Cliente y Rutinas'}</span>
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                    <span className="truncate">{saving ? 'Guardando...' : 'Crear Cliente y Mesociclo'}</span>
                   </Button>
                 )}
               </div>
