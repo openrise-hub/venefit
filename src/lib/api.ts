@@ -12,6 +12,7 @@ export async function getClients(): Promise<Client[]> {
   const pb = getPocketBaseClient();
   try {
     const list = await pb.collection('clients').getFullList({
+      batch: 200,
       sort: '-created'
     });
     return list as unknown as Client[];
@@ -26,9 +27,8 @@ export async function createClient(clientData: Partial<Client>): Promise<Client>
   const pb = getPocketBaseClient();
   try {
     const currentTrainer = getCurrentTrainer();
-    const payload = {
+    const payload: Record<string, any> = {
       name: clientData.name,
-      email: clientData.email || '',
       phone: clientData.phone || '',
       goal: clientData.goal || '',
       current_weight: clientData.current_weight || 0,
@@ -36,6 +36,10 @@ export async function createClient(clientData: Partial<Client>): Promise<Client>
       notes: clientData.notes || '',
       trainer: currentTrainer ? currentTrainer.id : null
     };
+
+    if (clientData.email && clientData.email.trim().length > 0) {
+      payload.email = clientData.email.trim();
+    }
 
     const record = await pb.collection('clients').create(payload);
     showToast(`Cliente "${clientData.name}" creado correctamente`, 'success');
@@ -82,6 +86,7 @@ export async function getExercises(muscleGroupsFilter: string[] = [], searchQuer
     const filterString = filterClauses.join(' && ');
 
     const list = await pb.collection('exercises').getFullList({
+      batch: 200,
       sort: 'name',
       filter: filterString || undefined
     });
@@ -111,12 +116,14 @@ export async function getRoutineForDay(clientId: string, dateStr: string): Promi
     const sanitizedRoutineId = sanitizeFilter(routineRecord.id);
 
     const exercisesList = await pb.collection('routine_exercises').getFullList({
+      batch: 200,
       filter: `routine = "${sanitizedRoutineId}"`,
       expand: 'exercise',
       sort: 'sort_order'
     });
 
     const setResultsList = await pb.collection('daily_set_results').getFullList({
+      batch: 200,
       filter: `date = "${sanitizedDate}"`
     });
 
@@ -303,6 +310,7 @@ export async function getClientPlans(clientId: string): Promise<ClientPlan[]> {
   try {
     const sanitizedId = sanitizeFilter(clientId);
     const list = await pb.collection('workout_plans').getFullList({
+      batch: 200,
       filter: `client = "${sanitizedId}"`,
       sort: '-created'
     });
