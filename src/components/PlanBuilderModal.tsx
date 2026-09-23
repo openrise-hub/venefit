@@ -89,7 +89,12 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
       const formattedNew = newExercises.map(ex => ({
         exercise_id: ex.id,
         name: ex.name,
+        primary_muscle: ex.primary_muscle,
         muscle_groups: ex.muscle_groups,
+        modality: ex.modality,
+        group_tag: '',
+        technique: 'straight',
+        notes: '',
         target_sets: 3,
         target_reps: '10-12',
         target_rir: 2,
