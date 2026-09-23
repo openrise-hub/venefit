@@ -153,11 +153,27 @@ migrate((db) => {
         },
         {
           "system": false,
+          "id": "ex_primary_muscle",
+          "name": "primary_muscle",
+          "type": "text",
+          "required": false,
+          "options": { "min": null, "max": null, "pattern": "" }
+        },
+        {
+          "system": false,
           "id": "ex_muscle_groups",
           "name": "muscle_groups",
           "type": "json",
           "required": false,
           "options": {}
+        },
+        {
+          "system": false,
+          "id": "ex_modality",
+          "name": "modality",
+          "type": "text",
+          "required": false,
+          "options": { "min": null, "max": null, "pattern": "" }
         },
         {
           "system": false,
@@ -358,6 +374,22 @@ migrate((db) => {
         },
         {
           "system": false,
+          "id": "re_group_tag",
+          "name": "group_tag",
+          "type": "text",
+          "required": false,
+          "options": { "min": null, "max": null, "pattern": "" }
+        },
+        {
+          "system": false,
+          "id": "re_technique",
+          "name": "technique",
+          "type": "text",
+          "required": false,
+          "options": { "min": null, "max": null, "pattern": "" }
+        },
+        {
+          "system": false,
           "id": "re_target_sets",
           "name": "target_sets",
           "type": "number",
@@ -400,6 +432,14 @@ migrate((db) => {
           "system": false,
           "id": "re_weight_unit",
           "name": "weight_unit",
+          "type": "text",
+          "required": false,
+          "options": { "min": null, "max": null, "pattern": "" }
+        },
+        {
+          "system": false,
+          "id": "re_notes",
+          "name": "notes",
           "type": "text",
           "required": false,
           "options": { "min": null, "max": null, "pattern": "" }
@@ -449,6 +489,14 @@ migrate((db) => {
         },
         {
           "system": false,
+          "id": "ds_set_type",
+          "name": "set_type",
+          "type": "text",
+          "required": false,
+          "options": { "min": null, "max": null, "pattern": "" }
+        },
+        {
+          "system": false,
           "id": "ds_completed_reps",
           "name": "completed_reps",
           "type": "number",
@@ -478,6 +526,14 @@ migrate((db) => {
           "type": "number",
           "required": false,
           "options": { "min": null, "max": null }
+        },
+        {
+          "system": false,
+          "id": "ds_drop_details",
+          "name": "drop_details",
+          "type": "json",
+          "required": false,
+          "options": {}
         },
         {
           "system": false,
