@@ -65,7 +65,11 @@ export async function deleteClient(clientId: string): Promise<boolean> {
   }
 }
 
-export async function getExercises(muscleGroupsFilter: string[] = [], searchQuery: string = ''): Promise<Exercise[]> {
+export async function getExercises(
+  muscleGroupsFilter: string[] = [],
+  modalityFilter: string = '',
+  searchQuery: string = ''
+): Promise<Exercise[]> {
   const pb = getPocketBaseClient();
   try {
     const filterClauses: string[] = [];
@@ -75,10 +79,15 @@ export async function getExercises(muscleGroupsFilter: string[] = [], searchQuer
       filterClauses.push(`name ~ "${cleanQuery}"`);
     }
 
+    if (modalityFilter && modalityFilter.trim().length > 0 && modalityFilter !== 'Todos') {
+      const cleanModality = sanitizeFilter(modalityFilter.trim());
+      filterClauses.push(`modality = "${cleanModality}"`);
+    }
+
     if (muscleGroupsFilter && muscleGroupsFilter.length > 0) {
       const groupConditions = muscleGroupsFilter.map(group => {
         const cleanGroup = sanitizeFilter(group);
-        return `muscle_groups ~ "${cleanGroup}"`;
+        return `(primary_muscle ~ "${cleanGroup}" || muscle_groups ~ "${cleanGroup}")`;
       });
       filterClauses.push(`(${groupConditions.join(' || ')})`);
     }
@@ -86,15 +95,15 @@ export async function getExercises(muscleGroupsFilter: string[] = [], searchQuer
     const filterString = filterClauses.join(' && ');
 
     const list = await pb.collection('exercises').getFullList({
-      batch: 200,
-      sort: 'name',
+      batch: 300,
+      sort: 'primary_muscle,name',
       filter: filterString || undefined
     });
 
     return list as unknown as Exercise[];
   } catch (e) {
     console.error('[API:getExercises] Failed to fetch exercises list from PocketBase:', e);
-    showToast('Error al cargar catálogo de ejercicios', 'error');
+    showToast('Error al cargar catalogo de ejercicios', 'error');
     return [];
   }
 }
@@ -133,7 +142,24 @@ export async function getRoutineForDay(clientId: string, dateStr: string): Promi
       if (!setResultsByExercise[exId]) {
         setResultsByExercise[exId] = {};
       }
-      setResultsByExercise[exId][sr.set_number] = sr as unknown as ExerciseSetResult;
+      setResultsByExercise[exId][sr.set_number] = {
+        id: sr.id,
+        routine_exercise: sr.routine_exercise || sr.routine_exercise_id,
+        routine_exercise_id: sr.routine_exercise || sr.routine_exercise_id,
+        date: sr.date,
+        set_number: sr.set_number,
+        set_type: sr.set_type || 'normal',
+        completed_reps: sr.completed_reps,
+        reps: sr.completed_reps,
+        weight_used: sr.weight_used,
+        weight: sr.weight_used,
+        unit: sr.weight_unit || 'kg',
+        weight_unit: sr.weight_unit || 'kg',
+        actual_rir: sr.actual_rir,
+        rir: sr.actual_rir,
+        drop_details: sr.drop_details || [],
+        completed: sr.completed === true
+      };
     });
 
     const formattedExercises: RoutineExercise[] = exercisesList.map(re => {
@@ -144,18 +170,24 @@ export async function getRoutineForDay(clientId: string, dateStr: string): Promi
         routine_id: re.routine || re.routine_id,
         exercise: re.exercise || re.exercise_id,
         exercise_id: re.exercise || re.exercise_id,
+        sort_order: re.sort_order,
+        group_tag: re.group_tag || '',
+        technique: re.technique || 'straight',
+        notes: re.notes || '',
         target_sets: re.target_sets,
         target_reps: re.target_reps,
         target_rir: re.target_rir,
         target_rest_sec: re.target_rest_sec,
         target_weight: re.target_weight,
         weight_unit: re.weight_unit || 'kg',
-        sort_order: re.sort_order,
         expandedExercise: expandedExercise ? {
           id: expandedExercise.id,
           name: expandedExercise.name,
+          primary_muscle: expandedExercise.primary_muscle,
           muscle_groups: expandedExercise.muscle_groups,
-          equipment: expandedExercise.equipment
+          modality: expandedExercise.modality,
+          equipment: expandedExercise.equipment,
+          description: expandedExercise.description
         } : undefined,
         setResults: setResultsByExercise[re.id] || {}
       };
@@ -186,10 +218,12 @@ export async function saveSetResult(setData: {
   routine_exercise_id: string;
   date: string;
   set_number: number;
+  set_type?: string;
   completed_reps?: number | string;
   weight_used?: number | string;
   weight_unit?: string;
   actual_rir?: number;
+  drop_details?: any[];
   completed?: boolean;
 }): Promise<ExerciseSetResult | null> {
   const pb = getPocketBaseClient();
@@ -206,10 +240,12 @@ export async function saveSetResult(setData: {
       routine_exercise: setData.routine_exercise_id,
       date: setData.date,
       set_number: setData.set_number,
+      set_type: setData.set_type || 'normal',
       completed_reps: setData.completed_reps !== '' && setData.completed_reps != null ? parseInt(String(setData.completed_reps), 10) : 0,
       weight_used: setData.weight_used !== '' && setData.weight_used != null ? parseFloat(String(setData.weight_used)) : 0,
       weight_unit: setData.weight_unit || 'kg',
       actual_rir: parseInt(String(setData.actual_rir || 2), 10),
+      drop_details: setData.drop_details || [],
       completed: setData.completed === true
     };
 
@@ -275,13 +311,16 @@ export async function createAndReplicatePlan({
           await pb.collection('routine_exercises').create({
             routine: routineRecord.id,
             exercise: ex.exercise_id,
+            sort_order: idx + 1,
+            group_tag: ex.group_tag || '',
+            technique: ex.technique || 'straight',
+            notes: ex.notes || '',
             target_sets: parseInt(String(ex.target_sets || 3), 10),
             target_reps: String(ex.target_reps || '10-12'),
             target_rir: parseInt(String(ex.target_rir || 2), 10),
             target_rest_sec: parseInt(String(ex.target_rest_sec || 90), 10),
             target_weight: parseFloat(String(ex.target_weight || 0)),
-            weight_unit: ex.weight_unit || 'kg',
-            sort_order: idx + 1
+            weight_unit: ex.weight_unit || 'kg'
           });
         }
       }
