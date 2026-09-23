@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, Chip, Button } from '@heroui/react';
 import { Plus, RefreshCw, CalendarX } from 'lucide-react';
 import { saveSetResult, updateExerciseSortOrder } from '../lib/api';
@@ -38,6 +38,7 @@ export default function DailyWorkoutView({
             weight: existing ? existing.weight_used : (ex.target_weight || ''),
             unit: existing ? existing.weight_unit : (ex.weight_unit || 'kg'),
             rir: existing ? existing.actual_rir : (ex.target_rir || 2),
+            set_type: existing ? existing.set_type : (ex.technique === 'dropset' && s === numSets ? 'dropset' : 'normal'),
             completed: existing ? existing.completed : false
           };
         }
@@ -55,6 +56,7 @@ export default function DailyWorkoutView({
         routine_exercise_id: routineExId,
         date,
         set_number: setNum,
+        set_type: setData.set_type || 'normal',
         completed_reps: setData.reps,
         weight_used: setData.weight,
         weight_unit: setData.unit,
@@ -151,6 +153,22 @@ export default function DailyWorkoutView({
     setActiveTimerSeconds(seconds);
   }, []);
 
+  // Compute group sub-indexes (e.g. A1, A2, B1...)
+  const exerciseGroupLabels = useMemo(() => {
+    const groupCounters: Record<string, number> = {};
+    const labels: Record<string, string> = {};
+
+    exercisesList.forEach((ex) => {
+      if (ex.group_tag) {
+        const tag = ex.group_tag.toUpperCase();
+        groupCounters[tag] = (groupCounters[tag] || 0) + 1;
+        labels[ex.id] = `${tag}${groupCounters[tag]}`;
+      }
+    });
+
+    return labels;
+  }, [exercisesList]);
+
   if (isLoading) {
     return (
       <Card>
@@ -190,8 +208,8 @@ export default function DailyWorkoutView({
         <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <Chip size="sm" variant="soft">
-                Rutina del Día
+              <Chip size="sm" variant="soft" className="font-semibold">
+                Rutina del Dia
               </Chip>
               {routineData.muscle_groups && routineData.muscle_groups.length > 0 && (
                 <Chip size="sm" variant="soft">
@@ -204,7 +222,7 @@ export default function DailyWorkoutView({
             </h3>
           </div>
 
-          <div className="text-xs opacity-70">
+          <div className="text-xs opacity-70 font-semibold">
             {exercisesList.length} Ejercicio{exercisesList.length !== 1 ? 's' : ''}
           </div>
         </CardContent>
@@ -218,6 +236,7 @@ export default function DailyWorkoutView({
             exIdx={exIdx}
             exSets={setsState[exItem.id] || {}}
             totalExercises={exercisesList.length}
+            groupLabel={exerciseGroupLabels[exItem.id]}
             onSetChange={handleSetChange}
             onToggleUnit={toggleUnitForSet}
             onStartRestTimer={handleStartRestTimer}
