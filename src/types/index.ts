@@ -29,6 +29,8 @@ export interface RoutineExercise {
   routine_id?: string;
   exercise: string;
   exercise_id?: string;
+  set_type?: string;
+  superset_tag?: string;
   target_sets: number;
   target_reps: string;
   target_rir: number;
@@ -46,6 +48,7 @@ export interface ExerciseSetResult {
   routine_exercise_id?: string;
   date: string;
   set_number: number;
+  set_type?: string;
   completed_reps?: number | string;
   reps?: number | string;
   weight_used?: number | string;
@@ -89,6 +92,9 @@ export interface DayRoutineConfig {
     exercise_id: string;
     name: string;
     muscle_groups?: string[];
+    equipment?: string;
+    set_type?: string;
+    superset_tag?: string;
     target_sets: number;
     target_reps: string;
     target_rir: number;

@@ -62,6 +62,21 @@ function ExerciseCard({
               </div>
 
               <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                {exItem.set_type && exItem.set_type !== 'normal' && (
+                  <Chip size="sm" variant="soft" className="font-bold text-[10px] border border-amber-500/40 text-amber-400">
+                    ⚡ {exItem.set_type === 'superset' ? 'Superserie' :
+                        exItem.set_type === 'triset' ? 'Triserie' :
+                        exItem.set_type === 'giant_set' ? 'Multiserie' :
+                        exItem.set_type === 'dropset' ? 'Drop Set' :
+                        exItem.set_type === 'rest_pause' ? 'Rest-Pause' :
+                        exItem.set_type === 'myo_reps' ? 'Myo-Reps' :
+                        exItem.set_type === 'cluster' ? 'Cluster Set' :
+                        exItem.set_type === 'top_set' ? 'Top Set' :
+                        exItem.set_type === 'backoff' ? 'Back-off Set' :
+                        exItem.set_type === 'warmup' ? 'Calentamiento' :
+                        exItem.set_type === 'feeder' ? 'Aproximación' : exItem.set_type}
+                  </Chip>
+                )}
                 {muscleGroups.length > 0 && (
                   <Chip size="sm" variant="soft">
                     💪 {muscleGroups.join(', ')}

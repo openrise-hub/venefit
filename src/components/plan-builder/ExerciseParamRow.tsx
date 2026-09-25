@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { Card, CardContent, Input, Button } from '@heroui/react';
 import { GripVertical, ArrowUp, ArrowDown, Trash2 } from 'lucide-react';
+import { SET_TYPES } from '../../lib/setTypes';
 
 interface ExerciseParamRowProps {
   ex: any;
@@ -70,6 +71,23 @@ function ExerciseParamRow({
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </Button>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1.5 flex-1 min-w-[180px]">
+              <label className="text-[10px] font-bold text-foreground shrink-0">Tipo de Serie:</label>
+              <select
+                value={ex.set_type || 'normal'}
+                onChange={(e) => onUpdateParam(idx, 'set_type', e.target.value)}
+                className="w-full h-8 rounded-lg border px-2 text-[11px] font-bold focus:outline-none bg-background text-foreground cursor-pointer"
+              >
+                {SET_TYPES.map((st) => (
+                  <option key={st.id} value={st.id}>
+                    {st.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

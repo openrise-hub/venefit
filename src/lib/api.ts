@@ -178,6 +178,8 @@ export async function getRoutineForDay(clientId: string, dateStr: string): Promi
         routine_id: re.routine || re.routine_id,
         exercise: re.exercise || re.exercise_id,
         exercise_id: re.exercise || re.exercise_id,
+        set_type: re.set_type || 'normal',
+        superset_tag: re.superset_tag || '',
         target_sets: re.target_sets,
         target_reps: re.target_reps,
         target_rir: re.target_rir,
@@ -220,6 +222,7 @@ export async function saveSetResult(setData: {
   routine_exercise_id: string;
   date: string;
   set_number: number;
+  set_type?: string;
   completed_reps?: number | string;
   weight_used?: number | string;
   weight_unit?: string;
@@ -240,6 +243,7 @@ export async function saveSetResult(setData: {
       routine_exercise: setData.routine_exercise_id,
       date: setData.date,
       set_number: setData.set_number,
+      set_type: setData.set_type || 'normal',
       completed_reps: setData.completed_reps !== '' && setData.completed_reps != null ? parseInt(String(setData.completed_reps), 10) : 0,
       weight_used: setData.weight_used !== '' && setData.weight_used != null ? parseFloat(String(setData.weight_used)) : 0,
       weight_unit: setData.weight_unit || 'kg',
@@ -309,6 +313,8 @@ export async function createAndReplicatePlan({
           await pb.collection('routine_exercises').create({
             routine: routineRecord.id,
             exercise: ex.exercise_id,
+            set_type: ex.set_type || 'normal',
+            superset_tag: ex.superset_tag || '',
             target_sets: parseInt(String(ex.target_sets || 3), 10),
             target_reps: String(ex.target_reps || '10-12'),
             target_rir: parseInt(String(ex.target_rir || 2), 10),
