@@ -65,7 +65,11 @@ export async function deleteClient(clientId: string): Promise<boolean> {
   }
 }
 
-export async function getExercises(muscleGroupsFilter: string[] = [], searchQuery: string = ''): Promise<Exercise[]> {
+export async function getExercises(
+  muscleGroupsFilter: string[] = [],
+  equipmentFilter: string = 'Todos',
+  searchQuery: string = ''
+): Promise<Exercise[]> {
   const pb = getPocketBaseClient();
   try {
     const filterClauses: string[] = [];
@@ -83,6 +87,11 @@ export async function getExercises(muscleGroupsFilter: string[] = [], searchQuer
       filterClauses.push(`(${groupConditions.join(' || ')})`);
     }
 
+    if (equipmentFilter && equipmentFilter !== 'Todos') {
+      const cleanEquip = sanitizeFilter(equipmentFilter);
+      filterClauses.push(`equipment = "${cleanEquip}"`);
+    }
+
     const filterString = filterClauses.join(' && ');
 
     const list = await pb.collection('exercises').getFullList({
@@ -91,12 +100,37 @@ export async function getExercises(muscleGroupsFilter: string[] = [], searchQuer
       filter: filterString || undefined
     });
 
-    return list as unknown as Exercise[];
+    if (list && list.length > 0) {
+      return list as unknown as Exercise[];
+    }
   } catch (e) {
     console.error('[API:getExercises] Failed to fetch exercises list from PocketBase:', e);
-    showToast('Error al cargar catálogo de ejercicios', 'error');
-    return [];
   }
+
+  // Fallback to local catalog with full filtering
+  const { INITIAL_EXERCISES } = await import('./exercisesCatalog');
+  return INITIAL_EXERCISES.filter(ex => {
+    if (searchQuery && searchQuery.trim().length > 0) {
+      const q = searchQuery.trim().toLowerCase();
+      if (!ex.name.toLowerCase().includes(q)) return false;
+    }
+
+    if (muscleGroupsFilter && muscleGroupsFilter.length > 0) {
+      const match = ex.muscle_groups.some(mg => muscleGroupsFilter.includes(mg));
+      if (!match) return false;
+    }
+
+    if (equipmentFilter && equipmentFilter !== 'Todos') {
+      if (ex.equipment !== equipmentFilter) return false;
+    }
+
+    return true;
+  }).map((ex, idx) => ({
+    id: `local_ex_${idx}`,
+    name: ex.name,
+    muscle_groups: ex.muscle_groups,
+    equipment: ex.equipment
+  })) as Exercise[];
 }
 
 export async function getRoutineForDay(clientId: string, dateStr: string): Promise<{ routine: DayRoutine; exercises: RoutineExercise[] } | null> {
