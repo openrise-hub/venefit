@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, Input, Button } from '@heroui/react';
 import { Dumbbell, LogIn, UserPlus } from 'lucide-react';
-import { loginTrainer, registerTrainer } from '../lib/pocketbase';
+import { loginTrainer, registerTrainer, enableDevSession } from '../lib/pocketbase';
 import { showToast } from '../lib/toastStore';
 
 interface AuthViewProps {
@@ -119,7 +119,19 @@ export default function AuthView({ onLoginSuccess }: AuthViewProps) {
             </Button>
           </form>
 
-          <div className="border-t pt-4 text-center">
+          <div className="border-t pt-4 space-y-2 text-center">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full font-bold text-xs border-dashed"
+              onPress={() => {
+                enableDevSession();
+                onLoginSuccess();
+              }}
+            >
+              Modo de prueba (sin iniciar sesión)
+            </Button>
+
             <Button
               variant="ghost"
               size="sm"
