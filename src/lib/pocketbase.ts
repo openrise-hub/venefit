@@ -46,8 +46,27 @@ export async function registerTrainer(email: string, pass: string, name: string)
   return user;
 }
 
+export function isDevSession(): boolean {
+  return localStorage.getItem('venefit_dev_mode') === 'true';
+}
+
+export function enableDevSession() {
+  const pb = getPocketBaseClient();
+  localStorage.setItem('venefit_dev_mode', 'true');
+  pb.authStore.save('dev-token', {
+    id: 'dev_trainer_001',
+    collectionId: '_pb_users_auth_',
+    collectionName: 'users',
+    email: 'entrenador@demo.local',
+    name: 'Entrenador (Modo Pruebas)',
+    created: new Date().toISOString(),
+    updated: new Date().toISOString()
+  } as any);
+}
+
 export function logoutTrainer() {
   const pb = getPocketBaseClient();
+  localStorage.removeItem('venefit_dev_mode');
   pb.authStore.clear();
 }
 
@@ -55,3 +74,4 @@ export function subscribeAuthChange(callback: (token: string, model: any) => voi
   const pb = getPocketBaseClient();
   return pb.authStore.onChange(callback);
 }
+
