@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@heroui/react": "^3.2.2",
-    "framer-motion": "^12.43.0",
+    "motion": "^12.43.0",
     "lucide-react": "^0.475.0",
     "pocketbase": "^0.27.0",
     "react": "19.2.8",
