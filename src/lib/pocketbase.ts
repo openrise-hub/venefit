@@ -1,5 +1,6 @@
 import PocketBase from 'pocketbase';
 import { TrainerUser } from '../types';
+import { DEMO_TRAINER, initDemoStorage, DemoSeedMode } from './demoData';
 
 let pbInstance: PocketBase | null = null;
 
@@ -13,6 +14,9 @@ export function getPocketBaseClient(): PocketBase {
 }
 
 export function getCurrentTrainer(): TrainerUser | null {
+  if (isDevSession()) {
+    return DEMO_TRAINER;
+  }
   const pb = getPocketBaseClient();
   if (pb.authStore.isValid && pb.authStore.record) {
     return {
@@ -25,6 +29,7 @@ export function getCurrentTrainer(): TrainerUser | null {
 }
 
 export function isTrainerAuthenticated(): boolean {
+  if (isDevSession()) return true;
   const pb = getPocketBaseClient();
   return pb.authStore.isValid;
 }
@@ -50,15 +55,16 @@ export function isDevSession(): boolean {
   return localStorage.getItem('venefit_dev_mode') === 'true';
 }
 
-export function enableDevSession() {
+export function enableDevSession(mode: DemoSeedMode = 'populated') {
   const pb = getPocketBaseClient();
+  initDemoStorage(true, mode);
   localStorage.setItem('venefit_dev_mode', 'true');
   pb.authStore.save('dev-token', {
-    id: 'dev_trainer_001',
+    id: DEMO_TRAINER.id,
     collectionId: '_pb_users_auth_',
     collectionName: 'users',
-    email: 'entrenador@demo.local',
-    name: 'Entrenador (Modo Pruebas)',
+    email: DEMO_TRAINER.email,
+    name: DEMO_TRAINER.name,
     created: new Date().toISOString(),
     updated: new Date().toISOString()
   } as any);
@@ -67,6 +73,7 @@ export function enableDevSession() {
 export function logoutTrainer() {
   const pb = getPocketBaseClient();
   localStorage.removeItem('venefit_dev_mode');
+  localStorage.removeItem('venefit_demo_seed_mode');
   pb.authStore.clear();
 }
 
@@ -74,4 +81,3 @@ export function subscribeAuthChange(callback: (token: string, model: any) => voi
   const pb = getPocketBaseClient();
   return pb.authStore.onChange(callback);
 }
-

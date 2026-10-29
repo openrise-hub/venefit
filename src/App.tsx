@@ -8,9 +8,10 @@ import DailyWorkoutView from './components/DailyWorkoutView';
 import AuthView from './components/AuthView';
 import PwaPrompt from './components/PwaPrompt';
 import ToastContainer from './components/ToastContainer';
+import DemoBanner from './components/DemoBanner';
 import { getClients, deleteClient, getClientPlans } from './lib/api';
 import { formatDateISO } from './lib/utils';
-import { subscribeAuthChange, isTrainerAuthenticated } from './lib/pocketbase';
+import { subscribeAuthChange, isTrainerAuthenticated, isDevSession } from './lib/pocketbase';
 import { showToast } from './lib/toastStore';
 import { Users, Plus } from 'lucide-react';
 import { Client, ClientPlan } from './types';
@@ -124,9 +125,15 @@ export default function App() {
     );
   }
 
+  const isDemo = isDevSession();
+
   return (
     <div className="min-h-screen flex flex-col font-sans antialiased pb-24 md:pb-12">
       <ToastContainer />
+
+      {isDemo && (
+        <DemoBanner onResetData={() => loadClientsData()} />
+      )}
 
       <Header
         clients={clients}
