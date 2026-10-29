@@ -4,11 +4,6 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  resolve: {
-    alias: {
-      'framer-motion': 'motion/react'
-    }
-  },
   server: {
     port: 3000,
     host: true

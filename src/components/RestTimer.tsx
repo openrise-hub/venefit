@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, RotateCcw, X, Timer, Volume2 } from 'lucide-react';
 import { formatTime } from '../lib/utils';
 
