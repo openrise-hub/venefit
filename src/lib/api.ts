@@ -2,6 +2,8 @@ import { getPocketBaseClient, getCurrentTrainer, isDevSession } from './pocketba
 import { generateReplicatedDates } from './utils';
 import { showToast } from './toastStore';
 import { Client, Exercise, RoutineExercise, ExerciseSetResult, ClientPlan, DayRoutine, DayRoutineConfig } from '../types';
+import { DEFAULT_EXERCISES } from './exerciseCatalog';
+import { DEMO_STORAGE_KEYS, initDemoStorage } from './demoData';
 
 function sanitizeFilter(value: any): string {
   if (value == null) return '';
@@ -23,9 +25,48 @@ function setLocalMock<T>(key: string, val: T): void {
   } catch {}
 }
 
+export function filterExercisesCatalog(
+  catalog: Exercise[],
+  muscleGroupsFilter: string[] = [],
+  modalityFilter: string = '',
+  searchQuery: string = ''
+): Exercise[] {
+  let list = [...catalog];
+
+  if (searchQuery && searchQuery.trim().length > 0) {
+    const q = searchQuery.trim().toLowerCase();
+    list = list.filter(e => {
+      const nameMatch = e.name.toLowerCase().includes(q);
+      const muscleMatch = e.primary_muscle ? e.primary_muscle.toLowerCase().includes(q) : false;
+      const descMatch = e.description ? e.description.toLowerCase().includes(q) : false;
+      const equipMatch = e.equipment ? e.equipment.toLowerCase().includes(q) : false;
+      return nameMatch || muscleMatch || descMatch || equipMatch;
+    });
+  }
+
+  if (modalityFilter && modalityFilter.trim().length > 0 && modalityFilter !== 'Todos') {
+    const m = modalityFilter.trim().toLowerCase();
+    list = list.filter(e => e.modality && e.modality.toLowerCase() === m);
+  }
+
+  if (muscleGroupsFilter && muscleGroupsFilter.length > 0) {
+    list = list.filter(e => {
+      const primary = e.primary_muscle ? e.primary_muscle.toLowerCase() : '';
+      const groups = (e.muscle_groups || []).map(g => g.toLowerCase());
+      return muscleGroupsFilter.some(targetGroup => {
+        const tg = targetGroup.toLowerCase();
+        return primary.includes(tg) || groups.some(g => g.includes(tg));
+      });
+    });
+  }
+
+  return list;
+}
+
 export async function getClients(): Promise<Client[]> {
   if (isDevSession()) {
-    return getLocalMock<Client[]>('venefit_mock_clients', []);
+    initDemoStorage(false);
+    return getLocalMock<Client[]>(DEMO_STORAGE_KEYS.CLIENTS, []);
   }
 
   const pb = getPocketBaseClient();
@@ -37,7 +78,8 @@ export async function getClients(): Promise<Client[]> {
     return list as unknown as Client[];
   } catch (e) {
     console.error('[API:getClients] Failed to fetch clients list from PocketBase:', e);
-    return getLocalMock<Client[]>('venefit_mock_clients', []);
+    initDemoStorage(false);
+    return getLocalMock<Client[]>(DEMO_STORAGE_KEYS.CLIENTS, []);
   }
 }
 
@@ -55,8 +97,8 @@ export async function createClient(clientData: Partial<Client>): Promise<Client>
   };
 
   if (isDevSession()) {
-    const existing = getLocalMock<Client[]>('venefit_mock_clients', []);
-    setLocalMock('venefit_mock_clients', [newClient, ...existing]);
+    const existing = getLocalMock<Client[]>(DEMO_STORAGE_KEYS.CLIENTS, []);
+    setLocalMock(DEMO_STORAGE_KEYS.CLIENTS, [newClient, ...existing]);
     showToast(`Cliente "${newClient.name}" guardado localmente`, 'success');
     return newClient;
   }
@@ -83,8 +125,8 @@ export async function createClient(clientData: Partial<Client>): Promise<Client>
     return record as unknown as Client;
   } catch (e) {
     console.error('[API:createClient] Failed to create client in PocketBase:', e);
-    const existing = getLocalMock<Client[]>('venefit_mock_clients', []);
-    setLocalMock('venefit_mock_clients', [newClient, ...existing]);
+    const existing = getLocalMock<Client[]>(DEMO_STORAGE_KEYS.CLIENTS, []);
+    setLocalMock(DEMO_STORAGE_KEYS.CLIENTS, [newClient, ...existing]);
     showToast(`Cliente "${newClient.name}" guardado localmente (modo offline)`, 'success');
     return newClient;
   }
@@ -92,8 +134,8 @@ export async function createClient(clientData: Partial<Client>): Promise<Client>
 
 export async function deleteClient(clientId: string): Promise<boolean> {
   if (isDevSession()) {
-    const existing = getLocalMock<Client[]>('venefit_mock_clients', []);
-    setLocalMock('venefit_mock_clients', existing.filter(c => c.id !== clientId));
+    const existing = getLocalMock<Client[]>(DEMO_STORAGE_KEYS.CLIENTS, []);
+    setLocalMock(DEMO_STORAGE_KEYS.CLIENTS, existing.filter(c => c.id !== clientId));
     showToast('Cliente eliminado', 'info');
     return true;
   }
@@ -106,8 +148,8 @@ export async function deleteClient(clientId: string): Promise<boolean> {
     return true;
   } catch (e) {
     console.error('[API:deleteClient] Failed to delete client from PocketBase:', e);
-    const existing = getLocalMock<Client[]>('venefit_mock_clients', []);
-    setLocalMock('venefit_mock_clients', existing.filter(c => c.id !== clientId));
+    const existing = getLocalMock<Client[]>(DEMO_STORAGE_KEYS.CLIENTS, []);
+    setLocalMock(DEMO_STORAGE_KEYS.CLIENTS, existing.filter(c => c.id !== clientId));
     showToast('Cliente eliminado localmente', 'info');
     return true;
   }
@@ -118,6 +160,10 @@ export async function getExercises(
   modalityFilter: string = '',
   searchQuery: string = ''
 ): Promise<Exercise[]> {
+  if (isDevSession()) {
+    return filterExercisesCatalog(DEFAULT_EXERCISES, muscleGroupsFilter, modalityFilter, searchQuery);
+  }
+
   const pb = getPocketBaseClient();
   try {
     const filterClauses: string[] = [];
@@ -150,24 +196,24 @@ export async function getExercises(
 
     return list as unknown as Exercise[];
   } catch (e) {
-    console.error('[API:getExercises] Failed to fetch exercises list from PocketBase:', e);
-    showToast('Error al cargar catalogo de ejercicios', 'error');
-    return [];
+    console.warn('[API:getExercises] PocketBase unreachable, serving fallback catalog:', e);
+    return filterExercisesCatalog(DEFAULT_EXERCISES, muscleGroupsFilter, modalityFilter, searchQuery);
   }
 }
 
 export async function getRoutineForDay(clientId: string, dateStr: string): Promise<{ routine: DayRoutine; exercises: RoutineExercise[] } | null> {
   if (isDevSession()) {
-    const routines = getLocalMock<DayRoutine[]>('venefit_mock_routines', []);
+    initDemoStorage(false);
+    const routines = getLocalMock<DayRoutine[]>(DEMO_STORAGE_KEYS.ROUTINES, []);
     const routine = routines.find(r => (r.client === clientId || r.client_id === clientId) && (r.date === dateStr || r.date_iso === dateStr));
     if (!routine) return null;
 
-    const allRoutineExercises = getLocalMock<RoutineExercise[]>('venefit_mock_routine_exercises', []);
+    const allRoutineExercises = getLocalMock<RoutineExercise[]>(DEMO_STORAGE_KEYS.ROUTINE_EXERCISES, []);
     const routineExercises = allRoutineExercises
       .filter(re => re.routine === routine.id || re.routine_id === routine.id)
       .sort((a, b) => a.sort_order - b.sort_order);
 
-    const allSetResults = getLocalMock<ExerciseSetResult[]>('venefit_mock_set_results', []);
+    const allSetResults = getLocalMock<ExerciseSetResult[]>(DEMO_STORAGE_KEYS.SET_RESULTS, []);
     const daySetResults = allSetResults.filter(s => s.date === dateStr);
 
     const setResultsByExercise: Record<string, Record<number, ExerciseSetResult>> = {};
@@ -181,10 +227,14 @@ export async function getRoutineForDay(clientId: string, dateStr: string): Promi
 
     return {
       routine,
-      exercises: routineExercises.map(re => ({
-        ...re,
-        setResults: setResultsByExercise[re.id] || {}
-      }))
+      exercises: routineExercises.map(re => {
+        const exerciseMeta = re.expandedExercise || DEFAULT_EXERCISES.find(e => e.id === re.exercise || e.id === re.exercise_id);
+        return {
+          ...re,
+          expandedExercise: exerciseMeta,
+          setResults: setResultsByExercise[re.id] || {}
+        };
+      })
     };
   }
 
@@ -325,9 +375,9 @@ export async function saveSetResult(setData: {
   };
 
   if (isDevSession()) {
-    const existing = getLocalMock<ExerciseSetResult[]>('venefit_mock_set_results', []);
+    const existing = getLocalMock<ExerciseSetResult[]>(DEMO_STORAGE_KEYS.SET_RESULTS, []);
     const filtered = existing.filter(s => !(s.routine_exercise === setData.routine_exercise_id && s.date === setData.date && s.set_number === setData.set_number));
-    setLocalMock('venefit_mock_set_results', [...filtered, result]);
+    setLocalMock(DEMO_STORAGE_KEYS.SET_RESULTS, [...filtered, result]);
     return result;
   }
 
@@ -363,9 +413,9 @@ export async function saveSetResult(setData: {
     }
   } catch (e) {
     console.error('[API:saveSetResult] Failed to persist set result in PocketBase:', e);
-    const existing = getLocalMock<ExerciseSetResult[]>('venefit_mock_set_results', []);
+    const existing = getLocalMock<ExerciseSetResult[]>(DEMO_STORAGE_KEYS.SET_RESULTS, []);
     const filtered = existing.filter(s => !(s.routine_exercise === setData.routine_exercise_id && s.date === setData.date && s.set_number === setData.set_number));
-    setLocalMock('venefit_mock_set_results', [...filtered, result]);
+    setLocalMock(DEMO_STORAGE_KEYS.SET_RESULTS, [...filtered, result]);
     return result;
   }
 }
@@ -389,7 +439,7 @@ export async function createAndReplicatePlan({
   const datesToReplicate = generateReplicatedDates(startDateStr, endDateStr, selectedDaysOfWeek);
 
   if (isDevSession()) {
-    const plans = getLocalMock<ClientPlan[]>('venefit_mock_plans', []);
+    const plans = getLocalMock<ClientPlan[]>(DEMO_STORAGE_KEYS.PLANS, []);
     const newPlan: ClientPlan = {
       id: planId,
       client: clientId,
@@ -400,10 +450,10 @@ export async function createAndReplicatePlan({
       end_date: endDateStr,
       created: new Date().toISOString()
     };
-    setLocalMock('venefit_mock_plans', [newPlan, ...plans]);
+    setLocalMock(DEMO_STORAGE_KEYS.PLANS, [newPlan, ...plans]);
 
-    const routines = getLocalMock<DayRoutine[]>('venefit_mock_routines', []);
-    const routineExercises = getLocalMock<RoutineExercise[]>('venefit_mock_routine_exercises', []);
+    const routines = getLocalMock<DayRoutine[]>(DEMO_STORAGE_KEYS.ROUTINES, []);
+    const routineExercises = getLocalMock<RoutineExercise[]>(DEMO_STORAGE_KEYS.ROUTINE_EXERCISES, []);
 
     const newRoutines: DayRoutine[] = [];
     const newRoutineExercises: RoutineExercise[] = [];
@@ -430,6 +480,7 @@ export async function createAndReplicatePlan({
 
       if (config.exercises && config.exercises.length > 0) {
         config.exercises.forEach((ex, idx) => {
+          const matchedCatalogEx = DEFAULT_EXERCISES.find(e => e.id === ex.exercise_id);
           newRoutineExercises.push({
             id: `re_${rId}_${idx}`,
             routine: rId,
@@ -446,7 +497,7 @@ export async function createAndReplicatePlan({
             target_rest_sec: parseInt(String(ex.target_rest_sec || 90), 10),
             target_weight: parseFloat(String(ex.target_weight || 0)),
             weight_unit: ex.weight_unit || 'kg',
-            expandedExercise: {
+            expandedExercise: matchedCatalogEx || {
               id: ex.exercise_id,
               name: ex.name,
               primary_muscle: ex.primary_muscle,
@@ -457,8 +508,8 @@ export async function createAndReplicatePlan({
       }
     }
 
-    setLocalMock('venefit_mock_routines', [...newRoutines, ...routines]);
-    setLocalMock('venefit_mock_routine_exercises', [...newRoutineExercises, ...routineExercises]);
+    setLocalMock(DEMO_STORAGE_KEYS.ROUTINES, [...newRoutines, ...routines]);
+    setLocalMock(DEMO_STORAGE_KEYS.ROUTINE_EXERCISES, [...newRoutineExercises, ...routineExercises]);
 
     showToast(`Plan "${planName}" creado y replicado en ${datesToReplicate.length} días.`, 'success');
     return newPlan;
@@ -531,7 +582,8 @@ export async function createAndReplicatePlan({
 
 export async function getClientPlans(clientId: string): Promise<ClientPlan[]> {
   if (isDevSession()) {
-    const plans = getLocalMock<ClientPlan[]>('venefit_mock_plans', []);
+    initDemoStorage(false);
+    const plans = getLocalMock<ClientPlan[]>(DEMO_STORAGE_KEYS.PLANS, []);
     return plans.filter(p => p.client === clientId || p.client_id === clientId);
   }
 
@@ -555,14 +607,14 @@ export async function getClientPlans(clientId: string): Promise<ClientPlan[]> {
     }));
   } catch (e) {
     console.error('[API:getClientPlans] Failed to fetch client plans from PocketBase:', e);
-    const plans = getLocalMock<ClientPlan[]>('venefit_mock_plans', []);
+    const plans = getLocalMock<ClientPlan[]>(DEMO_STORAGE_KEYS.PLANS, []);
     return plans.filter(p => p.client === clientId || p.client_id === clientId);
   }
 }
 
 export async function updateExerciseSortOrder(routineId: string, exercisesList: RoutineExercise[]): Promise<boolean> {
   if (isDevSession()) {
-    const all = getLocalMock<RoutineExercise[]>('venefit_mock_routine_exercises', []);
+    const all = getLocalMock<RoutineExercise[]>(DEMO_STORAGE_KEYS.ROUTINE_EXERCISES, []);
     const updated = all.map(re => {
       const matchIdx = exercisesList.findIndex(e => e.id === re.id);
       if (matchIdx >= 0) {
@@ -570,7 +622,7 @@ export async function updateExerciseSortOrder(routineId: string, exercisesList: 
       }
       return re;
     });
-    setLocalMock('venefit_mock_routine_exercises', updated);
+    setLocalMock(DEMO_STORAGE_KEYS.ROUTINE_EXERCISES, updated);
     return true;
   }
 
