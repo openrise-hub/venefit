@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Card, CardContent, Input, Button } from '@heroui/react';
-import { Dumbbell, LogIn, UserPlus } from 'lucide-react';
+import { Dumbbell, LogIn, UserPlus, Sparkles, FilePlus } from 'lucide-react';
 import { loginTrainer, registerTrainer, enableDevSession } from '../lib/pocketbase';
+import { DemoSeedMode } from '../lib/demoData';
 import { showToast } from '../lib/toastStore';
 
 interface AuthViewProps {
@@ -49,12 +50,22 @@ export default function AuthView({ onLoginSuccess }: AuthViewProps) {
         err?.data?.message ||
         err?.message ||
         (isRegister
-          ? 'Error al registrarte. Verifica el correo.'
-          : 'Correo o contraseña incorrectos.');
+          ? 'Error al registrarte. Verifica el correo o prueba en Modo Demo.'
+          : 'Correo o contraseña incorrectos o servidor no disponible.');
       showToast(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleStartDemo = (mode: DemoSeedMode) => {
+    enableDevSession(mode);
+    if (mode === 'populated') {
+      showToast('Modo Demo Activo: Datos de ejemplo cargados (clientes, planes y series)', 'success');
+    } else {
+      showToast('Modo Demo Activo (Semilla Vacía): Listo para probar desde cero', 'info');
+    }
+    onLoginSuccess();
   };
 
   return (
@@ -73,6 +84,51 @@ export default function AuthView({ onLoginSuccess }: AuthViewProps) {
                 ? 'Registra tu perfil para gestionar tus clientes y planes'
                 : 'Ingresa tus credenciales para acceder al portal'}
             </p>
+          </div>
+
+          {/* Quick Demo Options Section */}
+          <div className="p-3.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 space-y-3">
+            <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-400">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Opciones de Modo Demo (LocalStorage)</span>
+            </div>
+            <p className="text-[11px] text-center opacity-75 leading-relaxed">
+              Prueba la plataforma sin base de datos ni servidor. Elige cómo deseas comenzar:
+            </p>
+
+            <div className="space-y-2">
+              <Button
+                variant="primary"
+                size="sm"
+                className="w-full font-bold text-xs bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center gap-1.5"
+                onPress={() => handleStartDemo('populated')}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>1. Probar con Datos de Ejemplo</span>
+              </Button>
+              <p className="text-[10px] text-center opacity-60">
+                (Clientes, mesociclos y rutina de hoy ya precargados)
+              </p>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full font-bold text-xs border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 flex items-center justify-center gap-1.5 mt-2"
+                onPress={() => handleStartDemo('empty')}
+              >
+                <FilePlus className="w-3.5 h-3.5" />
+                <span>2. Probar desde Cero (Semilla Vacía)</span>
+              </Button>
+              <p className="text-[10px] text-center opacity-60">
+                (Sin clientes; ideal para probar el flujo de onboarding)
+              </p>
+            </div>
+          </div>
+
+          <div className="relative flex py-1 items-center">
+            <div className="flex-grow border-t border-muted/50"></div>
+            <span className="flex-shrink mx-3 text-[11px] uppercase tracking-wider opacity-60">o inicia con servidor</span>
+            <div className="flex-grow border-t border-muted/50"></div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -109,29 +165,17 @@ export default function AuthView({ onLoginSuccess }: AuthViewProps) {
 
             <Button
               type="submit"
-              variant="primary"
-              className="w-full mt-2"
+              variant="outline"
+              className="w-full mt-2 font-semibold"
               isDisabled={loading}
               onPress={() => handleSubmit()}
             >
               {isRegister ? <UserPlus className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
-              <span>{isRegister ? 'Registrarse' : 'Iniciar Sesión'}</span>
+              <span>{isRegister ? 'Registrarse en PocketBase' : 'Iniciar Sesión (PocketBase)'}</span>
             </Button>
           </form>
 
           <div className="border-t pt-4 space-y-2 text-center">
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full font-bold text-xs border-dashed"
-              onPress={() => {
-                enableDevSession();
-                onLoginSuccess();
-              }}
-            >
-              Modo de prueba (sin iniciar sesión)
-            </Button>
-
             <Button
               variant="ghost"
               size="sm"
