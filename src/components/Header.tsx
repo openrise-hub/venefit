@@ -62,17 +62,16 @@ export default function Header({
               }}
               className="appearance-none text-xs sm:text-sm font-medium rounded-xl px-3 py-2 pr-8 border cursor-pointer max-w-[140px] sm:max-w-[200px] truncate focus:outline-none bg-transparent"
             >
-              {clients.length === 0 ? (
-                <option value="" disabled selected>
+              {clients.length === 0 && (
+                <option value="" disabled>
                   Sin clientes
                 </option>
-              ) : (
-                clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))
               )}
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
             </select>
             <Users className="w-4 h-4 opacity-60 absolute right-2.5 pointer-events-none" />
           </div>
