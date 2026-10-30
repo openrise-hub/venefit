@@ -63,7 +63,7 @@ export default function Header({
               className="appearance-none text-xs sm:text-sm font-medium rounded-xl px-3 py-2 pr-8 border cursor-pointer max-w-[140px] sm:max-w-[200px] truncate focus:outline-none bg-transparent"
             >
               {clients.length === 0 ? (
-                <option value="" disabled selected>
+                <option value="" disabled>
                   Sin clientes
                 </option>
               ) : (
