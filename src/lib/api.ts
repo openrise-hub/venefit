@@ -640,3 +640,69 @@ export async function updateExerciseSortOrder(routineId: string, exercisesList: 
     return false;
   }
 }
+
+export async function updateRoutineExercise(
+  routineExId: string,
+  updates: Partial<RoutineExercise>
+): Promise<boolean> {
+  if (isDevSession()) {
+    const all = getLocalMock<RoutineExercise[]>(DEMO_STORAGE_KEYS.ROUTINE_EXERCISES, []);
+    const updated = all.map(re => {
+      if (re.id === routineExId) {
+        return {
+          ...re,
+          ...updates,
+          target_sets: updates.target_sets != null ? Number(updates.target_sets) : re.target_sets,
+          target_reps: updates.target_reps != null ? String(updates.target_reps) : re.target_reps,
+          target_rir: updates.target_rir != null ? Number(updates.target_rir) : re.target_rir,
+          target_weight: updates.target_weight != null ? Number(updates.target_weight) : re.target_weight,
+          target_rest_sec: updates.target_rest_sec != null ? Number(updates.target_rest_sec) : re.target_rest_sec,
+          notes: updates.notes != null ? String(updates.notes) : re.notes
+        };
+      }
+      return re;
+    });
+    setLocalMock(DEMO_STORAGE_KEYS.ROUTINE_EXERCISES, updated);
+    showToast('Parámetros del ejercicio actualizados', 'success');
+    return true;
+  }
+
+  const pb = getPocketBaseClient();
+  try {
+    const payload: Record<string, any> = {};
+    if (updates.target_sets != null) payload.target_sets = Number(updates.target_sets);
+    if (updates.target_reps != null) payload.target_reps = String(updates.target_reps);
+    if (updates.target_rir != null) payload.target_rir = Number(updates.target_rir);
+    if (updates.target_weight != null) payload.target_weight = Number(updates.target_weight);
+    if (updates.weight_unit != null) payload.weight_unit = updates.weight_unit;
+    if (updates.target_rest_sec != null) payload.target_rest_sec = Number(updates.target_rest_sec);
+    if (updates.notes != null) payload.notes = String(updates.notes);
+
+    await pb.collection('routine_exercises').update(routineExId, payload);
+    showToast('Parámetros guardados', 'success');
+    return true;
+  } catch (e) {
+    console.error('[API:updateRoutineExercise] Failed to update exercise:', e);
+    showToast('Error al actualizar parámetros', 'error');
+    return false;
+  }
+}
+
+export async function getWeekRoutines(
+  clientId: string,
+  dateStrings: string[]
+): Promise<Record<string, { routine: DayRoutine; exercises: RoutineExercise[] } | null>> {
+  const results: Record<string, { routine: DayRoutine; exercises: RoutineExercise[] } | null> = {};
+  await Promise.all(
+    dateStrings.map(async (dStr) => {
+      try {
+        const res = await getRoutineForDay(clientId, dStr);
+        results[dStr] = res;
+      } catch {
+        results[dStr] = null;
+      }
+    })
+  );
+  return results;
+}
+

@@ -1,6 +1,10 @@
 import useSWR from 'swr';
-import { getRoutineForDay, getClients, getClientPlans } from './api';
+import { getRoutineForDay, getClients, getClientPlans, getWeekRoutines } from './api';
 import { Client, ClientPlan, DayRoutine, RoutineExercise } from '../types';
+
+const EMPTY_EXERCISES: RoutineExercise[] = [];
+const EMPTY_CLIENTS: Client[] = [];
+const EMPTY_PLANS: ClientPlan[] = [];
 
 export function useRoutineForDay(clientId?: string, dateStr?: string) {
   const key = clientId && dateStr ? `routine/${clientId}/${dateStr}` : null;
@@ -16,10 +20,31 @@ export function useRoutineForDay(clientId?: string, dateStr?: string) {
 
   return {
     routineData: data ? data.routine : null,
-    exercisesList: data ? (data.exercises || []) : [],
+    exercisesList: data && data.exercises ? data.exercises : EMPTY_EXERCISES,
     isLoading,
     isError: error,
     mutate
+  };
+}
+
+export function useWeekRoutinesList(clientId?: string, dateStrings?: string[]) {
+  const sortedDates = dateStrings && dateStrings.length > 0 ? [...dateStrings].sort().join(',') : null;
+  const key = clientId && sortedDates ? `week_routines/${clientId}/${sortedDates}` : null;
+
+  const { data, error, isLoading, mutate } = useSWR<Record<string, { routine: DayRoutine; exercises: RoutineExercise[] } | null>>(
+    key,
+    () => getWeekRoutines(clientId!, dateStrings!),
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 5000
+    }
+  );
+
+  return {
+    weekData: data || {},
+    isLoading,
+    isError: error,
+    mutateWeek: mutate
   };
 }
 
@@ -34,7 +59,7 @@ export function useClientsList() {
   );
 
   return {
-    clients: data || [],
+    clients: data || EMPTY_CLIENTS,
     isLoading,
     isError: error,
     mutateClients: mutate
@@ -53,7 +78,7 @@ export function useClientPlansList(clientId?: string) {
   );
 
   return {
-    plans: data || [],
+    plans: data || EMPTY_PLANS,
     isLoading,
     isError: error,
     mutatePlans: mutate
