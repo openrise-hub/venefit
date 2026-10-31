@@ -1,14 +1,21 @@
 import React from 'react';
-import { Card, CardContent, Button, Chip } from '@heroui/react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, RotateCcw } from 'lucide-react';
+import { Card, CardContent, Button } from '@heroui/react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, RotateCcw, CalendarDays, LayoutGrid } from 'lucide-react';
 import { getWeekDates, formatDateISO } from '../lib/utils';
 
 interface WeekStripProps {
   selectedDateStr: string;
   onSelectDate: (dateStr: string) => void;
+  viewMode?: 'daily' | 'weekly';
+  onToggleViewMode?: (mode: 'daily' | 'weekly') => void;
 }
 
-export default function WeekStrip({ selectedDateStr, onSelectDate }: WeekStripProps) {
+export default function WeekStrip({
+  selectedDateStr,
+  onSelectDate,
+  viewMode = 'daily',
+  onToggleViewMode
+}: WeekStripProps) {
   const todayStr = formatDateISO(new Date());
   const currentWeek = getWeekDates(selectedDateStr);
 
@@ -21,12 +28,45 @@ export default function WeekStrip({ selectedDateStr, onSelectDate }: WeekStripPr
   return (
     <Card className="mb-5">
       <CardContent className="p-3 sm:p-4">
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <div className="flex items-center gap-2">
-            <CalendarIcon className="w-4 h-4" />
-            <span className="text-xs font-bold uppercase tracking-wider">
-              {new Date(selectedDateStr + 'T00:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
-            </span>
+        <div className="flex flex-wrap items-center justify-between gap-2.5 mb-3">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <CalendarIcon className="w-4 h-4 text-emerald-400" />
+              <span className="text-xs font-bold uppercase tracking-wider">
+                {new Date(selectedDateStr + 'T00:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+              </span>
+            </div>
+
+            {onToggleViewMode && (
+              <div className="flex items-center bg-default-100 dark:bg-zinc-800/80 p-0.5 rounded-lg border border-default-200/50">
+                <button
+                  type="button"
+                  onClick={() => onToggleViewMode('daily')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                    viewMode === 'daily'
+                      ? 'bg-emerald-500 text-white shadow-sm font-bold'
+                      : 'text-foreground/70 hover:text-foreground'
+                  }`}
+                  title="Vista Diaria"
+                >
+                  <CalendarDays className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Diaria</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onToggleViewMode('weekly')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                    viewMode === 'weekly'
+                      ? 'bg-emerald-500 text-white shadow-sm font-bold'
+                      : 'text-foreground/70 hover:text-foreground'
+                  }`}
+                  title="Vista Semanal"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Semanal</span>
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-1.5">

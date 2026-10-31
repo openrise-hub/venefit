@@ -1,7 +1,8 @@
-import React, { memo } from 'react';
-import { Card, CardContent, Chip, Button, Input } from '@heroui/react';
-import { GripVertical, Timer, ArrowUp, ArrowDown, Check, Info } from 'lucide-react';
+import React, { memo, useState } from 'react';
+import { Card, CardContent, Chip, Button } from '@heroui/react';
+import { GripVertical, Timer, ArrowUp, ArrowDown, Check, Info, Edit3, Target } from 'lucide-react';
 import { RoutineExercise, ExerciseSetResult } from '../types';
+import EditExerciseTargetModal from './EditExerciseTargetModal';
 
 const RIR_OPTIONS = [
   { key: '0', label: 'RIR 0 (Fallo)' },
@@ -33,6 +34,7 @@ interface ExerciseCardProps {
   onMoveExercise: (fromIndex: number, toIndex: number) => void;
   onDragStart: (e: React.DragEvent, index: number) => void;
   onDrop: (e: React.DragEvent, toIndex: number) => void;
+  onUpdateTarget?: (routineExId: string, updates: Partial<RoutineExercise>) => Promise<void>;
 }
 
 function ExerciseCard({
@@ -46,9 +48,16 @@ function ExerciseCard({
   onStartRestTimer,
   onMoveExercise,
   onDragStart,
-  onDrop
+  onDrop,
+  onUpdateTarget
 }: ExerciseCardProps) {
-  const exercise = exItem.expandedExercise || (typeof exItem.exercise === 'object' ? exItem.exercise : null) || { name: 'Ejercicio', muscle_groups: [] };
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  const exercise =
+    exItem.expandedExercise ||
+    (typeof exItem.exercise === 'object' ? (exItem.exercise as any) : null) ||
+    { name: 'Ejercicio', muscle_groups: [] };
+
   const muscleGroups = exercise.muscle_groups || [];
   const primaryMuscle = exercise.primary_muscle || (muscleGroups.length > 0 ? muscleGroups[0] : null);
   const modality = exercise.modality || null;
@@ -57,189 +66,276 @@ function ExerciseCard({
   const isSpecialTechnique = technique !== 'straight';
 
   return (
-    <Card
-      draggable
-      onDragStart={(e: any) => onDragStart(e, exIdx)}
-      onDragOver={(e: any) => e.preventDefault()}
-      onDrop={(e: any) => onDrop(e, exIdx)}
-      className={`transition-all ${groupLabel ? 'border-l-4 border-l-emerald-400 shadow-sm' : ''}`}
-    >
-      <CardContent className="p-3 sm:p-4 space-y-3">
-        <div className="flex items-start justify-between gap-2 border-b pb-3">
-          <div className="flex items-start gap-2.5 min-w-0">
-            <span className="cursor-grab opacity-60 hover:opacity-100 p-1 mt-0.5 shrink-0">
-              <GripVertical className="w-4 h-4" />
-            </span>
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <Chip variant="soft" size="sm" className="font-bold">
-                  #{exIdx + 1}
-                </Chip>
-                {groupLabel && (
-                  <Chip size="sm" variant="primary" className="font-bold text-[11px] tracking-wider uppercase">
-                    {technique === 'superset' ? `Super-Serie ${groupLabel}` : technique === 'multiseries' ? `Multiserie ${groupLabel}` : `Bloque ${groupLabel}`}
+    <>
+      <Card
+        draggable
+        onDragStart={(e: any) => onDragStart(e, exIdx)}
+        onDragOver={(e: any) => e.preventDefault()}
+        onDrop={(e: any) => onDrop(e, exIdx)}
+        className={`transition-all ${groupLabel ? 'border-l-4 border-l-emerald-400 shadow-sm' : ''}`}
+      >
+        <CardContent className="p-3 sm:p-4 space-y-3.5">
+          {/* Header Row */}
+          <div className="flex items-start justify-between gap-2 border-b pb-3">
+            <div className="flex items-start gap-2.5 min-w-0">
+              <span
+                className="cursor-grab opacity-50 hover:opacity-100 p-1 mt-0.5 shrink-0"
+                title="Arrastrar para reordenar"
+              >
+                <GripVertical className="w-4 h-4" />
+              </span>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                  <Chip variant="soft" size="sm" className="font-bold">
+                    #{exIdx + 1}
                   </Chip>
-                )}
-                {isSpecialTechnique && !groupLabel && (
-                  <Chip size="sm" variant="soft" className="font-bold text-[11px] text-emerald-400">
-                    {TECHNIQUE_LABELS[technique] || technique}
-                  </Chip>
-                )}
-                <h4 className="text-sm sm:text-base font-bold truncate">{exercise.name}</h4>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                {primaryMuscle && (
-                  <Chip size="sm" variant="soft" className="text-[10px] font-semibold">
-                    {primaryMuscle}
-                  </Chip>
-                )}
-                {modality && (
-                  <Chip size="sm" variant="soft" className="text-[10px] opacity-80">
-                    {modality}
-                  </Chip>
-                )}
-                <Chip size="sm" variant="soft" className="text-[10px]">
-                  Meta: {exItem.target_sets} sets x {exItem.target_reps} @ RIR {exItem.target_rir} ({exItem.target_weight}{exItem.weight_unit})
-                </Chip>
-              </div>
-
-              {exItem.notes && (
-                <div className="flex items-center gap-1.5 text-[11px] text-foreground/80 mt-2 bg-foreground/5 p-1.5 rounded-lg border">
-                  <Info className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span>{exItem.notes}</span>
+                  {groupLabel && (
+                    <Chip size="sm" variant="primary" className="font-bold text-[11px] tracking-wider uppercase">
+                      {technique === 'superset'
+                        ? `Super-Serie ${groupLabel}`
+                        : technique === 'multiseries'
+                        ? `Multiserie ${groupLabel}`
+                        : `Bloque ${groupLabel}`}
+                    </Chip>
+                  )}
+                  {isSpecialTechnique && !groupLabel && (
+                    <Chip size="sm" variant="soft" className="font-bold text-[11px] text-emerald-400">
+                      {TECHNIQUE_LABELS[technique] || technique}
+                    </Chip>
+                  )}
+                  <h4 className="text-sm sm:text-base font-bold truncate">{exercise.name}</h4>
                 </div>
+
+                {/* Tags row */}
+                <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                  {primaryMuscle && (
+                    <Chip size="sm" variant="soft" className="text-[10px] font-semibold">
+                      {primaryMuscle}
+                    </Chip>
+                  )}
+                  {modality && (
+                    <Chip size="sm" variant="soft" className="text-[10px] opacity-75">
+                      {modality}
+                    </Chip>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Top Right Actions */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {onUpdateTarget && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 px-2 text-xs font-semibold hover:text-emerald-400"
+                  onPress={() => setIsEditModalOpen(true)}
+                  title="Editar parámetros y notas del ejercicio"
+                >
+                  <Edit3 className="w-3.5 h-3.5 mr-1" />
+                  <span className="hidden sm:inline">Editar</span>
+                </Button>
               )}
+
+              <div className="flex items-center gap-0.5 p-0.5 rounded-xl border">
+                <Button
+                  isIconOnly
+                  size="sm"
+                  variant="ghost"
+                  isDisabled={exIdx === 0}
+                  onPress={() => onMoveExercise(exIdx, exIdx - 1)}
+                  title="Mover arriba"
+                >
+                  <ArrowUp className="w-3.5 h-3.5" />
+                </Button>
+                <Button
+                  isIconOnly
+                  size="sm"
+                  variant="ghost"
+                  isDisabled={exIdx === totalExercises - 1}
+                  onPress={() => onMoveExercise(exIdx, exIdx + 1)}
+                  title="Mover abajo"
+                >
+                  <ArrowDown className="w-3.5 h-3.5" />
+                </Button>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          {/* Target Prescription & Rest Timer Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-2 bg-foreground/[0.03] border border-border/80 rounded-xl p-2.5">
+            <div className="flex items-center gap-2 min-w-0">
+              <Target className="w-4 h-4 text-emerald-400 shrink-0" />
+              <div className="text-xs font-medium">
+                <span className="opacity-70 text-[11px] block">Meta Prescrita:</span>
+                <span className="font-extrabold text-foreground">
+                  {exItem.target_sets} series × {exItem.target_reps} reps
+                  {exItem.target_weight > 0 ? ` @ ${exItem.target_weight} ${exItem.weight_unit}` : ''}
+                  {` (RIR ${exItem.target_rir})`}
+                </span>
+              </div>
+            </div>
+
             <Button
               size="sm"
-              variant="ghost"
+              variant="outline"
+              className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 font-bold text-xs h-8 px-3 shrink-0"
               onPress={() => onStartRestTimer(exItem.target_rest_sec || 90)}
+              title="Iniciar temporizador de descanso"
             >
-              <Timer className="w-3.5 h-3.5" />
-              <span>{exItem.target_rest_sec || 90}s</span>
+              <Timer className="w-3.5 h-3.5 mr-1 text-emerald-400" />
+              <span>{exItem.target_rest_sec || 90}s Descanso</span>
             </Button>
-
-            <div className="flex items-center gap-0.5 p-0.5 rounded-xl border">
-              <Button
-                isIconOnly
-                size="sm"
-                variant="ghost"
-                isDisabled={exIdx === 0}
-                onPress={() => onMoveExercise(exIdx, exIdx - 1)}
-              >
-                <ArrowUp className="w-3.5 h-3.5" />
-              </Button>
-              <Button
-                isIconOnly
-                size="sm"
-                variant="ghost"
-                isDisabled={exIdx === totalExercises - 1}
-                onPress={() => onMoveExercise(exIdx, exIdx + 1)}
-              >
-                <ArrowDown className="w-3.5 h-3.5" />
-              </Button>
-            </div>
           </div>
-        </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead>
-              <tr className="text-[10px] font-bold uppercase border-b opacity-70">
-                <th className="py-2 px-1.5">Serie</th>
-                <th className="py-2 px-1.5 min-w-[120px]">Peso Usado</th>
-                <th className="py-2 px-1.5 min-w-[80px]">Reps</th>
-                <th className="py-2 px-1.5 min-w-[90px]">RIR</th>
-                <th className="py-2 px-1.5 text-center">Estado</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {Array.from({ length: numSets }, (_, i) => i + 1).map((setNum) => {
-                const rawSet = exSets[setNum];
-                const weightVal = rawSet ? (rawSet.weight ?? rawSet.weight_used ?? exItem.target_weight ?? 0) : (exItem.target_weight ?? 0);
-                const repsVal = rawSet ? (rawSet.reps ?? rawSet.completed_reps ?? 0) : 0;
-                const unitVal = rawSet ? (rawSet.unit ?? rawSet.weight_unit ?? exItem.weight_unit ?? 'kg') : (exItem.weight_unit ?? 'kg');
-                const rirVal = rawSet ? (rawSet.actual_rir ?? rawSet.rir ?? exItem.target_rir ?? 2) : (exItem.target_rir ?? 2);
-                const isCompleted = rawSet ? rawSet.completed : false;
+          {/* Coaching Notes Callout */}
+          {exItem.notes && (
+            <div className="flex items-start gap-2 text-xs bg-emerald-500/5 border border-emerald-500/20 p-2.5 rounded-xl text-foreground/90">
+              <Info className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <span className="font-bold text-[10px] uppercase tracking-wider text-emerald-400 block mb-0.5">
+                  Indicaciones Técnicas:
+                </span>
+                <p className="text-xs leading-relaxed text-foreground/85">{exItem.notes}</p>
+              </div>
+            </div>
+          )}
 
-                const isLastSet = setNum === numSets;
-                const isDropSetItem = technique === 'dropset' && isLastSet;
+          {/* Sets Recording Table */}
+          <div className="overflow-x-auto rounded-xl border border-border/60">
+            <table className="w-full text-xs text-left">
+              <thead>
+                <tr className="text-[10px] font-extrabold uppercase border-b bg-foreground/[0.02] opacity-70">
+                  <th className="py-2.5 px-2.5 w-24">Serie</th>
+                  <th className="py-2.5 px-2.5 w-36">Peso Usado</th>
+                  <th className="py-2.5 px-2.5 w-24">Reps</th>
+                  <th className="py-2.5 px-2.5 w-28">RIR</th>
+                  <th className="py-2.5 px-2.5 text-center w-16">Estado</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/60">
+                {Array.from({ length: numSets }, (_, i) => i + 1).map((setNum) => {
+                  const rawSet = exSets[setNum];
+                  const weightVal = rawSet
+                    ? (rawSet.weight ?? rawSet.weight_used ?? exItem.target_weight ?? 0)
+                    : (exItem.target_weight ?? 0);
+                  const repsVal = rawSet ? (rawSet.reps ?? rawSet.completed_reps ?? '') : '';
+                  const unitVal = rawSet
+                    ? (rawSet.unit ?? rawSet.weight_unit ?? exItem.weight_unit ?? 'kg')
+                    : (exItem.weight_unit ?? 'kg');
+                  const rirVal = rawSet
+                    ? (rawSet.actual_rir ?? rawSet.rir ?? exItem.target_rir ?? 2)
+                    : (exItem.target_rir ?? 2);
+                  const isCompleted = rawSet ? rawSet.completed : false;
 
-                return (
-                  <tr key={setNum} className={isDropSetItem ? 'bg-emerald-500/5' : ''}>
-                    <td className="py-2 px-1.5 font-bold">
-                      <div className="flex items-center gap-1.5">
-                        <span>SET {setNum}</span>
-                        {isDropSetItem && (
-                          <Chip size="sm" variant="soft" className="text-[9px] font-bold text-emerald-400">
-                            DROP
-                          </Chip>
-                        )}
-                      </div>
-                    </td>
+                  const isLastSet = setNum === numSets;
+                  const isDropSetItem = technique === 'dropset' && isLastSet;
 
-                    <td className="py-2 px-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <Input
+                  return (
+                    <tr
+                      key={setNum}
+                      className={`transition-colors ${
+                        isCompleted
+                          ? 'bg-emerald-500/[0.04]'
+                          : isDropSetItem
+                          ? 'bg-amber-500/[0.03]'
+                          : 'hover:bg-foreground/[0.01]'
+                      }`}
+                    >
+                      {/* Set Label */}
+                      <td className="py-2.5 px-2.5 font-bold">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-foreground">SET {setNum}</span>
+                          {isDropSetItem && (
+                            <Chip size="sm" variant="soft" className="text-[9px] font-bold text-amber-400">
+                              DROP
+                            </Chip>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Weight Used */}
+                      <td className="py-2.5 px-2.5">
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="number"
+                            step="0.5"
+                            placeholder="0"
+                            value={weightVal === '' ? '' : weightVal}
+                            onChange={(e) => onSetChange(exItem.id, setNum, 'weight', e.target.value)}
+                            className="w-16 sm:w-20 h-9 rounded-xl border border-border px-2 text-center text-xs font-black bg-foreground/5 focus:bg-background focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => onToggleUnit(exItem.id, setNum)}
+                            className="h-9 px-2 text-[11px] font-bold uppercase rounded-lg border border-border hover:bg-foreground/5 text-emerald-400 shrink-0 transition-colors"
+                            title="Cambiar kg / lb"
+                          >
+                            {unitVal}
+                          </button>
+                        </div>
+                      </td>
+
+                      {/* Reps */}
+                      <td className="py-2.5 px-2.5">
+                        <input
                           type="number"
-                          step={0.5}
                           placeholder="0"
-                          value={Number(weightVal) || undefined}
-                          onChange={(e) => onSetChange(exItem.id, setNum, 'weight', e.target.value)}
+                          value={repsVal === '' ? '' : repsVal}
+                          onChange={(e) => onSetChange(exItem.id, setNum, 'reps', e.target.value)}
+                          className="w-16 sm:w-20 h-9 rounded-xl border border-border px-2 text-center text-xs font-black bg-foreground/5 focus:bg-background focus:outline-none focus:ring-2 focus:ring-emerald-400"
                         />
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onPress={() => onToggleUnit(exItem.id, setNum)}
+                      </td>
+
+                      {/* RIR */}
+                      <td className="py-2.5 px-2.5">
+                        <select
+                          value={String(rirVal)}
+                          onChange={(e) => onSetChange(exItem.id, setNum, 'rir', e.target.value)}
+                          className="w-24 sm:w-28 h-9 rounded-xl border border-border px-2 text-xs font-semibold focus:outline-none bg-background cursor-pointer"
                         >
-                          {unitVal}
+                          {RIR_OPTIONS.map((opt) => (
+                            <option key={opt.key} value={opt.key}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+
+                      {/* Status / Checkbox */}
+                      <td className="py-2.5 px-2.5 text-center">
+                        <Button
+                          isIconOnly
+                          size="sm"
+                          variant={isCompleted ? 'primary' : 'outline'}
+                          className={`h-9 w-9 rounded-xl ${
+                            isCompleted ? 'bg-emerald-500 text-slate-950 font-black' : ''
+                          }`}
+                          onPress={() => onSetChange(exItem.id, setNum, 'completed', !isCompleted)}
+                          title={isCompleted ? 'Marcar como pendiente' : 'Marcar como completada'}
+                        >
+                          {isCompleted ? <Check className="w-4 h-4 stroke-[3]" /> : null}
                         </Button>
-                      </div>
-                    </td>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
 
-                    <td className="py-2 px-1.5">
-                      <Input
-                        type="number"
-                        placeholder="Reps"
-                        value={Number(repsVal) || undefined}
-                        onChange={(e) => onSetChange(exItem.id, setNum, 'reps', e.target.value)}
-                      />
-                    </td>
-
-                    <td className="py-2 px-1.5">
-                      <select
-                        value={String(rirVal)}
-                        onChange={(e) => onSetChange(exItem.id, setNum, 'rir', e.target.value)}
-                        className="w-full h-9 rounded-xl border px-2 text-xs focus:outline-none bg-transparent"
-                      >
-                        {RIR_OPTIONS.map(opt => (
-                          <option key={opt.key} value={opt.key}>{opt.label}</option>
-                        ))}
-                      </select>
-                    </td>
-
-                    <td className="py-2 px-1.5 text-center">
-                      <Button
-                        isIconOnly
-                        size="sm"
-                        variant={isCompleted ? "primary" : "outline"}
-                        onPress={() => onSetChange(exItem.id, setNum, 'completed', !isCompleted)}
-                      >
-                        {isCompleted ? <Check className="w-4 h-4 stroke-[3]" /> : null}
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </CardContent>
-    </Card>
+      {/* Edit Target & Notes Modal */}
+      {isEditModalOpen && onUpdateTarget && (
+        <EditExerciseTargetModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          exItem={exItem}
+          onSave={onUpdateTarget}
+        />
+      )}
+    </>
   );
 }
 

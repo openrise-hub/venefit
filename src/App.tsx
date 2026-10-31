@@ -5,6 +5,7 @@ import Navigation from './components/Navigation';
 import ClientHeader from './components/ClientHeader';
 import WeekStrip from './components/WeekStrip';
 import DailyWorkoutView from './components/DailyWorkoutView';
+import WeeklyOverviewView from './components/WeeklyOverviewView';
 import AuthView from './components/AuthView';
 import PwaPrompt from './components/PwaPrompt';
 import ToastContainer from './components/ToastContainer';
@@ -23,6 +24,7 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => isTrainerAuthenticated());
   const [activeTab, setActiveTab] = useState('workout');
   const [selectedDateStr, setSelectedDateStr] = useState(() => formatDateISO(new Date()));
+  const [viewMode, setViewMode] = useState<'daily' | 'weekly'>('daily');
 
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -181,13 +183,26 @@ export default function App() {
             <WeekStrip
               selectedDateStr={selectedDateStr}
               onSelectDate={setSelectedDateStr}
+              viewMode={viewMode}
+              onToggleViewMode={setViewMode}
             />
 
-            <DailyWorkoutView
-              clientId={selectedClient.id}
-              dateStr={selectedDateStr}
-              onOpenPlanBuilder={handleOpenPlanBuilder}
-            />
+            {viewMode === 'daily' ? (
+              <DailyWorkoutView
+                key={`${selectedClient.id}-${selectedDateStr}`}
+                clientId={selectedClient.id}
+                dateStr={selectedDateStr}
+                onOpenPlanBuilder={handleOpenPlanBuilder}
+              />
+            ) : (
+              <WeeklyOverviewView
+                clientId={selectedClient.id}
+                selectedDateStr={selectedDateStr}
+                onSelectDate={setSelectedDateStr}
+                onSwitchToDailyView={() => setViewMode('daily')}
+                onOpenPlanBuilder={handleOpenPlanBuilder}
+              />
+            )}
           </div>
         )}
 

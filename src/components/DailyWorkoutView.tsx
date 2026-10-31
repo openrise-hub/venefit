@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Card, CardContent, Chip, Button } from '@heroui/react';
 import { Plus, RefreshCw, CalendarX } from 'lucide-react';
-import { saveSetResult, updateExerciseSortOrder } from '../lib/api';
+import { saveSetResult, updateExerciseSortOrder, updateRoutineExercise } from '../lib/api';
 import { useRoutineForDay } from '../lib/useWorkoutData';
 import { convertWeight } from '../lib/utils';
 import RestTimer from './RestTimer';
 import ExerciseCard from './ExerciseCard';
+import { RoutineExercise } from '../types';
 
 interface DailyWorkoutViewProps {
   clientId: string;
@@ -23,32 +24,51 @@ export default function DailyWorkoutView({
   const [setsState, setSetsState] = useState<Record<string, any>>({});
   const [activeTimerSeconds, setActiveTimerSeconds] = useState<number | null>(null);
 
+  // Keep track of the last processed routine and exercises signature to avoid infinite render loops
+  const lastSyncSignatureRef = useRef<string>('');
+
   useEffect(() => {
     if (fetchedExercises && fetchedExercises.length > 0) {
-      setExercisesList(fetchedExercises);
+      // Build a signature of the current exercises to see if they genuinely changed
+      const currentSignature = `${routineData?.id || ''}_${fetchedExercises.map(e => `${e.id}_${e.target_sets}_${e.target_weight}_${e.target_reps}_${e.target_rir}`).join('|')}`;
+      
+      if (lastSyncSignatureRef.current !== currentSignature) {
+        lastSyncSignatureRef.current = currentSignature;
+        setExercisesList(fetchedExercises);
 
-      const initialSets: Record<string, any> = {};
-      fetchedExercises.forEach((ex: any) => {
-        initialSets[ex.id] = {};
-        const numSets = ex.target_sets || 3;
-        for (let s = 1; s <= numSets; s++) {
-          const existing = ex.setResults ? ex.setResults[s] : null;
-          initialSets[ex.id][s] = {
-            reps: existing ? existing.completed_reps : '',
-            weight: existing ? existing.weight_used : (ex.target_weight || ''),
-            unit: existing ? existing.weight_unit : (ex.weight_unit || 'kg'),
-            rir: existing ? existing.actual_rir : (ex.target_rir || 2),
-            set_type: existing ? existing.set_type : (ex.technique === 'dropset' && s === numSets ? 'dropset' : 'normal'),
-            completed: existing ? existing.completed : false
-          };
-        }
-      });
-      setSetsState(initialSets);
-    } else {
-      setExercisesList([]);
-      setSetsState({});
+        setSetsState(prevSets => {
+          const newSets: Record<string, any> = { ...prevSets };
+          fetchedExercises.forEach((ex: any) => {
+            if (!newSets[ex.id]) {
+              newSets[ex.id] = {};
+            }
+            const numSets = ex.target_sets || 3;
+            for (let s = 1; s <= numSets; s++) {
+              const existing = ex.setResults ? ex.setResults[s] : null;
+              // If user has typed something locally, preserve it; otherwise use fetched/default
+              if (!newSets[ex.id][s]) {
+                newSets[ex.id][s] = {
+                  reps: existing ? existing.completed_reps : '',
+                  weight: existing ? existing.weight_used : (ex.target_weight || ''),
+                  unit: existing ? existing.weight_unit : (ex.weight_unit || 'kg'),
+                  rir: existing ? existing.actual_rir : (ex.target_rir ?? 2),
+                  set_type: existing ? existing.set_type : (ex.technique === 'dropset' && s === numSets ? 'dropset' : 'normal'),
+                  completed: existing ? existing.completed : false
+                };
+              }
+            }
+          });
+          return newSets;
+        });
+      }
+    } else if (!isLoading && fetchedExercises && fetchedExercises.length === 0) {
+      if (lastSyncSignatureRef.current !== 'empty') {
+        lastSyncSignatureRef.current = 'empty';
+        setExercisesList([]);
+        setSetsState({});
+      }
     }
-  }, [fetchedExercises]);
+  }, [fetchedExercises, routineData, isLoading]);
 
   const persistSetResult = async (routineExId: string, date: string, setNum: number, setData: any) => {
     try {
@@ -65,7 +85,7 @@ export default function DailyWorkoutView({
       });
       mutate();
     } catch (e) {
-      console.error(e);
+      console.error('[DailyWorkoutView:persistSetResult]', e);
     }
   };
 
@@ -95,7 +115,8 @@ export default function DailyWorkoutView({
     let updatedSet: any = null;
 
     setSetsState(prev => {
-      const currentSet = prev[routineExId][setNum];
+      const currentSet = prev[routineExId]?.[setNum];
+      if (!currentSet) return prev;
       const newUnit = currentSet.unit === 'kg' ? 'lb' : 'kg';
       const convertedWeight = convertWeight(currentSet.weight, currentSet.unit, newUnit);
 
@@ -114,10 +135,16 @@ export default function DailyWorkoutView({
       };
     });
 
-    if (updatedSet) {
+    if (updatedSet && updatedSet.completed) {
       persistSetResult(routineExId, dateStr, setNum, updatedSet);
     }
   }, [dateStr]);
+
+  const handleUpdateExerciseTarget = useCallback(async (routineExId: string, updates: Partial<RoutineExercise>) => {
+    await updateRoutineExercise(routineExId, updates);
+    lastSyncSignatureRef.current = ''; // Force re-sync
+    mutate();
+  }, [mutate]);
 
   const moveExercise = useCallback(async (fromIndex: number, toIndex: number) => {
     if (toIndex < 0 || toIndex >= exercisesList.length) return;
@@ -169,11 +196,11 @@ export default function DailyWorkoutView({
     return labels;
   }, [exercisesList]);
 
-  if (isLoading) {
+  if (isLoading && exercisesList.length === 0) {
     return (
       <Card>
         <CardContent className="p-8 text-center text-xs">
-          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2" />
+          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-emerald-400" />
           Cargando entrenamiento...
         </CardContent>
       </Card>
@@ -184,7 +211,7 @@ export default function DailyWorkoutView({
     return (
       <Card className="my-4">
         <CardContent className="p-8 text-center">
-          <CalendarX className="w-12 h-12 mx-auto mb-3 opacity-60" />
+          <CalendarX className="w-12 h-12 mx-auto mb-3 opacity-60 text-emerald-400" />
           <h3 className="text-base font-bold mb-1">Sin Rutina Programada para Hoy</h3>
           <p className="text-xs max-w-sm mx-auto mb-4 opacity-70">
             No hay ejercicios asignados para esta fecha. Crea o asigna un plan de entrenamiento.
@@ -193,8 +220,9 @@ export default function DailyWorkoutView({
             variant="primary"
             size="sm"
             onPress={onOpenPlanBuilder}
+            className="font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950"
           >
-            <Plus />
+            <Plus className="w-4 h-4 mr-1" />
             <span>Crear Plan Replicado</span>
           </Button>
         </CardContent>
@@ -204,12 +232,13 @@ export default function DailyWorkoutView({
 
   return (
     <div className="space-y-4">
+      {/* Routine Header Card */}
       <Card>
         <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <Chip size="sm" variant="soft" className="font-semibold">
-                Rutina del Dia
+              <Chip size="sm" variant="soft" className="font-semibold text-emerald-400">
+                Rutina del Día
               </Chip>
               {routineData.muscle_groups && routineData.muscle_groups.length > 0 && (
                 <Chip size="sm" variant="soft">
@@ -217,17 +246,18 @@ export default function DailyWorkoutView({
                 </Chip>
               )}
             </div>
-            <h3 className="text-lg font-black mt-1">
+            <h3 className="text-lg font-black mt-1 font-heading">
               {routineData.routine_name}
             </h3>
           </div>
 
-          <div className="text-xs opacity-70 font-semibold">
+          <div className="text-xs opacity-75 font-bold">
             {exercisesList.length} Ejercicio{exercisesList.length !== 1 ? 's' : ''}
           </div>
         </CardContent>
       </Card>
 
+      {/* Exercises List */}
       <div className="space-y-4">
         {exercisesList.map((exItem, exIdx) => (
           <ExerciseCard
@@ -243,6 +273,7 @@ export default function DailyWorkoutView({
             onMoveExercise={moveExercise}
             onDragStart={handleDragStart}
             onDrop={handleDrop}
+            onUpdateTarget={handleUpdateExerciseTarget}
           />
         ))}
       </div>
