@@ -128,25 +128,26 @@ function ExerciseCard({
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-8 px-2 text-xs font-semibold hover:text-emerald-400"
+                  className="h-8 px-2.5 text-xs font-semibold hover:text-emerald-400"
                   onPress={() => setIsEditModalOpen(true)}
-                  title="Editar parámetros y notas del ejercicio"
+                  aria-label={`Editar metas y notas de ${exercise.name}`}
                 >
-                  <Edit3 className="w-3.5 h-3.5 mr-1" />
+                  <Edit3 className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
                   <span className="hidden sm:inline">Editar</span>
                 </Button>
               )}
 
-              <div className="flex items-center gap-0.5 p-0.5 rounded-xl border">
+              <div className="flex items-center gap-0.5 p-0.5 rounded-xl border border-border bg-background">
                 <Button
                   isIconOnly
                   size="sm"
                   variant="ghost"
                   isDisabled={exIdx === 0}
                   onPress={() => onMoveExercise(exIdx, exIdx - 1)}
-                  title="Mover arriba"
+                  aria-label={`Mover ${exercise.name} hacia arriba`}
+                  className="h-7 w-7 text-foreground/80 hover:text-foreground"
                 >
-                  <ArrowUp className="w-3.5 h-3.5" />
+                  <ArrowUp className="w-3.5 h-3.5" aria-hidden="true" />
                 </Button>
                 <Button
                   isIconOnly
@@ -154,24 +155,25 @@ function ExerciseCard({
                   variant="ghost"
                   isDisabled={exIdx === totalExercises - 1}
                   onPress={() => onMoveExercise(exIdx, exIdx + 1)}
-                  title="Mover abajo"
+                  aria-label={`Mover ${exercise.name} hacia abajo`}
+                  className="h-7 w-7 text-foreground/80 hover:text-foreground"
                 >
-                  <ArrowDown className="w-3.5 h-3.5" />
+                  <ArrowDown className="w-3.5 h-3.5" aria-hidden="true" />
                 </Button>
               </div>
             </div>
           </div>
 
           {/* Target Prescription & Rest Timer Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-2 bg-foreground/[0.03] border border-border/80 rounded-xl p-2.5">
+          <div className="flex flex-wrap items-center justify-between gap-2 bg-surface-secondary/60 border border-border rounded-xl p-2.5">
             <div className="flex items-center gap-2 min-w-0">
-              <Target className="w-4 h-4 text-emerald-400 shrink-0" />
+              <Target className="w-4 h-4 text-emerald-400 shrink-0" aria-hidden="true" />
               <div className="text-xs font-medium">
-                <span className="opacity-70 text-[11px] block">Meta Prescrita:</span>
+                <span className="text-muted text-[11px] block font-semibold">Meta Prescrita:</span>
                 <span className="font-extrabold text-foreground">
-                  {exItem.target_sets} series × {exItem.target_reps} reps
-                  {exItem.target_weight > 0 ? ` @ ${exItem.target_weight} ${exItem.weight_unit}` : ''}
-                  {` (RIR ${exItem.target_rir})`}
+                  {exItem.target_sets}&nbsp;series × {exItem.target_reps}&nbsp;reps
+                  {exItem.target_weight > 0 ? ` @ ${exItem.target_weight}\u00A0${exItem.weight_unit}` : ''}
+                  {` (RIR\u00A0${exItem.target_rir})`}
                 </span>
               </div>
             </div>
@@ -181,17 +183,17 @@ function ExerciseCard({
               variant="outline"
               className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 font-bold text-xs h-8 px-3 shrink-0"
               onPress={() => onStartRestTimer(exItem.target_rest_sec || 90)}
-              title="Iniciar temporizador de descanso"
+              aria-label={`Iniciar temporizador de descanso de ${exItem.target_rest_sec || 90} segundos`}
             >
-              <Timer className="w-3.5 h-3.5 mr-1 text-emerald-400" />
-              <span>{exItem.target_rest_sec || 90}s Descanso</span>
+              <Timer className="w-3.5 h-3.5 mr-1 text-emerald-400" aria-hidden="true" />
+              <span>{exItem.target_rest_sec || 90}&nbsp;s Descanso</span>
             </Button>
           </div>
 
           {/* Coaching Notes Callout */}
           {exItem.notes && (
-            <div className="flex items-start gap-2 text-xs bg-emerald-500/5 border border-emerald-500/20 p-2.5 rounded-xl text-foreground/90">
-              <Info className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2 text-xs bg-emerald-500/5 border border-emerald-500/20 p-2.5 rounded-xl text-foreground">
+              <Info className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" aria-hidden="true" />
               <div className="min-w-0">
                 <span className="font-bold text-[10px] uppercase tracking-wider text-emerald-400 block mb-0.5">
                   Indicaciones Técnicas:
@@ -202,18 +204,18 @@ function ExerciseCard({
           )}
 
           {/* Sets Recording Table */}
-          <div className="overflow-x-auto rounded-xl border border-border/60">
-            <table className="w-full text-xs text-left">
+          <div className="overflow-x-auto rounded-xl border border-border">
+            <table className="w-full text-xs text-left" aria-label={`Tabla de series para ${exercise.name}`}>
               <thead>
-                <tr className="text-[10px] font-extrabold uppercase border-b bg-foreground/[0.02] opacity-70">
-                  <th className="py-2.5 px-2.5 w-24">Serie</th>
-                  <th className="py-2.5 px-2.5 w-36">Peso Usado</th>
-                  <th className="py-2.5 px-2.5 w-24">Reps</th>
-                  <th className="py-2.5 px-2.5 w-28">RIR</th>
-                  <th className="py-2.5 px-2.5 text-center w-16">Estado</th>
+                <tr className="text-[10px] font-extrabold uppercase border-b border-border bg-surface-secondary text-muted">
+                  <th scope="col" className="py-2 px-2 sm:px-2.5">Set</th>
+                  <th scope="col" className="py-2 px-1.5 sm:px-2.5">Peso</th>
+                  <th scope="col" className="py-2 px-1.5 sm:px-2.5">Reps</th>
+                  <th scope="col" className="py-2 px-1.5 sm:px-2.5">RIR</th>
+                  <th scope="col" className="py-2 px-1.5 sm:px-2.5 text-center w-11 sm:w-16">Estado</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border/60">
+              <tbody className="divide-y divide-border">
                 {Array.from({ length: numSets }, (_, i) => i + 1).map((setNum) => {
                   const rawSet = exSets[setNum];
                   const weightVal = rawSet
@@ -236,18 +238,18 @@ function ExerciseCard({
                       key={setNum}
                       className={`transition-colors ${
                         isCompleted
-                          ? 'bg-emerald-500/[0.04]'
+                          ? 'bg-emerald-500/[0.06]'
                           : isDropSetItem
-                          ? 'bg-amber-500/[0.03]'
-                          : 'hover:bg-foreground/[0.01]'
+                          ? 'bg-amber-500/[0.04]'
+                          : 'hover:bg-surface-secondary/40'
                       }`}
                     >
                       {/* Set Label */}
-                      <td className="py-2.5 px-2.5 font-bold">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-foreground">SET {setNum}</span>
+                      <td className="py-2 px-2 sm:px-2.5 font-bold">
+                        <div className="flex items-center gap-1">
+                          <span className="text-foreground text-xs">S{setNum}</span>
                           {isDropSetItem && (
-                            <Chip size="sm" variant="soft" className="text-[9px] font-bold text-amber-400">
+                            <Chip size="sm" variant="soft" className="text-[8px] font-black text-amber-400 px-1 h-4">
                               DROP
                             </Chip>
                           )}
@@ -255,7 +257,7 @@ function ExerciseCard({
                       </td>
 
                       {/* Weight Used */}
-                      <td className="py-2.5 px-2.5">
+                      <td className="py-2 px-1.5 sm:px-2.5">
                         <div className="flex items-center gap-1">
                           <input
                             type="number"
@@ -263,12 +265,14 @@ function ExerciseCard({
                             placeholder="0"
                             value={weightVal === '' ? '' : weightVal}
                             onChange={(e) => onSetChange(exItem.id, setNum, 'weight', e.target.value)}
-                            className="w-16 sm:w-20 h-9 rounded-xl border border-border px-2 text-center text-xs font-black bg-foreground/5 focus:bg-background focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                            aria-label={`Peso en ${unitVal} para serie ${setNum} de ${exercise.name}`}
+                            className="w-13 sm:w-20 h-9 sm:h-10 rounded-xl border border-border px-1.5 sm:px-2 text-center text-xs font-black bg-surface text-foreground focus:bg-background focus:outline-none focus:ring-2 focus:ring-emerald-400 tabular-nums shadow-2xs"
                           />
                           <button
                             type="button"
                             onClick={() => onToggleUnit(exItem.id, setNum)}
-                            className="h-9 px-2 text-[11px] font-bold uppercase rounded-lg border border-border hover:bg-foreground/5 text-emerald-400 shrink-0 transition-colors"
+                            aria-label={`Cambiar unidad de peso serie ${setNum}. Actual: ${unitVal}`}
+                            className="h-9 sm:h-10 px-1.5 sm:px-2.5 text-[10px] sm:text-[11px] font-black uppercase rounded-lg border border-border hover:bg-surface-secondary text-emerald-400 shrink-0 transition-colors cursor-pointer"
                             title="Cambiar kg / lb"
                           >
                             {unitVal}
@@ -277,25 +281,27 @@ function ExerciseCard({
                       </td>
 
                       {/* Reps */}
-                      <td className="py-2.5 px-2.5">
+                      <td className="py-2 px-1.5 sm:px-2.5">
                         <input
                           type="number"
                           placeholder="0"
                           value={repsVal === '' ? '' : repsVal}
                           onChange={(e) => onSetChange(exItem.id, setNum, 'reps', e.target.value)}
-                          className="w-16 sm:w-20 h-9 rounded-xl border border-border px-2 text-center text-xs font-black bg-foreground/5 focus:bg-background focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                          aria-label={`Repeticiones para serie ${setNum} de ${exercise.name}`}
+                          className="w-12 sm:w-20 h-9 sm:h-10 rounded-xl border border-border px-1 text-center text-xs font-black bg-surface text-foreground focus:bg-background focus:outline-none focus:ring-2 focus:ring-emerald-400 tabular-nums shadow-2xs"
                         />
                       </td>
 
                       {/* RIR */}
-                      <td className="py-2.5 px-2.5">
+                      <td className="py-2 px-1.5 sm:px-2.5">
                         <select
                           value={String(rirVal)}
                           onChange={(e) => onSetChange(exItem.id, setNum, 'rir', e.target.value)}
-                          className="w-24 sm:w-28 h-9 rounded-xl border border-border px-2 text-xs font-semibold focus:outline-none bg-background cursor-pointer"
+                          aria-label={`RIR para serie ${setNum} de ${exercise.name}`}
+                          className="w-16 sm:w-28 h-9 sm:h-10 rounded-xl border border-border px-1 sm:px-2 text-[11px] sm:text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-surface text-foreground cursor-pointer shadow-2xs"
                         >
                           {RIR_OPTIONS.map((opt) => (
-                            <option key={opt.key} value={opt.key}>
+                            <option key={opt.key} value={opt.key} className="bg-surface text-foreground">
                               {opt.label}
                             </option>
                           ))}
@@ -303,19 +309,22 @@ function ExerciseCard({
                       </td>
 
                       {/* Status / Checkbox */}
-                      <td className="py-2.5 px-2.5 text-center">
-                        <Button
-                          isIconOnly
-                          size="sm"
-                          variant={isCompleted ? 'primary' : 'outline'}
-                          className={`h-9 w-9 rounded-xl ${
-                            isCompleted ? 'bg-emerald-500 text-slate-950 font-black' : ''
+                      <td className="py-2 px-1.5 sm:px-2.5 text-center">
+                        <button
+                          type="button"
+                          role="checkbox"
+                          aria-checked={isCompleted}
+                          aria-label={`Serie ${setNum} ${isCompleted ? 'completada. Haz clic para desmarcar' : 'pendiente. Haz clic para marcar como completada'}`}
+                          className={`inline-flex items-center justify-center h-9 w-9 sm:h-10 sm:w-10 rounded-xl border transition-all cursor-pointer active:scale-95 ${
+                            isCompleted
+                              ? 'bg-emerald-500 border-emerald-500 text-slate-950 font-black shadow-xs'
+                              : 'bg-surface border-border text-muted hover:border-emerald-500/40'
                           }`}
-                          onPress={() => onSetChange(exItem.id, setNum, 'completed', !isCompleted)}
+                          onClick={() => onSetChange(exItem.id, setNum, 'completed', !isCompleted)}
                           title={isCompleted ? 'Marcar como pendiente' : 'Marcar como completada'}
                         >
-                          {isCompleted ? <Check className="w-4 h-4 stroke-[3]" /> : null}
-                        </Button>
+                          {isCompleted ? <Check className="w-4 h-4 stroke-[3]" aria-hidden="true" /> : null}
+                        </button>
                       </td>
                     </tr>
                   );

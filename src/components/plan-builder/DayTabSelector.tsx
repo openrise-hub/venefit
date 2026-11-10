@@ -1,5 +1,4 @@
-import React, { memo } from 'react';
-import { Button } from '@heroui/react';
+import React, { memo, useMemo } from 'react';
 
 export const DAYS_OF_WEEK = [
   { id: 1, name: 'Lunes', short: 'Lun' },
@@ -26,45 +25,67 @@ function DayTabSelector({
   onSelectActiveTab,
   hideActiveTabs = false
 }: DayTabSelectorProps) {
+  const sortedDays = useMemo(() => {
+    return [...selectedDaysOfWeek].sort((a, b) => (a === 0 ? 7 : a) - (b === 0 ? 7 : b));
+  }, [selectedDaysOfWeek]);
+
   return (
     <div className="space-y-3">
       <div>
         <label className="text-xs font-bold text-foreground block mb-2">
           Días de la semana a entrenar:
         </label>
-        <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+        <div
+          role="group"
+          aria-label="Días de la semana a entrenar"
+          className="grid grid-cols-7 gap-1.5 sm:gap-2 max-w-sm sm:max-w-md"
+        >
           {DAYS_OF_WEEK.map((d) => {
             const isSelected = selectedDaysOfWeek.includes(d.id);
             return (
-              <Button
+              <button
                 key={d.id}
-                size="sm"
-                variant={isSelected ? "primary" : "outline"}
-                className="font-bold text-[11px] sm:text-xs px-1 min-w-0"
-                onPress={() => onToggleDay(d.id)}
+                type="button"
+                aria-pressed={isSelected}
+                aria-label={`Entrenar los ${d.name}s`}
+                onClick={() => onToggleDay(d.id)}
+                className={`w-full h-10 sm:h-11 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer flex items-center justify-center active:scale-95 ${
+                  isSelected
+                    ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20 ring-2 ring-emerald-500/30'
+                    : 'bg-surface border border-border text-muted hover:text-foreground hover:border-emerald-500/40'
+                }`}
               >
                 {d.short}
-              </Button>
+              </button>
             );
           })}
         </div>
       </div>
 
-      {!hideActiveTabs && onSelectActiveTab && selectedDaysOfWeek.length > 0 && (
-        <div className="flex items-center gap-1.5 p-1 rounded-2xl border overflow-x-auto">
-          {selectedDaysOfWeek.map((dayId) => {
+      {!hideActiveTabs && onSelectActiveTab && sortedDays.length > 0 && (
+        <div
+          role="tablist"
+          aria-label="Pestañas de días de rutina seleccionados"
+          className="flex flex-wrap items-center gap-1.5 p-1.5 rounded-2xl border border-border bg-surface-secondary/50 max-w-fit"
+        >
+          {sortedDays.map((dayId) => {
             const dayObj = DAYS_OF_WEEK.find(d => d.id === dayId);
             const isActive = activeDayTab === dayId;
             return (
-              <Button
+              <button
                 key={dayId}
-                size="sm"
-                variant={isActive ? "primary" : "ghost"}
-                className="shrink-0 font-bold text-xs"
-                onPress={() => onSelectActiveTab(dayId)}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => onSelectActiveTab(dayId)}
+                className={`shrink-0 font-bold text-xs h-8 px-3 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                  isActive
+                    ? 'bg-emerald-500 text-slate-950 font-black shadow-xs'
+                    : 'bg-surface border border-border text-muted hover:text-foreground hover:border-emerald-500/30'
+                }`}
               >
-                {dayObj ? dayObj.name : `Día ${dayId}`}
-              </Button>
+                <span>{dayObj ? dayObj.name : `Día ${dayId}`}</span>
+              </button>
             );
           })}
         </div>

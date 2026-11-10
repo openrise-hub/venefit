@@ -1,10 +1,33 @@
 @import "tailwindcss";
 @import "@heroui/styles";
 
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Outfit', system-ui, -apple-system, sans-serif;
+}
+
 @layer base {
   :root {
     --font-heading: 'Outfit', system-ui, -apple-system, sans-serif;
     --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+
+    /* Venefit Brand Emerald Tokens for HeroUI Accent (Primary) */
+    --accent: oklch(0.696 0.17 162.48);
+    --accent-hover: oklch(0.63 0.16 162.48);
+    --accent-foreground: #022c22;
+    --accent-soft: color-mix(in oklab, var(--accent) 15%, transparent);
+    --accent-soft-foreground: oklch(0.42 0.14 162.48);
+    --focus: oklch(0.696 0.17 162.48);
+  }
+
+  .dark,
+  [data-theme="dark"] {
+    --accent: oklch(0.696 0.17 162.48);
+    --accent-hover: oklch(0.76 0.16 162.48);
+    --accent-foreground: #022c22;
+    --accent-soft: color-mix(in oklab, var(--accent) 20%, transparent);
+    --accent-soft-foreground: oklch(0.78 0.15 162.48);
+    --focus: oklch(0.76 0.16 162.48);
   }
 
   body {
@@ -17,6 +40,26 @@
 
   h1, h2, h3, h4, .font-heading {
     font-family: var(--font-heading);
+  }
+
+  button, a, input, select, textarea {
+    touch-action: manipulation;
+  }
+
+  /* Remove spin arrows from number inputs across all browsers */
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent, #10b981);
+    outline-offset: 2px;
   }
 }
 
@@ -38,8 +81,16 @@
   background: var(--muted, #334155);
 }
 
+.safe-top {
+  padding-top: max(env(safe-area-inset-top, 0rem), 0.75rem);
+}
+
 .safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0.75rem);
+  padding-bottom: max(env(safe-area-inset-bottom, 0rem), 0.75rem);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
 @keyframes spinSlow {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button, Chip } from '@heroui/react';
-import { Sparkles, RotateCcw, LogOut, FilePlus, RefreshCw } from 'lucide-react';
+import { FlaskConical, RotateCcw, LogOut, FilePlus, RefreshCw } from 'lucide-react';
 import { resetDemoDataToPopulated, resetDemoDataToEmpty, getDemoSeedMode } from '../lib/demoData';
 import { logoutTrainer } from '../lib/pocketbase';
 import { showToast } from '../lib/toastStore';
@@ -34,68 +34,67 @@ export default function DemoBanner({ onResetData }: DemoBannerProps) {
   };
 
   return (
-    <aside aria-label="Aviso de Modo Demostración" className="bg-gradient-to-r from-emerald-950/80 via-slate-900/90 to-teal-950/80 border-b border-emerald-500/30 px-3 sm:px-4 py-2">
-      <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2.5">
-        <div className="flex items-center gap-2 min-w-0">
-          <Chip
-            size="sm"
-            variant="primary"
-            className="font-black text-[10px] tracking-wider uppercase bg-emerald-500 text-slate-950 shrink-0"
-          >
-            <Sparkles className="w-3 h-3 mr-1 inline" />
-            Modo Demo ({currentMode === 'populated' ? 'Con Datos' : 'Semilla Vacía'})
-          </Chip>
-          <p className="text-xs text-emerald-200/90 font-medium truncate hidden md:inline">
-            Modo autónomo en LocalStorage sin servidor. Puedes alternar entre datos de ejemplo o iniciar desde cero.
-          </p>
+    <aside
+      aria-label="Aviso de Modo Demostración"
+      className="bg-zinc-900 border-b border-emerald-500/30 px-3 py-1.5 text-zinc-100 transition-colors"
+    >
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <div className="flex items-center gap-1 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider shrink-0">
+            <FlaskConical className="w-3 h-3 shrink-0" aria-hidden="true" />
+            <span>Demo {currentMode === 'populated' ? 'Datos' : 'Limpio'}</span>
+          </div>
+          <span className="text-[11px] text-zinc-400 truncate hidden sm:inline">
+            LocalStorage sin servidor
+          </span>
         </div>
 
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center gap-1 shrink-0">
           {currentMode !== 'populated' ? (
-            <Button
-              size="sm"
-              variant="outline"
-              className="text-xs font-bold border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 h-7 px-2.5"
-              onPress={handleLoadPopulated}
+            <button
+              type="button"
+              onClick={handleLoadPopulated}
+              aria-label="Cargar datos de ejemplo"
+              className="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 px-2 py-1 rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
             >
-              <RefreshCw className="w-3 h-3 mr-1" />
-              <span>Cargar Datos Ejemplo</span>
-            </Button>
+              <RefreshCw className="w-3 h-3" aria-hidden="true" />
+              <span>Ejemplos</span>
+            </button>
           ) : (
-            <Button
-              size="sm"
-              variant="outline"
-              className="text-xs font-bold border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 h-7 px-2.5"
-              onPress={handleLoadPopulated}
+            <button
+              type="button"
+              onClick={handleLoadPopulated}
+              aria-label="Reiniciar datos de ejemplo originales"
               title="Restaura los 3 clientes y rutinas de ejemplo originales"
+              className="text-[11px] font-bold text-zinc-300 hover:text-white hover:bg-white/10 px-2 py-1 rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
             >
-              <RotateCcw className="w-3 h-3 mr-1" />
-              <span>Reiniciar Ejemplos</span>
-            </Button>
+              <RotateCcw className="w-3 h-3" aria-hidden="true" />
+              <span>Reiniciar</span>
+            </button>
           )}
 
           {currentMode !== 'empty' && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="text-xs font-bold border-slate-700 text-slate-300 hover:bg-slate-800 h-7 px-2"
-              onPress={handleClearToEmpty}
+            <button
+              type="button"
+              onClick={handleClearToEmpty}
+              aria-label="Vaciar a modo limpio con 0 clientes"
               title="Borra todos los clientes para probar el registro desde cero"
+              className="text-[11px] font-bold text-zinc-300 hover:text-white hover:bg-white/10 px-2 py-1 rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
             >
-              <FilePlus className="w-3 h-3 mr-1" />
-              <span>Vaciar a Modo Limpio</span>
-            </Button>
+              <FilePlus className="w-3 h-3" aria-hidden="true" />
+              <span className="hidden xs:inline">Vaciar</span>
+            </button>
           )}
 
-          <Button
-            size="sm"
-            variant="ghost"
-            className="text-xs font-semibold text-slate-300 hover:text-white h-7 px-2"
-            onPress={handleExit}
+          <button
+            type="button"
+            onClick={handleExit}
+            aria-label="Salir de la sesión de demostración"
+            className="text-[11px] font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 px-2 py-1 rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
           >
-            <LogOut className="w-3 h-3 mr-1" />
+            <LogOut className="w-3 h-3" aria-hidden="true" />
             <span>Salir</span>
-          </Button>
+          </button>
         </div>
       </div>
     </aside>

@@ -1,6 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { ModalBackdrop, ModalContainer, ModalDialog, ModalHeader, ModalHeading, ModalBody, ModalFooter, ModalCloseTrigger, Button } from '@heroui/react';
-import { Calendar, CheckCircle2 } from 'lucide-react';
+import { Calendar, CheckCircle2, RefreshCw } from 'lucide-react';
 import ExerciseSelectorModal from './ExerciseSelectorModal';
 import PlanMetadataForm from './plan-builder/PlanMetadataForm';
 import DayTabSelector from './plan-builder/DayTabSelector';
@@ -8,6 +8,7 @@ import DayRoutineEditor from './plan-builder/DayRoutineEditor';
 import { formatDateISO } from '../lib/utils';
 import { createAndReplicatePlan } from '../lib/api';
 import { showToast } from '../lib/toastStore';
+import { Client, ClientPlan } from '../types';
 
 const DAYS_OF_WEEK = [
   { id: 1, name: 'Lunes', short: 'Lun' },
@@ -23,13 +24,49 @@ interface PlanBuilderModalProps {
   isOpen: boolean;
   onClose: () => void;
   clientId: string;
+  client?: Client | null;
+  existingPlans?: ClientPlan[];
   onPlanCreated: () => void;
 }
 
-export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCreated }: PlanBuilderModalProps) {
+export default function PlanBuilderModal({
+  isOpen,
+  onClose,
+  clientId,
+  client,
+  existingPlans = [],
+  onPlanCreated
+}: PlanBuilderModalProps) {
   const today = formatDateISO(new Date());
 
-  const [planName, setPlanName] = useState('Plan de Entrenamiento Intensivo');
+  const defaultPlanName = useMemo(() => {
+    const rawName = client?.name?.trim() || '';
+    const firstName = rawName ? rawName.split(/\s+/)[0] : 'Cliente';
+    const baseName = `Plan de ${firstName}`;
+
+    const existingNames = existingPlans.map(p =>
+      (p.name || p.plan_name || '').trim().toLowerCase()
+    );
+
+    if (!existingNames.includes(baseName.toLowerCase())) {
+      return baseName;
+    }
+
+    let counter = 2;
+    while (existingNames.includes(`${baseName} ${counter}`.toLowerCase())) {
+      counter++;
+    }
+    return `${baseName} ${counter}`;
+  }, [client, existingPlans]);
+
+  const [planName, setPlanName] = useState(defaultPlanName);
+
+  // Sync planName when modal opens or client changes
+  useEffect(() => {
+    if (isOpen) {
+      setPlanName(defaultPlanName);
+    }
+  }, [isOpen, defaultPlanName]);
   const [startDateStr, setStartDateStr] = useState(today);
   const [endDateStr, setEndDateStr] = useState(() => {
     const end = new Date();
@@ -51,11 +88,13 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
 
   const toggleDaySelection = useCallback((dayId: number) => {
     setSelectedDaysOfWeek(prev => {
+      let updated: number[];
       if (prev.includes(dayId)) {
-        return prev.filter(d => d !== dayId);
+        updated = prev.filter(d => d !== dayId);
       } else {
-        return [...prev, dayId];
+        updated = [...prev, dayId];
       }
+      return updated.sort((a, b) => (a === 0 ? 7 : a) - (b === 0 ? 7 : b));
     });
 
     setDayRoutinesConfig(prev => {
@@ -201,16 +240,18 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
   return (
     <ModalBackdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
       <ModalContainer size="lg" placement="center" className="p-2 sm:p-4">
-        <ModalDialog className="w-full max-w-2xl mx-auto overflow-hidden">
-          <ModalHeader className="flex items-start sm:items-center justify-between border-b pb-3.5 gap-2">
+        <ModalDialog className="w-full max-w-2xl mx-auto overflow-hidden border border-border shadow-2xl bg-surface">
+          <ModalHeader className="flex items-start sm:items-center justify-between border-b border-border pb-3.5 gap-2">
             <div className="flex items-center gap-2.5 min-w-0">
-              <Calendar className="w-5 h-5 text-emerald-400 shrink-0" />
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                <Calendar className="w-5 h-5" aria-hidden="true" />
+              </div>
               <div className="min-w-0">
-                <ModalHeading className="text-sm sm:text-base font-bold text-foreground">Creador de Planes</ModalHeading>
-                <p className="text-[11px] sm:text-xs font-medium text-foreground/80 truncate">Diseña rutinas y replícalas en el rango de fechas</p>
+                <ModalHeading className="text-sm sm:text-base font-extrabold text-foreground">Creador de Planes</ModalHeading>
+                <p className="text-[11px] sm:text-xs font-medium text-muted truncate">Diseña rutinas y replícalas en el rango de fechas</p>
               </div>
             </div>
-            <ModalCloseTrigger onClick={onClose} />
+            <ModalCloseTrigger onClick={onClose} aria-label="Cerrar creador de planes" />
           </ModalHeader>
 
           <ModalBody className="py-4 sm:py-5 space-y-4 max-h-[70vh] overflow-y-auto">
@@ -245,7 +286,7 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
             )}
           </ModalBody>
 
-          <ModalFooter className="border-t pt-3.5 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5">
+          <ModalFooter className="border-t border-border pt-3.5 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5">
             <Button variant="ghost" size="sm" onPress={onClose} className="font-bold w-full sm:w-auto">
               Cancelar
             </Button>
@@ -254,10 +295,19 @@ export default function PlanBuilderModal({ isOpen, onClose, clientId, onPlanCrea
               size="sm"
               isDisabled={saving}
               onPress={handleSaveAndReplicate}
-              className="font-bold w-full sm:w-auto min-w-0"
+              className="font-bold w-full sm:w-auto min-w-0 shadow-sm"
             >
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
-              <span className="truncate">{saving ? 'Guardando...' : 'Guardar y Replicar Plan'}</span>
+              {saving ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin shrink-0" aria-hidden="true" />
+                  <span className="truncate">Guardando…</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  <span className="truncate">Guardar y Replicar Plan</span>
+                </>
+              )}
             </Button>
           </ModalFooter>
         </ModalDialog>

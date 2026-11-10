@@ -198,10 +198,10 @@ export default function DailyWorkoutView({
 
   if (isLoading && exercisesList.length === 0) {
     return (
-      <Card>
-        <CardContent className="p-8 text-center text-xs">
-          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-emerald-400" />
-          Cargando entrenamiento...
+      <Card className="border border-border">
+        <CardContent className="p-8 text-center text-xs" role="status" aria-live="polite">
+          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-emerald-400" aria-hidden="true" />
+          <span className="text-muted font-medium">Cargando entrenamiento…</span>
         </CardContent>
       </Card>
     );
@@ -209,20 +209,21 @@ export default function DailyWorkoutView({
 
   if (!routineData || exercisesList.length === 0) {
     return (
-      <Card className="my-4">
+      <Card className="my-4 border border-border shadow-xs">
         <CardContent className="p-8 text-center">
-          <CalendarX className="w-12 h-12 mx-auto mb-3 opacity-60 text-emerald-400" />
-          <h3 className="text-base font-bold mb-1">Sin Rutina Programada para Hoy</h3>
-          <p className="text-xs max-w-sm mx-auto mb-4 opacity-70">
-            No hay ejercicios asignados para esta fecha. Crea o asigna un plan de entrenamiento.
+          <CalendarX className="w-12 h-12 mx-auto mb-3 text-emerald-400/80" aria-hidden="true" />
+          <h3 className="text-base font-bold mb-1 text-foreground">Sin Rutina Programada para Hoy</h3>
+          <p className="text-xs max-w-sm mx-auto mb-4 text-muted leading-relaxed">
+            No hay ejercicios asignados para esta fecha. Crea o asigna un plan de entrenamiento replicado.
           </p>
           <Button
             variant="primary"
             size="sm"
             onPress={onOpenPlanBuilder}
-            className="font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950"
+            aria-label="Crear plan de entrenamiento replicado"
+            className="font-bold shadow-sm"
           >
-            <Plus className="w-4 h-4 mr-1" />
+            <Plus className="w-4 h-4 mr-1" aria-hidden="true" />
             <span>Crear Plan Replicado</span>
           </Button>
         </CardContent>
@@ -233,26 +234,26 @@ export default function DailyWorkoutView({
   return (
     <div className="space-y-4">
       {/* Routine Header Card */}
-      <Card>
+      <Card className="border border-border shadow-xs">
         <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <Chip size="sm" variant="soft" className="font-semibold text-emerald-400">
+              <Chip size="sm" variant="soft" className="font-semibold text-emerald-400 border border-emerald-500/30">
                 Rutina del Día
               </Chip>
               {routineData.muscle_groups && routineData.muscle_groups.length > 0 && (
-                <Chip size="sm" variant="soft">
+                <Chip size="sm" variant="soft" className="text-muted">
                   {routineData.muscle_groups.join(', ')}
                 </Chip>
               )}
             </div>
-            <h3 className="text-lg font-black mt-1 font-heading">
+            <h3 className="text-lg font-black mt-1 font-heading text-foreground">
               {routineData.routine_name}
             </h3>
           </div>
 
-          <div className="text-xs opacity-75 font-bold">
-            {exercisesList.length} Ejercicio{exercisesList.length !== 1 ? 's' : ''}
+          <div className="text-xs text-muted font-bold tabular-nums">
+            {exercisesList.length}&nbsp;Ejercicio{exercisesList.length !== 1 ? 's' : ''}
           </div>
         </CardContent>
       </Card>

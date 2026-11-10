@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent, Chip, Button } from '@heroui/react';
-import { Calendar, Dumbbell, Coffee, ArrowRight, Plus, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Calendar, Coffee, ArrowRight, Plus } from 'lucide-react';
 import { useWeekRoutinesList } from '../lib/useWorkoutData';
 import { getWeekDates, formatDateISO } from '../lib/utils';
 
@@ -21,31 +21,32 @@ export default function WeeklyOverviewView({
 }: WeeklyOverviewViewProps) {
   const currentWeekDays = getWeekDates(selectedDateStr);
   const weekDateStrings = currentWeekDays.map(d => d.dateStr);
-  const { weekData, isLoading } = useWeekRoutinesList(clientId, weekDateStrings);
+  const { weekData } = useWeekRoutinesList(clientId, weekDateStrings);
   const todayStr = formatDateISO(new Date());
 
   const totalRoutinesInWeek = Object.values(weekData).filter(Boolean).length;
+  const monthName = new Date(selectedDateStr + 'T00:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
 
   return (
     <div className="space-y-4">
       {/* Header Info */}
-      <Card>
+      <Card className="border border-border shadow-xs">
         <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
-              <Calendar className="w-5 h-5" />
+              <Calendar className="w-5 h-5" aria-hidden="true" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-extrabold font-heading">
+                <h3 className="text-base font-extrabold font-heading text-foreground">
                   Resumen Semanal de Entrenamientos
                 </h3>
                 <Chip size="sm" variant="primary" className="text-[10px] font-bold">
-                  {totalRoutinesInWeek} días activos
+                  {totalRoutinesInWeek}&nbsp;días activos
                 </Chip>
               </div>
-              <p className="text-xs opacity-70 mt-0.5">
-                Semana del {currentWeekDays[0]?.dayNum} al {currentWeekDays[6]?.dayNum} ({new Date(selectedDateStr + 'T00:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })})
+              <p className="text-xs text-muted mt-0.5 font-medium">
+                Semana del {currentWeekDays[0]?.dayNum} al {currentWeekDays[6]?.dayNum} de {monthName}
               </p>
             </div>
           </div>
@@ -53,10 +54,11 @@ export default function WeeklyOverviewView({
           <Button
             size="sm"
             variant="outline"
-            className="font-bold text-xs border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+            className="font-bold text-xs border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 h-8"
             onPress={onOpenPlanBuilder}
+            aria-label="Crear o modificar plan de entrenamiento"
           >
-            <Plus className="w-3.5 h-3.5 mr-1" />
+            <Plus className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
             <span>Crear / Modificar Plan</span>
           </Button>
         </CardContent>
@@ -74,31 +76,43 @@ export default function WeeklyOverviewView({
           return (
             <div
               key={day.dateStr}
+              role="button"
+              tabIndex={0}
+              aria-label={`${day.dayName} ${day.dayNum}. ${hasRoutine ? dayWorkout.routine.routine_name : 'Día de descanso'}${isSelected ? ', seleccionado' : ''}`}
               onClick={() => {
                 onSelectDate(day.dateStr);
                 if (hasRoutine) {
                   onSwitchToDailyView();
                 }
               }}
-              className="cursor-pointer group"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSelectDate(day.dateStr);
+                  if (hasRoutine) {
+                    onSwitchToDailyView();
+                  }
+                }
+              }}
+              className="cursor-pointer group focus-visible:outline-2 focus-visible:outline-emerald-400 focus-visible:outline-offset-2 rounded-2xl"
             >
               <Card
                 className={`h-full transition-all duration-200 border ${
                   isSelected
-                    ? 'border-emerald-400 shadow-lg shadow-emerald-500/5 ring-1 ring-emerald-400'
+                    ? 'border-emerald-400 shadow-md shadow-emerald-500/10 ring-1 ring-emerald-400 bg-surface'
                     : isToday
-                    ? 'border-emerald-500/50'
-                    : 'hover:border-foreground/30'
+                    ? 'border-emerald-500/50 bg-surface'
+                    : 'border-border hover:border-foreground/30 bg-surface'
                 }`}
               >
                 <CardContent className="p-4 flex flex-col justify-between h-full space-y-3">
                   {/* Day Header */}
-                  <div className="flex items-center justify-between border-b pb-2.5">
+                  <div className="flex items-center justify-between border-b border-border pb-2.5">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-black uppercase tracking-wider text-foreground">
                         {day.dayName}
                       </span>
-                      <span className="text-base font-black text-emerald-400">
+                      <span className="text-base font-black text-emerald-400 tabular-nums">
                         {day.dayNum}
                       </span>
                     </div>
@@ -110,7 +124,7 @@ export default function WeeklyOverviewView({
                         </Chip>
                       )}
                       {isSelected && !isToday && (
-                        <Chip size="sm" variant="soft" className="text-[9px] font-bold">
+                        <Chip size="sm" variant="soft" className="text-[9px] font-bold text-emerald-400 border border-emerald-500/30">
                           Seleccionado
                         </Chip>
                       )}
@@ -138,43 +152,43 @@ export default function WeeklyOverviewView({
 
                       {/* Mini exercise preview */}
                       <div className="space-y-1 pt-1">
-                        <span className="text-[10px] font-bold uppercase tracking-wider opacity-60 block">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted block">
                           Ejercicios ({exercises.length}):
                         </span>
                         <div className="space-y-1">
                           {exercises.slice(0, 3).map((ex, i) => {
                             const exName = ex.expandedExercise?.name || (typeof ex.exercise === 'object' ? (ex.exercise as any).name : 'Ejercicio');
                             return (
-                              <div key={ex.id || i} className="text-[11px] opacity-80 flex items-center justify-between gap-1">
+                              <div key={ex.id || i} className="text-[11px] text-foreground/80 flex items-center justify-between gap-1">
                                 <span className="truncate">• {exName}</span>
-                                <span className="text-[10px] font-bold opacity-60 shrink-0">
-                                  {ex.target_sets}×{ex.target_reps}
+                                <span className="text-[10px] font-bold text-muted shrink-0 tabular-nums">
+                                  {ex.target_sets}&nbsp;×&nbsp;{ex.target_reps}
                                 </span>
                               </div>
                             );
                           })}
                           {exercises.length > 3 && (
                             <span className="text-[10px] text-emerald-400 font-bold block pt-0.5">
-                              +{exercises.length - 3} ejercicios más...
+                              +{exercises.length - 3}&nbsp;ejercicios más…
                             </span>
                           )}
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center text-center py-6 space-y-1 opacity-60">
-                      <Coffee className="w-6 h-6 mb-1 text-slate-400" />
-                      <span className="text-xs font-bold">Día de Descanso</span>
-                      <p className="text-[10px] opacity-75">Sin entrenamiento programado</p>
+                    <div className="flex-1 flex flex-col items-center justify-center text-center py-6 space-y-1 text-muted">
+                      <Coffee className="w-6 h-6 mb-1 text-muted opacity-60" aria-hidden="true" />
+                      <span className="text-xs font-bold text-foreground/80">Día de Descanso</span>
+                      <p className="text-[10px] text-muted">Sin entrenamiento programado</p>
                     </div>
                   )}
 
                   {/* Card Footer Button */}
-                  <div className="pt-2 border-t">
+                  <div className="pt-2 border-t border-border">
                     {hasRoutine ? (
                       <div className="w-full text-xs font-bold text-emerald-400 flex items-center justify-between group-hover:translate-x-0.5 transition-transform">
                         <span>Ver / Registrar Serie</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                       </div>
                     ) : (
                       <button
@@ -184,9 +198,10 @@ export default function WeeklyOverviewView({
                           onSelectDate(day.dateStr);
                           onOpenPlanBuilder();
                         }}
-                        className="w-full text-[11px] font-bold text-foreground/70 hover:text-emerald-400 flex items-center justify-center gap-1 py-1 transition-colors"
+                        aria-label={`Asignar rutina para ${day.dayName} ${day.dayNum}`}
+                        className="w-full text-[11px] font-bold text-muted hover:text-emerald-400 flex items-center justify-center gap-1 py-1 transition-colors cursor-pointer"
                       >
-                        <Plus className="w-3.5 h-3.5" />
+                        <Plus className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>Asignar Rutina</span>
                       </button>
                     )}
@@ -200,4 +215,3 @@ export default function WeeklyOverviewView({
     </div>
   );
 }
-

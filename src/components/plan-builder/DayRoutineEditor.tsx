@@ -49,16 +49,18 @@ function DayRoutineEditor({
   const exercises = activeConfig.exercises || [];
 
   return (
-    <Card className="p-3.5 sm:p-4">
+    <Card className="p-3.5 sm:p-4 border border-border shadow-2xs bg-surface">
       <CardContent className="p-0 space-y-3.5">
         <div className="space-y-1.5">
-          <label className="text-xs font-bold text-foreground block">
+          <label htmlFor="routine-split-select" className="text-xs font-bold text-foreground block">
             Tipo de Rutina / Split del Día
           </label>
           <select
+            id="routine-split-select"
+            aria-label="Tipo de rutina o split del día"
             value={activeConfig.routineName || ROUTINE_SPLIT_OPTIONS[0]}
             onChange={(e) => onRoutineNameChange(activeDayTab, e.target.value)}
-            className="w-full h-10 rounded-xl border px-3 text-xs font-semibold focus:outline-none bg-background text-foreground cursor-pointer"
+            className="w-full h-10 rounded-xl border border-border px-3 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-background text-foreground cursor-pointer shadow-2xs"
           >
             {ROUTINE_SPLIT_OPTIONS.map((opt) => (
               <option key={opt} value={opt} className="bg-background text-foreground font-medium">
@@ -69,24 +71,25 @@ function DayRoutineEditor({
         </div>
 
         <div className="flex items-center justify-between pt-1">
-          <span className="text-xs font-bold text-foreground">
+          <span className="text-xs font-bold text-foreground tabular-nums">
             Ejercicios ({exercises.length})
           </span>
           <Button
             variant="primary"
             size="sm"
-            className="font-bold text-xs"
+            className="font-bold text-xs h-8 shadow-xs"
             onPress={onOpenExerciseSelector}
+            aria-label="Agregar ejercicio al día actual"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 mr-1" aria-hidden="true" />
             <span>Agregar Ejercicio</span>
           </Button>
         </div>
 
         <div className="space-y-2.5">
           {exercises.length === 0 ? (
-            <div className="text-center py-6 text-xs border border-dashed rounded-xl opacity-60">
-              Presiona "Agregar Ejercicio" para armar la rutina de este día.
+            <div className="text-center py-7 text-xs border border-dashed border-border rounded-xl text-muted">
+              Presiona “Agregar Ejercicio” para armar la rutina de este día.
             </div>
           ) : (
             exercises.map((ex, idx) => (

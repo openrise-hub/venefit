@@ -94,3 +94,53 @@ export function formatTime(seconds: number): string {
   const secs = seconds % 60;
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
+
+export function calculatePlanDates({
+  durationWeeks,
+  startDayId = 1,
+  startedBefore = false,
+  referenceDate = new Date()
+}: {
+  durationWeeks: number;
+  startDayId?: number;
+  startedBefore?: boolean;
+  referenceDate?: Date;
+}): { startDateStr: string; endDateStr: string; startDate: Date; endDate: Date } {
+  const today = new Date(referenceDate);
+  today.setHours(0, 0, 0, 0);
+  const todayDay = today.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+
+  let startDate: Date;
+
+  if (startedBefore) {
+    // Calculate Monday of the current week
+    const daysSinceMonday = todayDay === 0 ? 6 : todayDay - 1;
+    const currentMonday = new Date(today);
+    currentMonday.setDate(today.getDate() - daysSinceMonday);
+
+    // Target day offset from Monday (Monday = 0, Tuesday = 1, ..., Sunday = 6)
+    const targetOffset = startDayId === 0 ? 6 : startDayId - 1;
+    startDate = new Date(currentMonday);
+    startDate.setDate(currentMonday.getDate() + targetOffset);
+  } else {
+    // If today is that day -> starts today. Otherwise next upcoming occurrence
+    if (todayDay === startDayId) {
+      startDate = new Date(today);
+    } else {
+      const daysToAdd = (startDayId - todayDay + 7) % 7;
+      startDate = new Date(today);
+      startDate.setDate(today.getDate() + daysToAdd);
+    }
+  }
+
+  const weeks = Math.max(1, durationWeeks);
+  const endDate = new Date(startDate);
+  endDate.setDate(startDate.getDate() + (weeks * 7 - 1));
+
+  return {
+    startDate,
+    endDate,
+    startDateStr: formatDateISO(startDate),
+    endDateStr: formatDateISO(endDate)
+  };
+}

@@ -130,7 +130,14 @@ export default function App() {
   const isDemo = isDevSession();
 
   return (
-    <div className="min-h-screen flex flex-col font-sans antialiased pb-24 md:pb-12">
+    <div className="min-h-screen flex flex-col font-sans antialiased pb-24 md:pb-12 bg-background text-foreground transition-colors">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-emerald-500 focus:text-slate-950 focus:font-black focus:rounded-xl focus:shadow-xl"
+      >
+        Saltar al contenido principal
+      </a>
+
       <ToastContainer />
 
       {isDemo && (
@@ -150,21 +157,25 @@ export default function App() {
         onOpenPlanBuilder={handleOpenPlanBuilder}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-4 py-4 sm:py-6">
+      <main id="main-content" className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-4 py-4 sm:py-6">
         {!loadingClients && clients.length === 0 && (
-          <Card className="my-6">
+          <Card className="my-6 border border-border shadow-xs">
             <CardContent className="p-8 flex flex-col items-center justify-center text-center">
-              <Users className="w-12 h-12 mb-3 opacity-60 text-emerald-400" />
-              <h3 className="text-lg font-bold mb-1">Bienvenido a Venefit</h3>
-              <p className="text-xs opacity-70 max-w-sm mb-4">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-3">
+                <Users className="w-7 h-7" aria-hidden="true" />
+              </div>
+              <h3 className="text-lg font-bold mb-1 text-foreground">Bienvenido a Venefit</h3>
+              <p className="text-xs text-muted max-w-sm mb-4 leading-relaxed">
                 Agrega un cliente para comenzar a crear planes de entrenamiento y registrar rutinas.
               </p>
               <Button
                 variant="primary"
                 size="sm"
                 onPress={handleOpenNewClient}
+                aria-label="Agregar primer cliente"
+                className="font-bold shadow-sm"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 mr-1" aria-hidden="true" />
                 <span>Agregar Primer Cliente</span>
               </Button>
             </CardContent>
@@ -209,13 +220,15 @@ export default function App() {
         {activeTab === 'clients' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-black">Lista de Clientes</h2>
+              <h2 className="text-lg font-black text-foreground">Lista de Clientes</h2>
               <Button
                 variant="primary"
                 size="sm"
                 onPress={handleOpenNewClient}
+                aria-label="Crear nuevo cliente"
+                className="font-bold shadow-xs"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 mr-1" aria-hidden="true" />
                 <span>Nuevo Cliente</span>
               </Button>
             </div>
@@ -224,27 +237,37 @@ export default function App() {
               {clients.map((c) => (
                 <div
                   key={c.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Seleccionar cliente ${c.name}, objetivo: ${c.goal || 'Sin objetivo registrado'}`}
                   onClick={() => {
                     handleSelectClient(c);
                     setActiveTab('workout');
                   }}
-                  className="cursor-pointer"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleSelectClient(c);
+                      setActiveTab('workout');
+                    }
+                  }}
+                  className="cursor-pointer focus-visible:outline-2 focus-visible:outline-emerald-400 focus-visible:outline-offset-2 rounded-2xl"
                 >
-                  <Card>
+                  <Card className="border border-border bg-surface hover:border-foreground/30 transition-all shadow-2xs">
                     <CardContent className="p-4 flex flex-col justify-between">
                       <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-xl border font-bold flex items-center justify-center text-base shrink-0">
-                          {c.name.charAt(0)}
+                        <div className="w-10 h-10 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-black flex items-center justify-center text-base shrink-0">
+                          {c.name.charAt(0).toUpperCase()}
                         </div>
-                        <div>
-                          <h4 className="text-sm font-extrabold">{c.name}</h4>
-                          <p className="text-xs opacity-70 mt-0.5">{c.goal || 'Sin objetivo registrado'}</p>
+                        <div className="min-w-0">
+                          <h4 className="text-sm font-extrabold text-foreground truncate">{c.name}</h4>
+                          <p className="text-xs text-muted mt-0.5 truncate">{c.goal || 'Sin objetivo registrado'}</p>
                         </div>
                       </div>
 
-                      <div className="border-t pt-3 mt-3 flex items-center justify-between text-xs opacity-70">
-                        <span>Peso: <strong>{c.current_weight || '-'} kg</strong></span>
-                        <span>Altura: <strong>{c.height || '-'} cm</strong></span>
+                      <div className="border-t border-border pt-3 mt-3 flex items-center justify-between text-xs text-muted">
+                        <span>Peso: <strong className="text-foreground tabular-nums">{c.current_weight || '-'}&nbsp;kg</strong></span>
+                        <span>Altura: <strong className="text-foreground tabular-nums">{c.height || '-'}&nbsp;cm</strong></span>
                       </div>
                     </CardContent>
                   </Card>
@@ -261,6 +284,8 @@ export default function App() {
             isOpen={isPlanBuilderOpen}
             onClose={() => setIsPlanBuilderOpen(false)}
             clientId={selectedClient.id}
+            client={selectedClient}
+            existingPlans={clientPlans}
             onPlanCreated={() => {
               fetchClientPlans(selectedClient.id);
             }}
