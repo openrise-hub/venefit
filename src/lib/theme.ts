@@ -25,6 +25,12 @@ export function applyTheme(pref: ThemePreference = getThemePreference()) {
     root.classList.remove('dark');
     root.setAttribute('data-theme', 'light');
   }
+
+  // Update browser chrome theme-color dynamically
+  const metaThemeColor = document.querySelector('meta[name="theme-color"]:not([media])');
+  if (metaThemeColor) {
+    metaThemeColor.setAttribute('content', isDark ? '#090d16' : '#f8fafc');
+  }
 }
 
 export function setThemePreference(pref: ThemePreference) {

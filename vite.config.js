@@ -7,5 +7,16 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-heroui': ['@heroui/react'],
+          'vendor-icons': ['lucide-react'],
+          'vendor-pocketbase': ['pocketbase', 'swr']
+        }
+      }
+    }
   }
 });

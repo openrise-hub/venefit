@@ -10,7 +10,7 @@ import {
   ModalCloseTrigger,
   Button
 } from '@heroui/react';
-import { Settings2, Save, X, Timer, Target } from 'lucide-react';
+import { Settings2, Save, Timer, RefreshCw } from 'lucide-react';
 import { RoutineExercise } from '../types';
 
 const RIR_OPTIONS = [
@@ -82,74 +82,78 @@ export default function EditExerciseTargetModal({
   return (
     <ModalBackdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
       <ModalContainer size="md" placement="center" className="p-3 sm:p-4">
-        <ModalDialog className="w-full max-w-lg mx-auto overflow-hidden">
-          <ModalHeader className="flex items-center justify-between border-b pb-3.5 gap-2">
+        <ModalDialog className="w-full max-w-lg mx-auto overflow-hidden border border-border shadow-2xl bg-surface">
+          <ModalHeader className="flex items-center justify-between border-b border-border pb-3.5 gap-2">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
-                <Settings2 className="w-4 h-4" />
+                <Settings2 className="w-4 h-4" aria-hidden="true" />
               </div>
               <div className="min-w-0">
-                <ModalHeading className="text-sm sm:text-base font-bold text-foreground truncate">
+                <ModalHeading className="text-sm sm:text-base font-extrabold text-foreground truncate">
                   Editar Metas del Ejercicio
                 </ModalHeading>
-                <p className="text-[11px] font-medium text-foreground/70 truncate">
+                <p className="text-[11px] font-medium text-muted truncate">
                   {exerciseName}
                 </p>
               </div>
             </div>
-            <ModalCloseTrigger onClick={onClose} />
+            <ModalCloseTrigger onClick={onClose} aria-label="Cerrar modal de edición" />
           </ModalHeader>
 
           <form onSubmit={handleFormSubmit}>
             <ModalBody className="py-4 space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-foreground/80 block">
+                  <label htmlFor="edit-target-sets" className="text-[11px] font-bold text-foreground block">
                     Series Objetivo
                   </label>
                   <input
+                    id="edit-target-sets"
                     type="number"
                     min="1"
                     max="10"
                     value={targetSets}
                     onChange={(e) => setTargetSets(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="w-full h-9 rounded-xl border border-border px-3 text-xs font-bold bg-background focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                    className="w-full h-10 rounded-xl border border-border px-3 text-xs font-bold bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-400 tabular-nums shadow-2xs"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-foreground/80 block">
+                  <label htmlFor="edit-target-reps" className="text-[11px] font-bold text-foreground block">
                     Rango de Repeticiones
                   </label>
                   <input
+                    id="edit-target-reps"
                     type="text"
                     placeholder="Ej. 8-10, 12, Fallo"
                     value={targetReps}
                     onChange={(e) => setTargetReps(e.target.value)}
-                    className="w-full h-9 rounded-xl border border-border px-3 text-xs font-bold bg-background focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                    className="w-full h-10 rounded-xl border border-border px-3 text-xs font-bold bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-400 tabular-nums shadow-2xs"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-foreground/80 block">
+                  <label htmlFor="edit-target-weight" className="text-[11px] font-bold text-foreground block">
                     Peso de Referencia ({weightUnit})
                   </label>
                   <div className="flex items-center gap-1.5">
                     <input
+                      id="edit-target-weight"
                       type="number"
                       step="0.5"
                       min="0"
                       value={targetWeight || ''}
                       onChange={(e) => setTargetWeight(parseFloat(e.target.value) || 0)}
-                      className="w-full h-9 rounded-xl border border-border px-3 text-xs font-bold bg-background focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                      className="w-full h-10 rounded-xl border border-border px-3 text-xs font-bold bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-400 tabular-nums shadow-2xs"
                       placeholder="0"
                     />
                     <button
                       type="button"
                       onClick={() => setWeightUnit(u => u === 'kg' ? 'lb' : 'kg')}
-                      className="h-9 px-2.5 text-xs font-bold rounded-xl border border-border hover:bg-foreground/5 text-emerald-400 shrink-0"
+                      aria-label={`Cambiar unidad entre kg y lb. Actual: ${weightUnit}`}
+                      className="h-10 px-2.5 text-xs font-bold rounded-xl border border-border hover:bg-surface-secondary text-emerald-400 shrink-0 cursor-pointer shadow-2xs"
                     >
                       {weightUnit}
                     </button>
@@ -157,16 +161,17 @@ export default function EditExerciseTargetModal({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-foreground/80 block">
+                  <label htmlFor="edit-target-rir" className="text-[11px] font-bold text-foreground block">
                     RIR Objetivo
                   </label>
                   <select
+                    id="edit-target-rir"
                     value={targetRir}
                     onChange={(e) => setTargetRir(parseInt(e.target.value, 10))}
-                    className="w-full h-9 rounded-xl border border-border px-2 text-xs font-semibold bg-background focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer"
+                    className="w-full h-10 rounded-xl border border-border px-2 text-xs font-semibold bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer shadow-2xs"
                   >
                     {RIR_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
+                      <option key={opt.value} value={opt.value} className="bg-background text-foreground">
                         {opt.label}
                       </option>
                     ))}
@@ -175,17 +180,18 @@ export default function EditExerciseTargetModal({
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-foreground/80 block flex items-center gap-1.5">
-                  <Timer className="w-3.5 h-3.5 text-emerald-400" />
+                <label htmlFor="edit-target-rest" className="text-[11px] font-bold text-foreground block flex items-center gap-1.5">
+                  <Timer className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" />
                   <span>Tiempo de Descanso entre Series</span>
                 </label>
                 <select
+                  id="edit-target-rest"
                   value={targetRestSec}
                   onChange={(e) => setTargetRestSec(parseInt(e.target.value, 10))}
-                  className="w-full h-9 rounded-xl border border-border px-2 text-xs font-semibold bg-background focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer"
+                  className="w-full h-10 rounded-xl border border-border px-2 text-xs font-semibold bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer shadow-2xs"
                 >
                   {REST_TIME_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
+                    <option key={opt.value} value={opt.value} className="bg-background text-foreground">
                       {opt.label}
                     </option>
                   ))}
@@ -193,25 +199,27 @@ export default function EditExerciseTargetModal({
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-foreground/80 block">
+                <label htmlFor="edit-target-notes" className="text-[11px] font-bold text-foreground block">
                   Indicaciones Técnicas / Notas del Entrenador
                 </label>
                 <textarea
+                  id="edit-target-notes"
                   rows={2}
-                  placeholder="Ej. Pausa de 1s en contracción, mantener escápulas retraídas..."
+                  placeholder="Ej. Pausa de 1 s en contracción, mantener escápulas retraídas…"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full rounded-xl border border-border p-2.5 text-xs bg-background focus:outline-none focus:ring-2 focus:ring-emerald-400 resize-none"
+                  className="w-full rounded-xl border border-border p-2.5 text-xs bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-400 resize-none shadow-2xs"
                 />
               </div>
             </ModalBody>
 
-            <ModalFooter className="border-t pt-3 flex items-center justify-end gap-2">
+            <ModalFooter className="border-t border-border pt-3 flex items-center justify-end gap-2">
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 onPress={onClose}
+                className="font-bold"
               >
                 Cancelar
               </Button>
@@ -220,10 +228,19 @@ export default function EditExerciseTargetModal({
                 variant="primary"
                 size="sm"
                 isDisabled={saving}
-                className="font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950"
+                className="font-bold shadow-sm"
               >
-                <Save className="w-4 h-4 mr-1" />
-                <span>{saving ? 'Guardando...' : 'Guardar Metas'}</span>
+                {saving ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin mr-1" aria-hidden="true" />
+                    <span>Guardando…</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-1" aria-hidden="true" />
+                    <span>Guardar Metas</span>
+                  </>
+                )}
               </Button>
             </ModalFooter>
           </form>
@@ -232,4 +249,3 @@ export default function EditExerciseTargetModal({
     </ModalBackdrop>
   );
 }
-

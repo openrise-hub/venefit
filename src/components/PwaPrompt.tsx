@@ -2,11 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Download, X } from 'lucide-react';
 
 export default function PwaPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
-    const handleBeforeInstall = (e) => {
+    // Check if dismissed previously in this session
+    if (typeof window !== 'undefined' && sessionStorage.getItem('venefit_pwa_dismissed')) {
+      return;
+    }
+
+    const handleBeforeInstall = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
       setShowPrompt(true);
@@ -16,12 +21,18 @@ export default function PwaPrompt() {
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
   }, []);
 
+  const handleDismiss = () => {
+    setShowPrompt(false);
+    sessionStorage.setItem('venefit_pwa_dismissed', 'true');
+  };
+
   const handleInstall = async () => {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
       setShowPrompt(false);
+      sessionStorage.setItem('venefit_pwa_dismissed', 'true');
     }
     setDeferredPrompt(null);
   };
@@ -29,31 +40,38 @@ export default function PwaPrompt() {
   if (!showPrompt) return null;
 
   return (
-    <div className="fixed bottom-20 md:bottom-6 left-3 right-3 sm:right-auto sm:left-4 sm:max-w-sm z-50 bg-slate-900 border border-emerald-500/40 rounded-2xl p-3.5 sm:p-4 shadow-2xl backdrop-blur-md flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4">
-      <div className="flex items-center gap-2.5 min-w-0">
-        <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
-          <Download className="w-4 h-4" />
+    <aside
+      aria-label="Aviso de instalación de la aplicación"
+      className="fixed bottom-20 md:bottom-6 left-3 right-3 sm:right-auto sm:left-4 sm:max-w-sm z-30 bg-surface/95 text-foreground border border-emerald-500/40 rounded-2xl p-2.5 sm:p-3 shadow-xl backdrop-blur-xl flex items-center justify-between gap-2.5 animate-in fade-in slide-in-from-bottom-2 transition-colors"
+    >
+      <div className="flex items-center gap-2 min-w-0">
+        <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+          <Download className="w-3.5 h-3.5" aria-hidden="true" />
         </div>
         <div className="min-w-0">
-          <h4 className="text-xs font-bold text-white truncate">Instalar Venefit App</h4>
-          <p className="text-[10px] sm:text-[11px] text-slate-400 line-clamp-1">Acceso rápido y offline.</p>
+          <h4 className="text-xs font-black text-foreground truncate">Instalar Venefit</h4>
+          <p className="text-[10px] text-muted line-clamp-1">Acceso rápido y offline.</p>
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 shrink-0">
+      <div className="flex items-center gap-1 shrink-0">
         <button
+          type="button"
           onClick={handleInstall}
-          className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-3 py-1.5 rounded-xl text-xs font-extrabold shadow-md shadow-emerald-500/20 transition-all"
+          aria-label="Instalar Venefit"
+          className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-2.5 py-1 rounded-lg text-[11px] font-black shadow-xs transition-all cursor-pointer"
         >
           Instalar
         </button>
         <button
-          onClick={() => setShowPrompt(false)}
-          className="text-slate-400 hover:text-white p-1 rounded-lg"
+          type="button"
+          onClick={handleDismiss}
+          aria-label="Descartar aviso de instalación"
+          className="text-muted hover:text-foreground p-1 rounded-lg transition-colors cursor-pointer"
         >
-          <X className="w-4 h-4" />
+          <X className="w-3.5 h-3.5" aria-hidden="true" />
         </button>
       </div>
-    </div>
+    </aside>
   );
 }

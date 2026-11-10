@@ -32,39 +32,133 @@ export default function Header({
     setThemePreference(next);
   };
 
+  const handleLogout = () => {
+    if (window.confirm('¿Seguro que deseas cerrar la sesión del entrenador?')) {
+      logoutTrainer();
+    }
+  };
+
+  const themeLabel =
+    themePref === 'system' ? 'Sistema' : themePref === 'dark' ? 'Oscuro' : 'Claro';
+
   return (
-    <header className="border-b px-4 py-3">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl border flex items-center justify-center">
-            <Dumbbell className="w-5 h-5 text-emerald-400" />
-          </div>
-          <div>
+    <header className="border-b border-border bg-background/95 backdrop-blur-md sticky top-0 z-30 px-3 sm:px-4 py-2.5 transition-colors">
+      <div className="max-w-7xl mx-auto">
+        {/* Main Row */}
+        <div className="flex items-center justify-between gap-2.5">
+          {/* Logo & Brand */}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="w-8 h-8 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center text-emerald-400 shrink-0">
+              <Dumbbell className="w-4 h-4" aria-hidden="true" />
+            </div>
             <div className="flex items-center gap-1.5">
-              <h1 className="font-extrabold text-lg tracking-tight font-heading">
+              <span className="font-black text-base tracking-tight font-heading text-foreground">
                 Venefit
-              </h1>
-              <Chip variant="soft" size="sm">
-                Pro
+              </span>
+              <Chip variant="soft" size="sm" className="font-extrabold text-[9px] text-emerald-400 border border-emerald-500/30 h-4.5 px-1.5">
+                PRO
               </Chip>
             </div>
-            <p className="text-xs opacity-60 hidden sm:block">Plataforma para Entrenadores</p>
+          </div>
+
+          {/* Desktop Client Selector (sm+) */}
+          <div className="hidden sm:flex items-center gap-2 flex-1 justify-center max-w-md mx-2">
+            <div className="relative flex-1 flex items-center">
+              <label htmlFor="client-selector-desktop" className="sr-only">
+                Seleccionar cliente activo
+              </label>
+              <select
+                id="client-selector-desktop"
+                aria-label="Seleccionar cliente activo"
+                value={selectedClient ? selectedClient.id : ''}
+                onChange={(e) => {
+                  const found = clients.find(c => c.id === e.target.value);
+                  if (found) onSelectClient(found);
+                }}
+                className="appearance-none w-full text-xs font-semibold rounded-xl pl-3 pr-8 py-1.5 border border-border cursor-pointer truncate focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-surface text-foreground shadow-2xs"
+              >
+                {clients.length === 0 && (
+                  <option value="" disabled>
+                    Sin clientes registrados
+                  </option>
+                )}
+                {clients.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              <Users className="w-3.5 h-3.5 text-muted absolute right-2.5 pointer-events-none" aria-hidden="true" />
+            </div>
+
+            <Button
+              variant="primary"
+              size="sm"
+              onPress={onOpenNewClientModal}
+              aria-label="Agregar nuevo cliente"
+              className="font-bold text-xs h-8 px-3 shrink-0 shadow-2xs"
+            >
+              <Plus className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
+              <span>Nuevo</span>
+            </Button>
+          </div>
+
+          {/* Right Action Icons (Theme + Profile) */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Button
+              isIconOnly
+              size="sm"
+              variant="ghost"
+              onPress={cycleTheme}
+              aria-label={`Cambiar tema visual (actual: ${themeLabel})`}
+              className="h-8 w-8 text-foreground/80 hover:text-foreground"
+            >
+              {themePref === 'system' ? (
+                <Laptop className="w-4 h-4" aria-hidden="true" />
+              ) : themePref === 'dark' ? (
+                <Moon className="w-4 h-4" aria-hidden="true" />
+              ) : (
+                <Sun className="w-4 h-4" aria-hidden="true" />
+              )}
+            </Button>
+
+            {currentTrainer && (
+              <Button
+                size="sm"
+                variant="outline"
+                onPress={handleLogout}
+                aria-label={`Cerrar sesión de ${currentTrainer.name || currentTrainer.email}`}
+                className="h-8 px-2 border-border text-foreground/90 font-medium text-xs"
+              >
+                <UserCheck className="w-3.5 h-3.5 text-emerald-400 mr-1 shrink-0" aria-hidden="true" />
+                <span className="hidden md:inline truncate max-w-[100px] text-[11px] font-semibold">
+                  {currentTrainer.name || currentTrainer.email.split('@')[0]}
+                </span>
+                <LogOut className="w-3 h-3 opacity-70 ml-1 shrink-0" aria-hidden="true" />
+              </Button>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="relative flex items-center">
+        {/* Mobile Dedicated Client Selector Row (sm:hidden) */}
+        <div className="sm:hidden flex items-center gap-2 mt-2 pt-2 border-t border-border/40">
+          <div className="relative flex-1 flex items-center min-w-0">
+            <label htmlFor="client-selector-mobile" className="sr-only">
+              Seleccionar cliente activo
+            </label>
             <select
+              id="client-selector-mobile"
+              aria-label="Seleccionar cliente activo"
               value={selectedClient ? selectedClient.id : ''}
               onChange={(e) => {
                 const found = clients.find(c => c.id === e.target.value);
                 if (found) onSelectClient(found);
               }}
-              className="appearance-none text-xs sm:text-sm font-medium rounded-xl px-3 py-2 pr-8 border cursor-pointer max-w-[140px] sm:max-w-[200px] truncate focus:outline-none bg-transparent"
+              className="appearance-none w-full text-xs font-bold rounded-xl pl-3 pr-8 py-2 border border-border cursor-pointer truncate focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-surface text-foreground shadow-2xs"
             >
               {clients.length === 0 && (
                 <option value="" disabled>
-                  Sin clientes
+                  Sin clientes registrados
                 </option>
               )}
               {clients.map((c) => (
@@ -73,50 +167,19 @@ export default function Header({
                 </option>
               ))}
             </select>
-            <Users className="w-4 h-4 opacity-60 absolute right-2.5 pointer-events-none" />
+            <Users className="w-3.5 h-3.5 text-muted absolute right-2.5 pointer-events-none" aria-hidden="true" />
           </div>
 
           <Button
             variant="primary"
             size="sm"
             onPress={onOpenNewClientModal}
+            aria-label="Agregar nuevo cliente"
+            className="font-bold text-xs h-9 px-3 shrink-0 shadow-2xs"
           >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Nuevo Cliente</span>
+            <Plus className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
+            <span>Nuevo</span>
           </Button>
-
-          <div title={`Tema: ${themePref === 'system' ? 'Sistema' : themePref === 'dark' ? 'Oscuro' : 'Claro'}`}>
-            <Button
-              isIconOnly
-              size="sm"
-              variant="ghost"
-              onPress={cycleTheme}
-            >
-              {themePref === 'system' ? (
-                <Laptop className="w-4 h-4" />
-              ) : themePref === 'dark' ? (
-                <Moon className="w-4 h-4" />
-              ) : (
-                <Sun className="w-4 h-4" />
-              )}
-            </Button>
-          </div>
-
-          {currentTrainer && (
-            <div title={`Sesión activa: ${currentTrainer.email}`}>
-              <Button
-                size="sm"
-                variant="outline"
-                onPress={() => logoutTrainer()}
-              >
-                <UserCheck className="w-4 h-4" />
-                <span className="hidden md:inline truncate max-w-[100px]">
-                  {currentTrainer.name || currentTrainer.email.split('@')[0]}
-                </span>
-                <LogOut className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-          )}
         </div>
       </div>
     </header>
