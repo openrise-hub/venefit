@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   ModalBackdrop,
   ModalContainer,
@@ -12,24 +12,25 @@ import {
 } from '@heroui/react';
 import { Settings2, Save, Timer, RefreshCw } from 'lucide-react';
 import { RoutineExercise } from '../types';
+import VenefitSelect, { VenefitSelectOption } from './VenefitSelect';
 
-const RIR_OPTIONS = [
-  { value: 0, label: 'RIR 0 (Fallo muscular)' },
-  { value: 1, label: 'RIR 1' },
-  { value: 2, label: 'RIR 2' },
-  { value: 3, label: 'RIR 3' },
-  { value: 4, label: 'RIR 4+' }
+const RIR_OPTIONS: VenefitSelectOption[] = [
+  { value: '0', label: 'RIR 0 (Fallo muscular)', triggerLabel: 'RIR 0 (Fallo)' },
+  { value: '1', label: 'RIR 1' },
+  { value: '2', label: 'RIR 2' },
+  { value: '3', label: 'RIR 3' },
+  { value: '4', label: 'RIR 4+' }
 ];
 
-const REST_TIME_OPTIONS = [
-  { value: 45, label: '45 segundos' },
-  { value: 60, label: '60 segundos (1 min)' },
-  { value: 75, label: '75 segundos' },
-  { value: 90, label: '90 segundos (1.5 min)' },
-  { value: 120, label: '120 segundos (2 min)' },
-  { value: 150, label: '150 segundos (2.5 min)' },
-  { value: 180, label: '180 segundos (3 min)' },
-  { value: 240, label: '240 segundos (4 min)' }
+const REST_TIME_OPTIONS: VenefitSelectOption[] = [
+  { value: '45', label: '45 segundos' },
+  { value: '60', label: '60 segundos (1 min)' },
+  { value: '75', label: '75 segundos' },
+  { value: '90', label: '90 segundos (1.5 min)' },
+  { value: '120', label: '120 segundos (2 min)' },
+  { value: '150', label: '150 segundos (2.5 min)' },
+  { value: '180', label: '180 segundos (3 min)' },
+  { value: '240', label: '240 segundos (4 min)' }
 ];
 
 interface EditExerciseTargetModalProps {
@@ -53,6 +54,20 @@ export default function EditExerciseTargetModal({
   const [targetRestSec, setTargetRestSec] = useState(exItem.target_rest_sec || 90);
   const [notes, setNotes] = useState(exItem.notes || '');
   const [saving, setSaving] = useState(false);
+
+  const rirOptions = useMemo(() => {
+    const valStr = String(targetRir);
+    if (RIR_OPTIONS.some((o) => o.value === valStr)) return RIR_OPTIONS;
+    return [{ value: valStr, label: `RIR ${valStr}` }, ...RIR_OPTIONS];
+  }, [targetRir]);
+
+  const restTimeOptions = useMemo(() => {
+    const valStr = String(targetRestSec);
+    if (REST_TIME_OPTIONS.some((o) => o.value === valStr)) return REST_TIME_OPTIONS;
+    return [...REST_TIME_OPTIONS, { value: valStr, label: `${valStr} segundos` }].sort(
+      (a, b) => Number(a.value) - Number(b.value)
+    );
+  }, [targetRestSec]);
 
   const exerciseName =
     exItem.expandedExercise?.name ||
@@ -164,18 +179,16 @@ export default function EditExerciseTargetModal({
                   <label htmlFor="edit-target-rir" className="text-[11px] font-bold text-foreground block">
                     RIR Objetivo
                   </label>
-                  <select
+                  <VenefitSelect
                     id="edit-target-rir"
-                    value={targetRir}
-                    onChange={(e) => setTargetRir(parseInt(e.target.value, 10))}
-                    className="w-full h-10 rounded-xl border border-border px-2 text-xs font-semibold bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer shadow-2xs"
-                  >
-                    {RIR_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value} className="bg-background text-foreground">
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
+                    aria-label="RIR Objetivo"
+                    value={String(targetRir)}
+                    onChange={(val) => setTargetRir(parseInt(val, 10))}
+                    options={rirOptions}
+                    surfaceTone="background"
+                    triggerClassName="h-10 font-semibold"
+                    popoverClassName="min-w-[max(var(--trigger-width),190px)]"
+                  />
                 </div>
               </div>
 
@@ -184,18 +197,15 @@ export default function EditExerciseTargetModal({
                   <Timer className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" />
                   <span>Tiempo de Descanso entre Series</span>
                 </label>
-                <select
+                <VenefitSelect
                   id="edit-target-rest"
-                  value={targetRestSec}
-                  onChange={(e) => setTargetRestSec(parseInt(e.target.value, 10))}
-                  className="w-full h-10 rounded-xl border border-border px-2 text-xs font-semibold bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer shadow-2xs"
-                >
-                  {REST_TIME_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value} className="bg-background text-foreground">
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
+                  aria-label="Tiempo de Descanso entre Series"
+                  value={String(targetRestSec)}
+                  onChange={(val) => setTargetRestSec(parseInt(val, 10))}
+                  options={restTimeOptions}
+                  surfaceTone="background"
+                  triggerClassName="h-10 font-semibold"
+                />
               </div>
 
               <div className="space-y-1">
