@@ -30,6 +30,7 @@ interface ExerciseCardProps {
   totalExercises: number;
   groupLabel?: string;
   onSetChange: (routineExId: string, setNum: number, key: string, value: any) => void;
+  onSetBlur?: (routineExId: string, setNum: number) => void;
   onToggleUnit: (routineExId: string, setNum: number) => void;
   onStartRestTimer: (seconds: number) => void;
   onMoveExercise: (fromIndex: number, toIndex: number) => void;
@@ -45,6 +46,7 @@ function ExerciseCard({
   totalExercises,
   groupLabel,
   onSetChange,
+  onSetBlur,
   onToggleUnit,
   onStartRestTimer,
   onMoveExercise,
@@ -266,6 +268,7 @@ function ExerciseCard({
                             placeholder="0"
                             value={weightVal === '' ? '' : weightVal}
                             onChange={(e) => onSetChange(exItem.id, setNum, 'weight', e.target.value)}
+                            onBlur={() => onSetBlur?.(exItem.id, setNum)}
                             aria-label={`Peso en ${unitVal} para serie ${setNum} de ${exercise.name}`}
                             className="w-13 sm:w-20 h-9 sm:h-10 rounded-xl border border-border px-1.5 sm:px-2 text-center text-xs font-black bg-surface text-foreground focus:bg-background focus:outline-none focus:ring-2 focus:ring-emerald-400 tabular-nums shadow-2xs"
                           />
@@ -288,6 +291,7 @@ function ExerciseCard({
                           placeholder="0"
                           value={repsVal === '' ? '' : repsVal}
                           onChange={(e) => onSetChange(exItem.id, setNum, 'reps', e.target.value)}
+                          onBlur={() => onSetBlur?.(exItem.id, setNum)}
                           aria-label={`Repeticiones para serie ${setNum} de ${exercise.name}`}
                           className="w-12 sm:w-20 h-9 sm:h-10 rounded-xl border border-border px-1 text-center text-xs font-black bg-surface text-foreground focus:bg-background focus:outline-none focus:ring-2 focus:ring-emerald-400 tabular-nums shadow-2xs"
                         />
