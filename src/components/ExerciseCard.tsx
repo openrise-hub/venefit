@@ -1,6 +1,6 @@
 import React, { memo, useState } from 'react';
-import { Card, CardContent, Chip, Button } from '@heroui/react';
-import { GripVertical, Timer, ArrowUp, ArrowDown, Check, Info, Edit3, Target } from 'lucide-react';
+import { Card, CardContent, Chip, Button, ModalBackdrop, ModalContainer, ModalDialog, ModalHeading } from '@heroui/react';
+import { GripVertical, Timer, ArrowUp, ArrowDown, Check, Info, Edit3, Target, Trash2 } from 'lucide-react';
 import { RoutineExercise, ExerciseSetResult } from '../types';
 import EditExerciseTargetModal from './EditExerciseTargetModal';
 import VenefitSelect, { VenefitSelectOption } from './VenefitSelect';
@@ -37,6 +37,7 @@ interface ExerciseCardProps {
   onDragStart: (e: React.DragEvent, index: number) => void;
   onDrop: (e: React.DragEvent, toIndex: number) => void;
   onUpdateTarget?: (routineExId: string, updates: Partial<RoutineExercise>) => Promise<void>;
+  onRemoveExercise?: (routineExId: string) => Promise<void> | void;
 }
 
 function ExerciseCard({
@@ -52,9 +53,11 @@ function ExerciseCard({
   onMoveExercise,
   onDragStart,
   onDrop,
-  onUpdateTarget
+  onUpdateTarget,
+  onRemoveExercise
 }: ExerciseCardProps) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   const exercise =
     exItem.expandedExercise ||
@@ -164,6 +167,19 @@ function ExerciseCard({
                   <ArrowDown className="w-3.5 h-3.5" aria-hidden="true" />
                 </Button>
               </div>
+
+              {onRemoveExercise && (
+                <Button
+                  isIconOnly
+                  size="sm"
+                  variant="ghost"
+                  onPress={() => setIsDeleteConfirmOpen(true)}
+                  aria-label={`Eliminar ${exercise.name} de la rutina de hoy`}
+                  className="h-8 w-8 text-muted hover:text-rose-400 hover:bg-rose-500/10 rounded-xl"
+                >
+                  <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                </Button>
+              )}
             </div>
           </div>
 
@@ -348,6 +364,51 @@ function ExerciseCard({
           exItem={exItem}
           onSave={onUpdateTarget}
         />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteConfirmOpen && onRemoveExercise && (
+        <ModalBackdrop isOpen={isDeleteConfirmOpen} onOpenChange={(open) => !open && setIsDeleteConfirmOpen(false)}>
+          <ModalContainer size="sm" placement="center" className="p-4">
+            <ModalDialog className="w-full max-w-sm mx-auto p-5 border border-border bg-surface rounded-2xl shadow-xl">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 shrink-0">
+                  <Trash2 className="w-4 h-4" aria-hidden="true" />
+                </div>
+                <div>
+                  <ModalHeading className="text-sm font-bold text-foreground">
+                    ¿Quitar de la rutina de hoy?
+                  </ModalHeading>
+                  <p className="text-[11px] text-muted">Esta acción solo afecta la sesión de hoy</p>
+                </div>
+              </div>
+              <p className="text-xs text-muted leading-relaxed mb-5">
+                Se removerá <strong className="text-foreground">{exercise.name}</strong> y sus series registradas en esta fecha.
+              </p>
+              <div className="flex items-center justify-end gap-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onPress={() => setIsDeleteConfirmOpen(false)}
+                  className="text-xs font-semibold"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  size="sm"
+                  variant="danger"
+                  onPress={() => {
+                    setIsDeleteConfirmOpen(false);
+                    onRemoveExercise(exItem.id);
+                  }}
+                  className="text-xs font-bold"
+                >
+                  Eliminar Ejercicio
+                </Button>
+              </div>
+            </ModalDialog>
+          </ModalContainer>
+        </ModalBackdrop>
       )}
     </>
   );

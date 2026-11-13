@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Card, CardContent, Chip, Button } from '@heroui/react';
 import { Plus, RefreshCw, CalendarX } from 'lucide-react';
-import { saveSetResult, updateExerciseSortOrder, updateRoutineExercise } from '../lib/api';
+import { saveSetResult, updateExerciseSortOrder, updateRoutineExercise, addExerciseToRoutine, deleteRoutineExercise } from '../lib/api';
 import { useRoutineForDay } from '../lib/useWorkoutData';
 import { convertWeight } from '../lib/utils';
 import RestTimer from './RestTimer';
 import ExerciseCard from './ExerciseCard';
+import ExerciseSelectorModal from './ExerciseSelectorModal';
 import { RoutineExercise } from '../types';
 
 interface DailyWorkoutViewProps {
@@ -23,6 +24,7 @@ export default function DailyWorkoutView({
   const [exercisesList, setExercisesList] = useState<any[]>([]);
   const [setsState, setSetsState] = useState<Record<string, any>>({});
   const [activeTimerSeconds, setActiveTimerSeconds] = useState<number | null>(null);
+  const [isExerciseSelectorOpen, setIsExerciseSelectorOpen] = useState(false);
 
   // Keep track of the last processed routine and exercises signature to avoid infinite render loops
   const lastSyncSignatureRef = useRef<string>('');
@@ -224,15 +226,46 @@ export default function DailyWorkoutView({
 
     setExercisesList(newList);
 
-    if (routineData) {
-      try {
-        await updateExerciseSortOrder(routineData.id, newList);
-        mutate();
-      } catch (e) {
-        console.error(e);
+      if (routineData) {
+        try {
+          await updateExerciseSortOrder(routineData.id, newList);
+          mutate();
+        } catch (e) {
+          console.error(e);
+        }
       }
-    }
-  }, [exercisesList, routineData, mutate]);
+    },
+    [exercisesList, routineData, mutate]
+  );
+
+  const handleAddExercisesToRoutine = useCallback(
+    async (selectedExercises: any[]) => {
+      if (!routineData || selectedExercises.length === 0) return;
+      try {
+        for (const ex of selectedExercises) {
+          await addExerciseToRoutine(routineData.id, ex.id);
+        }
+        lastSyncSignatureRef.current = '';
+        mutate();
+      } catch (err) {
+        console.error('[DailyWorkoutView:handleAddExercises]', err);
+      }
+    },
+    [routineData, mutate]
+  );
+
+  const handleRemoveExercise = useCallback(
+    async (routineExId: string) => {
+      try {
+        await deleteRoutineExercise(routineExId);
+        lastSyncSignatureRef.current = '';
+        mutate();
+      } catch (err) {
+        console.error('[DailyWorkoutView:handleRemoveExercise]', err);
+      }
+    },
+    [mutate]
+  );
 
   const handleDragStart = useCallback((e: React.DragEvent, index: number) => {
     e.dataTransfer.setData('text/plain', index.toString());
@@ -322,8 +355,20 @@ export default function DailyWorkoutView({
             </h3>
           </div>
 
-          <div className="text-xs text-muted font-bold tabular-nums">
-            {exercisesList.length}&nbsp;Ejercicio{exercisesList.length !== 1 ? 's' : ''}
+          <div className="flex items-center justify-between sm:justify-end gap-3">
+            <span className="text-xs text-muted font-bold tabular-nums">
+              {exercisesList.length}&nbsp;Ejercicio{exercisesList.length !== 1 ? 's' : ''}
+            </span>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 px-2.5 text-xs font-bold text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+              onPress={() => setIsExerciseSelectorOpen(true)}
+              aria-label="Agregar ejercicio a esta rutina"
+            >
+              <Plus className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
+              <span>Agregar</span>
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -346,9 +391,29 @@ export default function DailyWorkoutView({
             onDragStart={handleDragStart}
             onDrop={handleDrop}
             onUpdateTarget={handleUpdateExerciseTarget}
+            onRemoveExercise={handleRemoveExercise}
           />
         ))}
+
+        {/* Add Exercise on the Fly Button */}
+        <Button
+          variant="outline"
+          onPress={() => setIsExerciseSelectorOpen(true)}
+          className="w-full h-11 border-dashed border-2 border-emerald-500/30 hover:border-emerald-500/60 hover:bg-emerald-500/5 text-emerald-400 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 rounded-2xl transition-all cursor-pointer"
+          aria-label="Agregar ejercicio a la rutina de hoy"
+        >
+          <Plus className="w-4 h-4" aria-hidden="true" />
+          <span>Agregar Ejercicio a esta rutina</span>
+        </Button>
       </div>
+
+      {isExerciseSelectorOpen && (
+        <ExerciseSelectorModal
+          isOpen={isExerciseSelectorOpen}
+          onClose={() => setIsExerciseSelectorOpen(false)}
+          onAddExercises={handleAddExercisesToRoutine}
+        />
+      )}
 
       {activeTimerSeconds && (
         <RestTimer
