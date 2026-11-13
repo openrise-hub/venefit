@@ -688,6 +688,122 @@ export async function updateRoutineExercise(
   }
 }
 
+export async function addExerciseToRoutine(
+  routineId: string,
+  exerciseId: string,
+  customParams?: Partial<RoutineExercise>
+): Promise<RoutineExercise | null> {
+  if (isDevSession()) {
+    const routineExercises = getLocalMock<RoutineExercise[]>(DEMO_STORAGE_KEYS.ROUTINE_EXERCISES, []);
+    const routineExs = routineExercises.filter(re => re.routine === routineId || re.routine_id === routineId);
+    const nextSortOrder = routineExs.length + 1;
+    const matchedCatalogEx = DEFAULT_EXERCISES.find(e => e.id === exerciseId);
+
+    const newRoutineEx: RoutineExercise = {
+      id: `re_${routineId}_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      routine: routineId,
+      routine_id: routineId,
+      exercise: exerciseId,
+      exercise_id: exerciseId,
+      sort_order: nextSortOrder,
+      group_tag: customParams?.group_tag || '',
+      technique: customParams?.technique || 'straight',
+      notes: customParams?.notes || '',
+      target_sets: customParams?.target_sets ?? 3,
+      target_reps: customParams?.target_reps || '10-12',
+      target_rir: customParams?.target_rir ?? 2,
+      target_rest_sec: customParams?.target_rest_sec ?? 90,
+      target_weight: customParams?.target_weight ?? 0,
+      weight_unit: customParams?.weight_unit || 'kg',
+      expandedExercise: matchedCatalogEx || {
+        id: exerciseId,
+        name: 'Ejercicio',
+        primary_muscle: 'General',
+        muscle_groups: []
+      },
+      setResults: {}
+    };
+
+    setLocalMock(DEMO_STORAGE_KEYS.ROUTINE_EXERCISES, [...routineExercises, newRoutineEx]);
+    showToast('Ejercicio agregado a la rutina', 'success');
+    return newRoutineEx;
+  }
+
+  const pb = getPocketBaseClient();
+  try {
+    const existing = await pb.collection('routine_exercises').getList(1, 1, {
+      filter: `routine = "${sanitizeFilter(routineId)}"`,
+      sort: '-sort_order'
+    }).catch(() => null);
+    const nextSortOrder = (existing?.items?.[0]?.sort_order || 0) + 1;
+
+    const payload = {
+      routine: routineId,
+      exercise: exerciseId,
+      sort_order: nextSortOrder,
+      group_tag: customParams?.group_tag || '',
+      technique: customParams?.technique || 'straight',
+      notes: customParams?.notes || '',
+      target_sets: Number(customParams?.target_sets ?? 3),
+      target_reps: String(customParams?.target_reps || '10-12'),
+      target_rir: Number(customParams?.target_rir ?? 2),
+      target_rest_sec: Number(customParams?.target_rest_sec ?? 90),
+      target_weight: Number(customParams?.target_weight ?? 0),
+      weight_unit: customParams?.weight_unit || 'kg'
+    };
+
+    const record = await pb.collection('routine_exercises').create(payload, {
+      expand: 'exercise'
+    });
+
+    showToast('Ejercicio agregado a la rutina', 'success');
+    return record as unknown as RoutineExercise;
+  } catch (e) {
+    console.error('[API:addExerciseToRoutine] Failed to add exercise to routine:', e);
+    showToast('Error al agregar el ejercicio a la rutina', 'error');
+    return null;
+  }
+}
+
+export async function deleteRoutineExercise(routineExId: string): Promise<boolean> {
+  if (isDevSession()) {
+    const all = getLocalMock<RoutineExercise[]>(DEMO_STORAGE_KEYS.ROUTINE_EXERCISES, []);
+    const filtered = all.filter(re => re.id !== routineExId);
+    setLocalMock(DEMO_STORAGE_KEYS.ROUTINE_EXERCISES, filtered);
+
+    const setResults = getLocalMock<ExerciseSetResult[]>(DEMO_STORAGE_KEYS.SET_RESULTS, []);
+    const filteredSets = setResults.filter(
+      s => s.routine_exercise !== routineExId && s.routine_exercise_id !== routineExId
+    );
+    setLocalMock(DEMO_STORAGE_KEYS.SET_RESULTS, filteredSets);
+
+    showToast('Ejercicio eliminado de la rutina', 'success');
+    return true;
+  }
+
+  const pb = getPocketBaseClient();
+  try {
+    await pb.collection('routine_exercises').delete(routineExId);
+
+    // Delete associated set results
+    try {
+      const sets = await pb.collection('daily_set_results').getFullList({
+        filter: `routine_exercise = "${sanitizeFilter(routineExId)}"`
+      });
+      for (const s of sets) {
+        await pb.collection('daily_set_results').delete(s.id).catch(() => {});
+      }
+    } catch {}
+
+    showToast('Ejercicio eliminado de la rutina', 'success');
+    return true;
+  } catch (e) {
+    console.error('[API:deleteRoutineExercise] Failed to delete routine exercise:', e);
+    showToast('Error al eliminar el ejercicio', 'error');
+    return false;
+  }
+}
+
 export async function getWeekRoutines(
   clientId: string,
   dateStrings: string[]
