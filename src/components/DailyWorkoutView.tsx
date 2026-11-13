@@ -41,7 +41,7 @@ export default function DailyWorkoutView({
   useEffect(() => {
     if (fetchedExercises && fetchedExercises.length > 0) {
       // Build a signature of the current exercises to see if they genuinely changed
-      const currentSignature = `${dateStr}_${routineData?.id || ''}_${fetchedExercises.map(e => `${e.id}_${e.target_sets}_${e.target_weight}_${e.target_reps}_${e.target_rir}`).join('|')}`;
+      const currentSignature = `${dateStr}_${routineData?.id || ''}_${fetchedExercises.map(e => `${e.id}_${e.custom_name || ''}_${e.target_sets}_${e.target_weight}_${e.target_reps}_${e.target_rir}`).join('|')}`;
       
       if (lastSyncSignatureRef.current !== currentSignature) {
         lastSyncSignatureRef.current = currentSignature;
@@ -312,25 +312,53 @@ export default function DailyWorkoutView({
 
   if (!routineData || exercisesList.length === 0) {
     return (
-      <Card className="my-4 border border-border shadow-xs">
-        <CardContent className="p-8 text-center">
-          <CalendarX className="w-12 h-12 mx-auto mb-3 text-emerald-400/80" aria-hidden="true" />
-          <h3 className="text-base font-bold mb-1 text-foreground">Sin Rutina Programada para Hoy</h3>
-          <p className="text-xs max-w-sm mx-auto mb-4 text-muted leading-relaxed">
-            No hay ejercicios asignados para esta fecha. Crea o asigna un plan de entrenamiento replicado.
-          </p>
-          <Button
-            variant="primary"
-            size="sm"
-            onPress={onOpenPlanBuilder}
-            aria-label="Crear plan de entrenamiento replicado"
-            className="font-bold shadow-sm"
-          >
-            <Plus className="w-4 h-4 mr-1" aria-hidden="true" />
-            <span>Crear Plan Replicado</span>
-          </Button>
-        </CardContent>
-      </Card>
+      <>
+        <Card className="my-4 border border-border shadow-xs">
+          <CardContent className="p-8 text-center">
+            <CalendarX className="w-12 h-12 mx-auto mb-3 text-emerald-400/80" aria-hidden="true" />
+            <h3 className="text-base font-bold mb-1 text-foreground">
+              {routineData ? 'Rutina sin Ejercicios Asignados' : 'Sin Rutina Programada para Hoy'}
+            </h3>
+            <p className="text-xs max-w-sm mx-auto mb-4 text-muted leading-relaxed">
+              {routineData
+                ? 'Esta sesión no contiene ejercicios todavía. Puedes agregar ejercicios directamente a hoy o crear un plan nuevo.'
+                : 'No hay ejercicios asignados para esta fecha. Crea o asigna un plan de entrenamiento replicado.'}
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {routineData && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onPress={() => setIsExerciseSelectorOpen(true)}
+                  aria-label="Agregar ejercicios a esta rutina"
+                  className="font-bold shadow-sm"
+                >
+                  <Plus className="w-4 h-4 mr-1" aria-hidden="true" />
+                  <span>Agregar Ejercicio Hoy</span>
+                </Button>
+              )}
+              <Button
+                variant={routineData ? 'outline' : 'primary'}
+                size="sm"
+                onPress={onOpenPlanBuilder}
+                aria-label="Crear plan de entrenamiento replicado"
+                className="font-bold shadow-sm"
+              >
+                <Plus className="w-4 h-4 mr-1" aria-hidden="true" />
+                <span>Crear Plan Replicado</span>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {isExerciseSelectorOpen && (
+          <ExerciseSelectorModal
+            isOpen={isExerciseSelectorOpen}
+            onClose={() => setIsExerciseSelectorOpen(false)}
+            onAddExercises={handleAddExercisesToRoutine}
+          />
+        )}
+      </>
     );
   }
 

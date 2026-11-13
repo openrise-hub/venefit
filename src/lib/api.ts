@@ -353,16 +353,22 @@ export async function getRoutineForDay(clientId: string, dateStr: string): Promi
 
     const formattedExercises: RoutineExercise[] = exercisesList.map(re => {
       const expandedExercise = re.expand && (re.expand.exercise || re.expand.exercise_id) ? (re.expand.exercise || re.expand.exercise_id) : null;
+      let customName = re.custom_name;
+      if (!customName && re.notes) {
+        const match = re.notes.match(/\[NOMBRE:\s*([^\]]+)\]/i);
+        if (match) customName = match[1].trim();
+      }
       return {
         id: re.id,
         routine: re.routine || re.routine_id,
         routine_id: re.routine || re.routine_id,
         exercise: re.exercise || re.exercise_id,
         exercise_id: re.exercise || re.exercise_id,
+        custom_name: customName || undefined,
         sort_order: re.sort_order,
         group_tag: re.group_tag || '',
         technique: re.technique || 'straight',
-        notes: re.notes || '',
+        notes: re.notes ? re.notes.replace(/\[NOMBRE:\s*[^\]]+\]/gi, '').trim() : '',
         target_sets: re.target_sets,
         target_reps: re.target_reps,
         target_rir: re.target_rir,
@@ -813,6 +819,7 @@ export async function updateRoutineExercise(
         return {
           ...re,
           ...updates,
+          custom_name: updates.custom_name !== undefined ? updates.custom_name : re.custom_name,
           target_sets: updates.target_sets != null ? Number(updates.target_sets) : re.target_sets,
           target_reps: updates.target_reps != null ? String(updates.target_reps) : re.target_reps,
           target_rir: updates.target_rir != null ? Number(updates.target_rir) : re.target_rir,
@@ -838,8 +845,21 @@ export async function updateRoutineExercise(
     if (updates.weight_unit != null) payload.weight_unit = updates.weight_unit;
     if (updates.target_rest_sec != null) payload.target_rest_sec = Number(updates.target_rest_sec);
     if (updates.notes != null) payload.notes = String(updates.notes);
+    if (updates.custom_name !== undefined) {
+      payload.custom_name = updates.custom_name.trim();
+    }
 
-    await pb.collection('routine_exercises').update(routineExId, payload);
+    try {
+      await pb.collection('routine_exercises').update(routineExId, payload);
+    } catch {
+      // Fallback: embed in notes if custom_name column not present on remote
+      if (payload.custom_name) {
+        delete payload.custom_name;
+        const currentNotes = (payload.notes || '').replace(/\[NOMBRE:\s*[^\]]+\]/gi, '').trim();
+        payload.notes = `[NOMBRE: ${updates.custom_name?.trim()}] ${currentNotes}`.trim();
+        await pb.collection('routine_exercises').update(routineExId, payload);
+      }
+    }
     showToast('Parámetros guardados', 'success');
     return true;
   } catch (e) {
@@ -866,6 +886,7 @@ export async function addExerciseToRoutine(
       routine_id: routineId,
       exercise: exerciseId,
       exercise_id: exerciseId,
+      custom_name: customParams?.custom_name || undefined,
       sort_order: nextSortOrder,
       group_tag: customParams?.group_tag || '',
       technique: customParams?.technique || 'straight',
@@ -878,7 +899,7 @@ export async function addExerciseToRoutine(
       weight_unit: customParams?.weight_unit || 'kg',
       expandedExercise: matchedCatalogEx || {
         id: exerciseId,
-        name: 'Ejercicio',
+        name: customParams?.custom_name || 'Ejercicio',
         primary_muscle: 'General',
         muscle_groups: []
       },
@@ -912,6 +933,9 @@ export async function addExerciseToRoutine(
       target_weight: Number(customParams?.target_weight ?? 0),
       weight_unit: customParams?.weight_unit || 'kg'
     };
+    if (customParams?.custom_name) {
+      (payload as any).custom_name = customParams.custom_name.trim();
+    }
 
     const record = await pb.collection('routine_exercises').create(payload, {
       expand: 'exercise'

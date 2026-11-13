@@ -107,7 +107,7 @@ export default function EditClientModal({
               {/* Name */}
               <div className="space-y-1.5 min-w-0">
                 <label htmlFor="edit-client-name" className="text-xs font-bold text-foreground block">
-                  Nombre Completo <span className="text-emerald-500">*</span>
+                  Nombre <span className="text-emerald-500">*</span>
                 </label>
                 <input
                   id="edit-client-name"

@@ -21,7 +21,7 @@ function PlanMetadataForm({
   endDateStr,
   onEndDateChange
 }: PlanMetadataFormProps) {
-  const [durationWeeks, setDurationWeeks] = useState(8);
+  const [durationWeeks, setDurationWeeks] = useState(3);
   const [startDayId, setStartDayId] = useState(1); // 1 = Lunes
   const [startedBefore, setStartedBefore] = useState(false);
 

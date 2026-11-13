@@ -1,6 +1,6 @@
 import React, { memo, useState } from 'react';
 import { Card, CardContent, Chip, Button, ModalBackdrop, ModalContainer, ModalDialog, ModalHeading } from '@heroui/react';
-import { GripVertical, Timer, ArrowUp, ArrowDown, Check, Info, Edit3, Target, Trash2 } from 'lucide-react';
+import { GripVertical, Timer, ArrowUp, ArrowDown, Check, Info, Edit3, Target, Trash2, Plus, Minus } from 'lucide-react';
 import { RoutineExercise, ExerciseSetResult } from '../types';
 import EditExerciseTargetModal from './EditExerciseTargetModal';
 import VenefitSelect, { VenefitSelectOption } from './VenefitSelect';
@@ -64,6 +64,7 @@ function ExerciseCard({
     (typeof exItem.exercise === 'object' ? (exItem.exercise as any) : null) ||
     { name: 'Ejercicio', muscle_groups: [] };
 
+  const displayName = exItem.custom_name || exercise.name || 'Ejercicio';
   const muscleGroups = exercise.muscle_groups || [];
   const primaryMuscle = exercise.primary_muscle || (muscleGroups.length > 0 ? muscleGroups[0] : null);
   const modality = exercise.modality || null;
@@ -109,7 +110,14 @@ function ExerciseCard({
                       {TECHNIQUE_LABELS[technique] || technique}
                     </Chip>
                   )}
-                  <h4 className="text-sm sm:text-base font-bold truncate">{exercise.name}</h4>
+                  <div className="flex flex-col min-w-0">
+                    <h4 className="text-sm sm:text-base font-bold truncate">{displayName}</h4>
+                    {exItem.custom_name && exItem.custom_name !== exercise.name && (
+                      <span className="text-[10px] text-muted italic truncate">
+                        (Catálogo: {exercise.name})
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Tags row */}
@@ -136,7 +144,7 @@ function ExerciseCard({
                   variant="ghost"
                   className="h-8 px-2.5 text-xs font-semibold hover:text-emerald-400"
                   onPress={() => setIsEditModalOpen(true)}
-                  aria-label={`Editar metas y notas de ${exercise.name}`}
+                  aria-label={`Editar ejercicio y metas de ${displayName}`}
                 >
                   <Edit3 className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
                   <span className="hidden sm:inline">Editar</span>
@@ -150,7 +158,7 @@ function ExerciseCard({
                   variant="ghost"
                   isDisabled={exIdx === 0}
                   onPress={() => onMoveExercise(exIdx, exIdx - 1)}
-                  aria-label={`Mover ${exercise.name} hacia arriba`}
+                  aria-label={`Mover ${displayName} hacia arriba`}
                   className="h-7 w-7 text-foreground/80 hover:text-foreground"
                 >
                   <ArrowUp className="w-3.5 h-3.5" aria-hidden="true" />
@@ -161,7 +169,7 @@ function ExerciseCard({
                   variant="ghost"
                   isDisabled={exIdx === totalExercises - 1}
                   onPress={() => onMoveExercise(exIdx, exIdx + 1)}
-                  aria-label={`Mover ${exercise.name} hacia abajo`}
+                  aria-label={`Mover ${displayName} hacia abajo`}
                   className="h-7 w-7 text-foreground/80 hover:text-foreground"
                 >
                   <ArrowDown className="w-3.5 h-3.5" aria-hidden="true" />
@@ -174,7 +182,7 @@ function ExerciseCard({
                   size="sm"
                   variant="ghost"
                   onPress={() => setIsDeleteConfirmOpen(true)}
-                  aria-label={`Eliminar ${exercise.name} de la rutina de hoy`}
+                  aria-label={`Eliminar ${displayName} de la rutina de hoy`}
                   className="h-8 w-8 text-muted hover:text-rose-400 hover:bg-rose-500/10 rounded-xl"
                 >
                   <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
@@ -319,7 +327,7 @@ function ExerciseCard({
                           value={String(rirVal)}
                           onChange={(val) => onSetChange(exItem.id, setNum, 'rir', val)}
                           options={RIR_OPTIONS}
-                          aria-label={`RIR para serie ${setNum} de ${exercise.name}`}
+                          aria-label={`RIR para serie ${setNum} de ${displayName}`}
                           compact
                           fullWidth={false}
                           surfaceTone="surface"
@@ -353,6 +361,39 @@ function ExerciseCard({
               </tbody>
             </table>
           </div>
+
+          {/* Quick Series Adjusters (+ / - Serie for today) */}
+          {onUpdateTarget && (
+            <div className="flex items-center justify-between pt-1 border-t border-border/50 text-xs">
+              <span className="text-[11px] text-muted font-medium">
+                Series hoy: <strong className="text-foreground font-black tabular-nums">{numSets}</strong>
+              </span>
+              <div className="flex items-center gap-1.5">
+                {numSets > 1 && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 px-2 text-[11px] font-semibold text-muted hover:text-rose-400 hover:bg-rose-500/10 rounded-lg"
+                    onPress={() => onUpdateTarget(exItem.id, { target_sets: Math.max(1, numSets - 1) })}
+                    aria-label={`Quitar una serie de ${displayName}`}
+                  >
+                    <Minus className="w-3 h-3 mr-1" aria-hidden="true" />
+                    Quitar Serie
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 px-2 text-[11px] font-semibold text-emerald-400 hover:bg-emerald-500/10 rounded-lg"
+                  onPress={() => onUpdateTarget(exItem.id, { target_sets: numSets + 1 })}
+                  aria-label={`Agregar una serie a ${displayName}`}
+                >
+                  <Plus className="w-3 h-3 mr-1" aria-hidden="true" />
+                  Agregar Serie
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -383,7 +424,7 @@ function ExerciseCard({
                 </div>
               </div>
               <p className="text-xs text-muted leading-relaxed mb-5">
-                Se removerá <strong className="text-foreground">{exercise.name}</strong> y sus series registradas en esta fecha.
+                Se removerá <strong className="text-foreground">{displayName}</strong> y sus series registradas en esta fecha.
               </p>
               <div className="flex items-center justify-end gap-2">
                 <Button

@@ -72,6 +72,7 @@ export interface RoutineExercise {
   routine_id?: string;
   exercise: string;
   exercise_id?: string;
+  custom_name?: string;
   sort_order: number;
   group_tag?: string; // e.g. "A", "B", "C" para enlazar A1, A2
   technique?: TrainingTechnique | string;
