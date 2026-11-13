@@ -132,6 +132,66 @@ export async function createClient(clientData: Partial<Client>): Promise<Client>
   }
 }
 
+export async function updateClient(clientId: string, updates: Partial<Client>): Promise<Client | null> {
+  if (isDevSession()) {
+    const existing = getLocalMock<Client[]>(DEMO_STORAGE_KEYS.CLIENTS, []);
+    let updatedClient: Client | null = null;
+    const nextClients = existing.map(c => {
+      if (c.id === clientId) {
+        updatedClient = {
+          ...c,
+          ...updates,
+          current_weight: updates.current_weight != null ? Number(updates.current_weight) : c.current_weight,
+          height: updates.height != null ? Number(updates.height) : c.height,
+          updated: new Date().toISOString()
+        };
+        return updatedClient;
+      }
+      return c;
+    });
+    setLocalMock(DEMO_STORAGE_KEYS.CLIENTS, nextClients);
+    showToast('Datos del cliente actualizados', 'success');
+    return updatedClient;
+  }
+
+  const pb = getPocketBaseClient();
+  try {
+    const sanitizedId = sanitizeFilter(clientId);
+    const payload: Record<string, any> = {};
+    if (updates.name !== undefined) payload.name = updates.name.trim();
+    if (updates.email !== undefined) payload.email = updates.email.trim();
+    if (updates.phone !== undefined) payload.phone = updates.phone.trim();
+    if (updates.goal !== undefined) payload.goal = updates.goal.trim();
+    if (updates.current_weight !== undefined) payload.current_weight = Number(updates.current_weight);
+    if (updates.height !== undefined) payload.height = Number(updates.height);
+    if (updates.notes !== undefined) payload.notes = updates.notes;
+
+    const record = await pb.collection('clients').update(sanitizedId, payload);
+    showToast('Datos del cliente actualizados', 'success');
+    return record as unknown as Client;
+  } catch (e) {
+    console.error('[API:updateClient] Failed to update client in PocketBase:', e);
+    const existing = getLocalMock<Client[]>(DEMO_STORAGE_KEYS.CLIENTS, []);
+    let updatedClient: Client | null = null;
+    const nextClients = existing.map(c => {
+      if (c.id === clientId) {
+        updatedClient = {
+          ...c,
+          ...updates,
+          current_weight: updates.current_weight != null ? Number(updates.current_weight) : c.current_weight,
+          height: updates.height != null ? Number(updates.height) : c.height,
+          updated: new Date().toISOString()
+        };
+        return updatedClient;
+      }
+      return c;
+    });
+    setLocalMock(DEMO_STORAGE_KEYS.CLIENTS, nextClients);
+    showToast('Datos del cliente guardados localmente (modo offline)', 'info');
+    return updatedClient;
+  }
+}
+
 export async function deleteClient(clientId: string): Promise<boolean> {
   if (isDevSession()) {
     const existing = getLocalMock<Client[]>(DEMO_STORAGE_KEYS.CLIENTS, []);

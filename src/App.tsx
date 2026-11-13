@@ -14,8 +14,9 @@ import { getClients, deleteClient, getClientPlans } from './lib/api';
 import { formatDateISO } from './lib/utils';
 import { subscribeAuthChange, isTrainerAuthenticated, isDevSession } from './lib/pocketbase';
 import { showToast } from './lib/toastStore';
-import { Users, Plus } from 'lucide-react';
+import { Users, Plus, Edit3 } from 'lucide-react';
 import { Client, ClientPlan } from './types';
+import EditClientModal from './components/EditClientModal';
 
 const PlanBuilderModal = lazy(() => import('./components/PlanBuilderModal'));
 const ClientOnboardingModal = lazy(() => import('./components/ClientOnboardingModal'));
@@ -33,6 +34,7 @@ export default function App() {
 
   const [isPlanBuilderOpen, setIsPlanBuilderOpen] = useState(false);
   const [isNewClientOpen, setIsNewClientOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
 
   const fetchClientPlans = useCallback(async (clientId: string) => {
     try {
@@ -104,6 +106,11 @@ export default function App() {
       console.error('[App:handleDeleteClient] Failed to delete client:', e);
     }
   }, [loadClientsData]);
+
+  const handleUpdateClient = useCallback((updatedClient: Client) => {
+    setClients(prev => prev.map(c => c.id === updatedClient.id ? updatedClient : c));
+    setSelectedClient(prev => (prev && prev.id === updatedClient.id ? updatedClient : prev));
+  }, []);
 
   const handleOpenNewClient = useCallback(() => {
     setIsNewClientOpen(true);
@@ -189,6 +196,7 @@ export default function App() {
               plans={clientPlans}
               onOpenPlanBuilder={handleOpenPlanBuilder}
               onDeleteClient={handleDeleteClient}
+              onUpdateClient={handleUpdateClient}
             />
 
             <WeekStrip
@@ -266,8 +274,22 @@ export default function App() {
                       </div>
 
                       <div className="border-t border-border pt-3 mt-3 flex items-center justify-between text-xs text-muted">
-                        <span>Peso: <strong className="text-foreground tabular-nums">{c.current_weight || '-'}&nbsp;kg</strong></span>
-                        <span>Altura: <strong className="text-foreground tabular-nums">{c.height || '-'}&nbsp;cm</strong></span>
+                        <div className="flex items-center gap-3">
+                          <span>Peso: <strong className="text-foreground tabular-nums">{c.current_weight || '-'}&nbsp;kg</strong></span>
+                          <span>Altura: <strong className="text-foreground tabular-nums">{c.height || '-'}&nbsp;cm</strong></span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-[11px] font-bold text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 rounded-lg"
+                          onPress={() => {
+                            setEditingClient(c);
+                          }}
+                          aria-label={`Editar datos de ${c.name}`}
+                        >
+                          <Edit3 className="w-3 h-3 mr-1" aria-hidden="true" />
+                          <span>Editar</span>
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -303,6 +325,15 @@ export default function App() {
           />
         )}
       </Suspense>
+
+      {editingClient && (
+        <EditClientModal
+          isOpen={Boolean(editingClient)}
+          onClose={() => setEditingClient(null)}
+          client={editingClient}
+          onClientUpdated={handleUpdateClient}
+        />
+      )}
 
       <PwaPrompt />
     </div>
