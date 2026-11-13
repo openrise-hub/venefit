@@ -763,6 +763,7 @@ export async function getClientPlans(clientId: string): Promise<ClientPlan[]> {
       plan_name: p.name,
       start_date: p.start_date,
       end_date: p.end_date,
+      notes: p.notes,
       created: p.created
     }));
   } catch (e) {
@@ -980,5 +981,94 @@ export async function getWeekRoutines(
     })
   );
   return results;
+}
+
+export async function deletePlan(planId: string): Promise<boolean> {
+  if (isDevSession()) {
+    const plans = getLocalMock<ClientPlan[]>(DEMO_STORAGE_KEYS.PLANS, []);
+    setLocalMock(DEMO_STORAGE_KEYS.PLANS, plans.filter(p => p.id !== planId));
+
+    const routines = getLocalMock<DayRoutine[]>(DEMO_STORAGE_KEYS.ROUTINES, []);
+    const matchingRoutines = routines.filter(r => r.plan === planId || r.plan_id === planId);
+    const routineIds = new Set(matchingRoutines.map(r => r.id));
+
+    setLocalMock(DEMO_STORAGE_KEYS.ROUTINES, routines.filter(r => !routineIds.has(r.id)));
+
+    const routineExercises = getLocalMock<RoutineExercise[]>(DEMO_STORAGE_KEYS.ROUTINE_EXERCISES, []);
+    const matchingExercises = routineExercises.filter(re => routineIds.has(re.routine) || routineIds.has(re.routine_id || ''));
+    const exIds = new Set(matchingExercises.map(e => e.id));
+
+    setLocalMock(DEMO_STORAGE_KEYS.ROUTINE_EXERCISES, routineExercises.filter(re => !exIds.has(re.id)));
+
+    const setResults = getLocalMock<ExerciseSetResult[]>(DEMO_STORAGE_KEYS.SET_RESULTS, []);
+    setLocalMock(
+      DEMO_STORAGE_KEYS.SET_RESULTS,
+      setResults.filter(s => !exIds.has(s.routine_exercise) && !exIds.has(s.routine_exercise_id || ''))
+    );
+
+    showToast('Plan de entrenamiento eliminado', 'info');
+    return true;
+  }
+
+  const pb = getPocketBaseClient();
+  try {
+    const sanitizedId = sanitizeFilter(planId);
+    await pb.collection('workout_plans').delete(sanitizedId);
+    showToast('Plan de entrenamiento eliminado', 'info');
+    return true;
+  } catch (e) {
+    console.error('[API:deletePlan] Failed to delete plan in PocketBase:', e);
+    const plans = getLocalMock<ClientPlan[]>(DEMO_STORAGE_KEYS.PLANS, []);
+    setLocalMock(DEMO_STORAGE_KEYS.PLANS, plans.filter(p => p.id !== planId));
+    showToast('Plan eliminado localmente', 'info');
+    return true;
+  }
+}
+
+export async function toggleArchivePlan(planId: string, shouldArchive: boolean): Promise<boolean> {
+  if (isDevSession()) {
+    const plans = getLocalMock<ClientPlan[]>(DEMO_STORAGE_KEYS.PLANS, []);
+    const updated = plans.map(p => {
+      if (p.id === planId) {
+        let currentNotes = p.notes || '';
+        if (shouldArchive) {
+          if (!currentNotes.includes('[ARCHIVADO]')) {
+            currentNotes = `[ARCHIVADO] ${currentNotes}`.trim();
+          }
+        } else {
+          currentNotes = currentNotes.replace('[ARCHIVADO]', '').trim();
+        }
+        return {
+          ...p,
+          notes: currentNotes
+        };
+      }
+      return p;
+    });
+    setLocalMock(DEMO_STORAGE_KEYS.PLANS, updated);
+    showToast(shouldArchive ? 'Plan archivado' : 'Plan reactivado', 'success');
+    return true;
+  }
+
+  const pb = getPocketBaseClient();
+  try {
+    const sanitizedId = sanitizeFilter(planId);
+    const record = await pb.collection('workout_plans').getOne(sanitizedId);
+    let currentNotes = record.notes || '';
+    if (shouldArchive) {
+      if (!currentNotes.includes('[ARCHIVADO]')) {
+        currentNotes = `[ARCHIVADO] ${currentNotes}`.trim();
+      }
+    } else {
+      currentNotes = currentNotes.replace('[ARCHIVADO]', '').trim();
+    }
+    await pb.collection('workout_plans').update(sanitizedId, { notes: currentNotes });
+    showToast(shouldArchive ? 'Plan archivado' : 'Plan reactivado', 'success');
+    return true;
+  } catch (e) {
+    console.error('[API:toggleArchivePlan] Failed to update plan archive status in PocketBase:', e);
+    showToast('Error al actualizar estado del plan', 'error');
+    return false;
+  }
 }
 
