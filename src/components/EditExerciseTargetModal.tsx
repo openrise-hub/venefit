@@ -46,6 +46,11 @@ export default function EditExerciseTargetModal({
   exItem,
   onSave
 }: EditExerciseTargetModalProps) {
+  const defaultName =
+    exItem.custom_name ||
+    exItem.expandedExercise?.name ||
+    (typeof exItem.exercise === 'object' ? (exItem.exercise as any).name : 'Ejercicio');
+  const [exerciseName, setExerciseName] = useState(defaultName);
   const [targetSets, setTargetSets] = useState(exItem.target_sets || 3);
   const [targetReps, setTargetReps] = useState(exItem.target_reps || '10-12');
   const [targetWeight, setTargetWeight] = useState(exItem.target_weight || 0);
@@ -69,15 +74,12 @@ export default function EditExerciseTargetModal({
     );
   }, [targetRestSec]);
 
-  const exerciseName =
-    exItem.expandedExercise?.name ||
-    (typeof exItem.exercise === 'object' ? (exItem.exercise as any).name : 'Ejercicio');
-
   const handleFormSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     try {
       setSaving(true);
       await onSave(exItem.id, {
+        custom_name: exerciseName.trim(),
         target_sets: Number(targetSets) || 3,
         target_reps: String(targetReps || '10-12'),
         target_weight: Number(targetWeight) || 0,
@@ -117,6 +119,23 @@ export default function EditExerciseTargetModal({
 
           <form onSubmit={handleFormSubmit}>
             <ModalBody className="py-4 space-y-4">
+              {/* Exercise Name (Day Specific) */}
+              <div className="space-y-1">
+                <label htmlFor="edit-exercise-name" className="text-[11px] font-bold text-foreground block">
+                  Nombre del Ejercicio (para hoy)
+                </label>
+                <input
+                  id="edit-exercise-name"
+                  type="text"
+                  value={exerciseName}
+                  onChange={(e) => setExerciseName(e.target.value)}
+                  placeholder="Ej. Press Banca Plano con Barra"
+                  className="w-full h-10 rounded-xl border border-border px-3 text-xs sm:text-sm font-bold bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-2xs"
+                />
+                <span className="text-[10px] text-muted block">
+                  Solo se aplica a la rutina de esta fecha y no modifica el catálogo general.
+                </span>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label htmlFor="edit-target-sets" className="text-[11px] font-bold text-foreground block">
