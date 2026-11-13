@@ -26,11 +26,20 @@ export default function DailyWorkoutView({
 
   // Keep track of the last processed routine and exercises signature to avoid infinite render loops
   const lastSyncSignatureRef = useRef<string>('');
+  const setsStateRef = useRef<Record<string, any>>({});
+  const debounceTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  // Clean up debounce timers on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(debounceTimersRef.current).forEach(t => clearTimeout(t));
+    };
+  }, []);
 
   useEffect(() => {
     if (fetchedExercises && fetchedExercises.length > 0) {
       // Build a signature of the current exercises to see if they genuinely changed
-      const currentSignature = `${routineData?.id || ''}_${fetchedExercises.map(e => `${e.id}_${e.target_sets}_${e.target_weight}_${e.target_reps}_${e.target_rir}`).join('|')}`;
+      const currentSignature = `${dateStr}_${routineData?.id || ''}_${fetchedExercises.map(e => `${e.id}_${e.target_sets}_${e.target_weight}_${e.target_reps}_${e.target_rir}`).join('|')}`;
       
       if (lastSyncSignatureRef.current !== currentSignature) {
         lastSyncSignatureRef.current = currentSignature;
@@ -58,6 +67,7 @@ export default function DailyWorkoutView({
               }
             }
           });
+          setsStateRef.current = newSets;
           return newSets;
         });
       }
@@ -66,11 +76,13 @@ export default function DailyWorkoutView({
         lastSyncSignatureRef.current = 'empty';
         setExercisesList([]);
         setSetsState({});
+        setsStateRef.current = {};
       }
     }
-  }, [fetchedExercises, routineData, isLoading]);
+  }, [fetchedExercises, routineData, isLoading, dateStr]);
 
-  const persistSetResult = async (routineExId: string, date: string, setNum: number, setData: any) => {
+  const persistSetResult = useCallback(async (routineExId: string, date: string, setNum: number, setData: any) => {
+    if (!setData) return;
     try {
       await saveSetResult({
         routine_exercise_id: routineExId,
@@ -81,13 +93,13 @@ export default function DailyWorkoutView({
         weight_used: setData.weight,
         weight_unit: setData.unit,
         actual_rir: setData.rir,
-        completed: setData.completed
+        completed: setData.completed === true
       });
       mutate();
     } catch (e) {
       console.error('[DailyWorkoutView:persistSetResult]', e);
     }
-  };
+  }, [mutate]);
 
   const handleSetChange = useCallback((routineExId: string, setNum: number, key: string, value: any) => {
     let updatedSet: any = null;
@@ -97,19 +109,69 @@ export default function DailyWorkoutView({
       const currentSet = currentExSets[setNum] || {};
       updatedSet = { ...currentSet, [key]: value };
 
-      return {
+      const next = {
         ...prev,
         [routineExId]: {
           ...currentExSets,
           [setNum]: updatedSet
         }
       };
+      setsStateRef.current = next;
+      return next;
     });
 
-    if (key === 'completed' && value === true && updatedSet) {
-      persistSetResult(routineExId, dateStr, setNum, updatedSet);
+    const timerKey = `${routineExId}_${setNum}`;
+
+    // 1) Completion toggle (true OR false): save immediately and clear pending debounce
+    if (key === 'completed') {
+      if (debounceTimersRef.current[timerKey]) {
+        clearTimeout(debounceTimersRef.current[timerKey]);
+        delete debounceTimersRef.current[timerKey];
+      }
+      if (updatedSet) {
+        persistSetResult(routineExId, dateStr, setNum, updatedSet);
+      }
+      return;
     }
-  }, [dateStr]);
+
+    // 2) Discrete RIR change: save immediately and clear pending debounce
+    if (key === 'rir') {
+      if (debounceTimersRef.current[timerKey]) {
+        clearTimeout(debounceTimersRef.current[timerKey]);
+        delete debounceTimersRef.current[timerKey];
+      }
+      if (updatedSet) {
+        persistSetResult(routineExId, dateStr, setNum, updatedSet);
+      }
+      return;
+    }
+
+    // 3) Typing weight or reps: debounce auto-save so user edits persist even without blur
+    if (key === 'weight' || key === 'reps') {
+      if (debounceTimersRef.current[timerKey]) {
+        clearTimeout(debounceTimersRef.current[timerKey]);
+      }
+      debounceTimersRef.current[timerKey] = setTimeout(() => {
+        const latestSet = setsStateRef.current[routineExId]?.[setNum];
+        if (latestSet) {
+          persistSetResult(routineExId, dateStr, setNum, latestSet);
+        }
+        delete debounceTimersRef.current[timerKey];
+      }, 750);
+    }
+  }, [dateStr, persistSetResult]);
+
+  const handleSetBlur = useCallback((routineExId: string, setNum: number) => {
+    const timerKey = `${routineExId}_${setNum}`;
+    if (debounceTimersRef.current[timerKey]) {
+      clearTimeout(debounceTimersRef.current[timerKey]);
+      delete debounceTimersRef.current[timerKey];
+    }
+    const currentSet = setsStateRef.current[routineExId]?.[setNum];
+    if (currentSet) {
+      persistSetResult(routineExId, dateStr, setNum, currentSet);
+    }
+  }, [dateStr, persistSetResult]);
 
   const toggleUnitForSet = useCallback((routineExId: string, setNum: number) => {
     let updatedSet: any = null;
@@ -126,19 +188,27 @@ export default function DailyWorkoutView({
         weight: convertedWeight
       };
 
-      return {
+      const next = {
         ...prev,
         [routineExId]: {
           ...prev[routineExId],
           [setNum]: updatedSet
         }
       };
+      setsStateRef.current = next;
+      return next;
     });
 
-    if (updatedSet && updatedSet.completed) {
+    const timerKey = `${routineExId}_${setNum}`;
+    if (debounceTimersRef.current[timerKey]) {
+      clearTimeout(debounceTimersRef.current[timerKey]);
+      delete debounceTimersRef.current[timerKey];
+    }
+
+    if (updatedSet) {
       persistSetResult(routineExId, dateStr, setNum, updatedSet);
     }
-  }, [dateStr]);
+  }, [dateStr, persistSetResult]);
 
   const handleUpdateExerciseTarget = useCallback(async (routineExId: string, updates: Partial<RoutineExercise>) => {
     await updateRoutineExercise(routineExId, updates);
@@ -269,6 +339,7 @@ export default function DailyWorkoutView({
             totalExercises={exercisesList.length}
             groupLabel={exerciseGroupLabels[exItem.id]}
             onSetChange={handleSetChange}
+            onSetBlur={handleSetBlur}
             onToggleUnit={toggleUnitForSet}
             onStartRestTimer={handleStartRestTimer}
             onMoveExercise={moveExercise}
