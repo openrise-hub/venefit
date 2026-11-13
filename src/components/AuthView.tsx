@@ -136,7 +136,7 @@ export default function AuthView({ onLoginSuccess }: AuthViewProps) {
             {isRegister && (
               <div className="space-y-1.5">
                 <label htmlFor="auth-name" className="text-xs font-bold block text-foreground">
-                  Nombre Completo
+                  Nombre
                 </label>
                 <input
                   id="auth-name"

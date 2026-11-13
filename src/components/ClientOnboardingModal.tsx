@@ -51,13 +51,13 @@ export default function ClientOnboardingModal({
   const [notes, setNotes] = useState('');
 
   const [planName, setPlanName] = useState('Plan de Entrenamiento');
-  const [durationWeeks, setDurationWeeks] = useState(8);
+  const [durationWeeks, setDurationWeeks] = useState(3);
   const [startDayId, setStartDayId] = useState(1);
   const [startedBefore, setStartedBefore] = useState(false);
   const [startDateStr, setStartDateStr] = useState(() => formatDateISO(new Date()));
   const [endDateStr, setEndDateStr] = useState(() => {
     const end = new Date();
-    end.setDate(end.getDate() + 55);
+    end.setDate(end.getDate() + 20);
     return formatDateISO(end);
   });
   const [selectedDaysOfWeek, setSelectedDaysOfWeek] = useState<number[]>([1, 3, 5]);
@@ -328,7 +328,7 @@ export default function ClientOnboardingModal({
                 <div className="space-y-4">
                   <div className="space-y-1.5 min-w-0">
                     <label htmlFor="new-client-name" className="text-xs font-bold text-foreground block">
-                      Nombre Completo <span className="text-emerald-500">*</span>
+                      Nombre <span className="text-emerald-500">*</span>
                     </label>
                     <input
                       id="new-client-name"
