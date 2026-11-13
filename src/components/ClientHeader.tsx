@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Card, CardContent, Chip, Button } from '@heroui/react';
-import { Target, Weight, Ruler, Trash2, Plus, Check, Edit3 } from 'lucide-react';
+import { Card, CardContent, Button } from '@heroui/react';
+import { Target, Weight, Ruler, Trash2, Plus, Check, Edit3, Calendar } from 'lucide-react';
 import { Client, ClientPlan } from '../types';
 import EditClientModal from './EditClientModal';
+import PlanManagementModal from './PlanManagementModal';
 
 interface ClientHeaderProps {
   client: Client | null;
@@ -10,6 +11,7 @@ interface ClientHeaderProps {
   onOpenPlanBuilder: () => void;
   onDeleteClient: (clientId: string) => void;
   onUpdateClient?: (updatedClient: Client) => void;
+  onPlansChanged?: () => void;
 }
 
 export default function ClientHeader({ 
@@ -17,10 +19,12 @@ export default function ClientHeader({
   plans = [], 
   onOpenPlanBuilder, 
   onDeleteClient,
-  onUpdateClient
+  onUpdateClient,
+  onPlansChanged
 }: ClientHeaderProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isPlanManagerOpen, setIsPlanManagerOpen] = useState(false);
 
   if (!client) return null;
 
@@ -36,7 +40,7 @@ export default function ClientHeader({
   return (
     <Card className="mb-4 sm:mb-5 border border-border shadow-xs bg-surface">
       <CardContent className="p-3.5 sm:p-5 space-y-3">
-        {/* Header: Avatar, Name, Plans Badge & Delete Action */}
+        {/* Header: Avatar, Name, Plans Badge & Actions */}
         <div className="flex items-start justify-between gap-2.5">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-lg sm:text-xl font-black shrink-0 border border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
@@ -47,11 +51,16 @@ export default function ClientHeader({
                 <h2 className="text-base sm:text-lg font-black tracking-tight text-foreground truncate">
                   {client.name}
                 </h2>
-                {plans.length > 0 && (
-                  <Chip size="sm" variant="soft" className="font-extrabold text-[10px] text-emerald-400 border border-emerald-500/30 shrink-0">
-                    {plans.length}&nbsp;Plan{plans.length > 1 ? 'es' : ''}
-                  </Chip>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setIsPlanManagerOpen(true)}
+                  aria-label={`Gestionar planes de ${client.name}. ${plans.length} plan${plans.length !== 1 ? 'es' : ''} registrado${plans.length !== 1 ? 's' : ''}`}
+                  className="font-extrabold text-[10px] text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded-full shrink-0 transition-all cursor-pointer flex items-center gap-1"
+                  title="Ver y gestionar planes"
+                >
+                  <Calendar className="w-3 h-3" aria-hidden="true" />
+                  <span>{plans.length}&nbsp;Plan{plans.length !== 1 ? 'es' : ''}</span>
+                </button>
               </div>
               {client.goal && (
                 <p className="text-xs flex items-center gap-1.5 mt-0.5 text-muted font-medium truncate">
@@ -169,6 +178,21 @@ export default function ClientHeader({
           onClose={() => setIsEditModalOpen(false)}
           client={client}
           onClientUpdated={onUpdateClient}
+        />
+      )}
+
+      {/* Plan Management Modal */}
+      {isPlanManagerOpen && (
+        <PlanManagementModal
+          isOpen={isPlanManagerOpen}
+          onClose={() => setIsPlanManagerOpen(false)}
+          clientId={client.id}
+          clientName={client.name}
+          plans={plans}
+          onOpenPlanBuilder={onOpenPlanBuilder}
+          onPlansChanged={() => {
+            onPlansChanged?.();
+          }}
         />
       )}
     </Card>
