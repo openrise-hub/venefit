@@ -1,7 +1,8 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { Card, CardContent, Button } from '@heroui/react';
 import { Plus } from 'lucide-react';
 import ExerciseParamRow from './ExerciseParamRow';
+import VenefitSelect, { VenefitSelectOption } from '../VenefitSelect';
 
 export const ROUTINE_SPLIT_OPTIONS = [
   'Empuje (Pecho, Hombro, Tríceps)',
@@ -47,6 +48,15 @@ function DayRoutineEditor({
   onDrop
 }: DayRoutineEditorProps) {
   const exercises = activeConfig.exercises || [];
+  const currentRoutineName = activeConfig.routineName || ROUTINE_SPLIT_OPTIONS[0];
+
+  const splitOptions = useMemo<VenefitSelectOption[]>(() => {
+    const base = ROUTINE_SPLIT_OPTIONS.map((opt) => ({ value: opt, label: opt }));
+    if (currentRoutineName && !ROUTINE_SPLIT_OPTIONS.includes(currentRoutineName)) {
+      return [{ value: currentRoutineName, label: currentRoutineName }, ...base];
+    }
+    return base;
+  }, [currentRoutineName]);
 
   return (
     <Card className="p-3.5 sm:p-4 border border-border shadow-2xs bg-surface">
@@ -55,19 +65,14 @@ function DayRoutineEditor({
           <label htmlFor="routine-split-select" className="text-xs font-bold text-foreground block">
             Tipo de Rutina / Split del Día
           </label>
-          <select
+          <VenefitSelect
             id="routine-split-select"
             aria-label="Tipo de rutina o split del día"
-            value={activeConfig.routineName || ROUTINE_SPLIT_OPTIONS[0]}
-            onChange={(e) => onRoutineNameChange(activeDayTab, e.target.value)}
-            className="w-full h-10 rounded-xl border border-border px-3 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-background text-foreground cursor-pointer shadow-2xs"
-          >
-            {ROUTINE_SPLIT_OPTIONS.map((opt) => (
-              <option key={opt} value={opt} className="bg-background text-foreground font-medium">
-                {opt}
-              </option>
-            ))}
-          </select>
+            value={currentRoutineName}
+            onChange={(val) => onRoutineNameChange(activeDayTab, val)}
+            options={splitOptions}
+            surfaceTone="background"
+          />
         </div>
 
         <div className="flex items-center justify-between pt-1">
