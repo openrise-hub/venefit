@@ -343,6 +343,94 @@ export async function getRoutineForDay(clientId: string, dateStr: string): Promi
   }
 }
 
+const PENDING_SYNC_KEY = 'venefit_pending_set_syncs';
+
+export function getPendingSetSyncs(): any[] {
+  try {
+    const raw = localStorage.getItem(PENDING_SYNC_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function queuePendingSetSync(setData: any): void {
+  try {
+    const pending = getPendingSetSyncs();
+    const filtered = pending.filter(
+      p => !(p.routine_exercise_id === setData.routine_exercise_id && p.date === setData.date && p.set_number === setData.set_number)
+    );
+    filtered.push(setData);
+    localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(filtered));
+  } catch (err) {
+    console.warn('[API:queuePendingSetSync] Failed to queue pending set sync:', err);
+  }
+}
+
+export async function syncPendingSets(): Promise<number> {
+  if (isDevSession() || typeof window === 'undefined' || !navigator.onLine) {
+    return 0;
+  }
+  const pending = getPendingSetSyncs();
+  if (pending.length === 0) return 0;
+
+  const pb = getPocketBaseClient();
+  if (!pb.authStore.isValid) return 0;
+
+  let syncedCount = 0;
+  const remaining: any[] = [];
+
+  for (const item of pending) {
+    try {
+      const sanitizedExId = sanitizeFilter(item.routine_exercise_id);
+      const sanitizedDate = sanitizeFilter(item.date);
+      const setNum = item.set_number;
+
+      const existingRecord = await pb.collection('daily_set_results').getFirstListItem(
+        `routine_exercise = "${sanitizedExId}" && date = "${sanitizedDate}" && set_number = ${setNum}`
+      ).catch(() => null);
+
+      const payload = {
+        routine_exercise: item.routine_exercise_id,
+        date: item.date,
+        set_number: item.set_number,
+        set_type: item.set_type || 'normal',
+        completed_reps: item.completed_reps !== '' && item.completed_reps != null ? parseInt(String(item.completed_reps), 10) : 0,
+        weight_used: item.weight_used !== '' && item.weight_used != null ? parseFloat(String(item.weight_used)) : 0,
+        weight_unit: item.weight_unit || 'kg',
+        actual_rir: parseInt(String(item.actual_rir || 2), 10),
+        drop_details: item.drop_details || [],
+        completed: item.completed === true
+      };
+
+      if (existingRecord) {
+        await pb.collection('daily_set_results').update(existingRecord.id, payload);
+      } else {
+        await pb.collection('daily_set_results').create(payload);
+      }
+      syncedCount++;
+    } catch {
+      remaining.push(item);
+    }
+  }
+
+  try {
+    localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(remaining));
+  } catch {}
+
+  if (syncedCount > 0) {
+    showToast(`${syncedCount} serie${syncedCount > 1 ? 's sincronizadas' : ' sincronizada'} con la nube`, 'success');
+  }
+
+  return syncedCount;
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    syncPendingSets().catch(() => {});
+  });
+}
+
 export async function saveSetResult(setData: {
   routine_exercise_id: string;
   date: string;
@@ -381,6 +469,16 @@ export async function saveSetResult(setData: {
     return result;
   }
 
+  // If client is known to be offline before attempting PocketBase call
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    queuePendingSetSync(setData);
+    const existing = getLocalMock<ExerciseSetResult[]>(DEMO_STORAGE_KEYS.SET_RESULTS, []);
+    const filtered = existing.filter(s => !(s.routine_exercise === setData.routine_exercise_id && s.date === setData.date && s.set_number === setData.set_number));
+    setLocalMock(DEMO_STORAGE_KEYS.SET_RESULTS, [...filtered, result]);
+    showToast('Guardado localmente — sin conexión', 'info');
+    return result;
+  }
+
   const pb = getPocketBaseClient();
   try {
     const sanitizedExId = sanitizeFilter(setData.routine_exercise_id);
@@ -413,9 +511,11 @@ export async function saveSetResult(setData: {
     }
   } catch (e) {
     console.error('[API:saveSetResult] Failed to persist set result in PocketBase:', e);
+    queuePendingSetSync(setData);
     const existing = getLocalMock<ExerciseSetResult[]>(DEMO_STORAGE_KEYS.SET_RESULTS, []);
     const filtered = existing.filter(s => !(s.routine_exercise === setData.routine_exercise_id && s.date === setData.date && s.set_number === setData.set_number));
     setLocalMock(DEMO_STORAGE_KEYS.SET_RESULTS, [...filtered, result]);
+    showToast('Guardado localmente — sin conexión', 'info');
     return result;
   }
 }
