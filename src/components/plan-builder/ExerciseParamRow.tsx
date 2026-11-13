@@ -1,7 +1,8 @@
-import React, { memo } from 'react';
+import React, { memo, useId } from 'react';
 import { Card, CardContent, Button, Chip } from '@heroui/react';
 import { GripVertical, ArrowUp, ArrowDown, Trash2 } from 'lucide-react';
 import { TrainingTechnique } from '../../types';
+import VenefitSelect, { VenefitSelectOption } from '../VenefitSelect';
 
 export const TECHNIQUE_OPTIONS: Array<{ key: TrainingTechnique; label: string }> = [
   { key: 'straight', label: 'Serie Normal' },
@@ -19,6 +20,29 @@ export const GROUP_TAG_OPTIONS = [
   { key: 'B', label: 'Bloque B (B1, B2…)' },
   { key: 'C', label: 'Bloque C (C1, C2…)' },
   { key: 'D', label: 'Bloque D (D1, D2…)' }
+];
+
+const TECHNIQUE_SELECT_OPTIONS: VenefitSelectOption[] = TECHNIQUE_OPTIONS.map((opt) => ({
+  value: opt.key,
+  label: opt.label
+}));
+
+const GROUP_TAG_SELECT_OPTIONS: VenefitSelectOption[] = GROUP_TAG_OPTIONS.map((opt) => ({
+  value: opt.key,
+  label: opt.label
+}));
+
+const RIR_SELECT_OPTIONS: VenefitSelectOption[] = [
+  { value: '0', label: 'RIR 0 (Fallo)', triggerLabel: 'RIR 0' },
+  { value: '1', label: 'RIR 1' },
+  { value: '2', label: 'RIR 2' },
+  { value: '3', label: 'RIR 3' },
+  { value: '4', label: 'RIR 4+' }
+];
+
+const WEIGHT_UNIT_OPTIONS: VenefitSelectOption[] = [
+  { value: 'kg', label: 'kg' },
+  { value: 'lb', label: 'lb' }
 ];
 
 interface ExerciseParamRowProps {
@@ -42,6 +66,7 @@ function ExerciseParamRow({
   onDragStart,
   onDrop
 }: ExerciseParamRowProps) {
+  const fieldPrefix = useId();
   const isSpecialTechnique = ex.technique && ex.technique !== 'straight';
   const hasGroup = Boolean(ex.group_tag);
 
@@ -127,40 +152,43 @@ function ExerciseParamRow({
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-foreground block">Técnica de Ejecución</label>
-              <select
-                value={ex.technique || 'straight'}
-                onChange={(e) => onUpdateParam(idx, 'technique', e.target.value)}
+              <label htmlFor={`${fieldPrefix}-technique`} className="text-[10px] font-bold text-foreground block">
+                Técnica de Ejecución
+              </label>
+              <VenefitSelect
+                id={`${fieldPrefix}-technique`}
                 aria-label={`Técnica de ejecución para ${ex.name}`}
-                className="w-full h-9 rounded-xl border border-border px-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-background text-foreground cursor-pointer shadow-2xs"
-              >
-                {TECHNIQUE_OPTIONS.map(opt => (
-                  <option key={opt.key} value={opt.key} className="bg-background text-foreground">
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+                value={ex.technique || 'straight'}
+                onChange={(val) => onUpdateParam(idx, 'technique', val)}
+                options={TECHNIQUE_SELECT_OPTIONS}
+                surfaceTone="background"
+                triggerClassName="h-9"
+                popoverClassName="min-w-[max(var(--trigger-width),210px)]"
+              />
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-foreground block">Enlace Superserie / Bloque</label>
-              <select
-                value={ex.group_tag || ''}
-                onChange={(e) => onUpdateParam(idx, 'group_tag', e.target.value)}
+              <label htmlFor={`${fieldPrefix}-group-tag`} className="text-[10px] font-bold text-foreground block">
+                Enlace Superserie / Bloque
+              </label>
+              <VenefitSelect
+                id={`${fieldPrefix}-group-tag`}
                 aria-label={`Enlace superserie o bloque para ${ex.name}`}
-                className="w-full h-9 rounded-xl border border-border px-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-background text-foreground cursor-pointer shadow-2xs"
-              >
-                {GROUP_TAG_OPTIONS.map(opt => (
-                  <option key={opt.key} value={opt.key} className="bg-background text-foreground">
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+                value={ex.group_tag || ''}
+                onChange={(val) => onUpdateParam(idx, 'group_tag', val)}
+                options={GROUP_TAG_SELECT_OPTIONS}
+                surfaceTone="background"
+                triggerClassName="h-9"
+                popoverClassName="min-w-[max(var(--trigger-width),190px)]"
+              />
             </div>
 
             <div className="space-y-1 col-span-2">
-              <label className="text-[10px] font-bold text-foreground block">Notas / Indicaciones</label>
+              <label htmlFor={`${fieldPrefix}-notes`} className="text-[10px] font-bold text-foreground block">
+                Notas / Indicaciones
+              </label>
               <input
+                id={`${fieldPrefix}-notes`}
                 type="text"
                 placeholder="Ej. Reducir 25% peso en último set"
                 value={ex.notes || ''}
@@ -173,8 +201,11 @@ function ExerciseParamRow({
 
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-xs p-2 rounded-xl border border-border bg-surface-secondary/50">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-foreground block">Series</label>
+              <label htmlFor={`${fieldPrefix}-sets`} className="text-[10px] font-bold text-foreground block">
+                Series
+              </label>
               <input
+                id={`${fieldPrefix}-sets`}
                 type="number"
                 min="1"
                 value={ex.target_sets ?? ''}
@@ -185,8 +216,11 @@ function ExerciseParamRow({
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-foreground block">Reps Meta</label>
+              <label htmlFor={`${fieldPrefix}-reps`} className="text-[10px] font-bold text-foreground block">
+                Reps Meta
+              </label>
               <input
+                id={`${fieldPrefix}-reps`}
                 type="text"
                 value={ex.target_reps}
                 onChange={(e) => onUpdateParam(idx, 'target_reps', e.target.value)}
@@ -196,24 +230,27 @@ function ExerciseParamRow({
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-foreground block">RIR Meta</label>
-              <select
-                value={ex.target_rir}
-                onChange={(e) => onUpdateParam(idx, 'target_rir', e.target.value)}
+              <label htmlFor={`${fieldPrefix}-rir`} className="text-[10px] font-bold text-foreground block">
+                RIR Meta
+              </label>
+              <VenefitSelect
+                id={`${fieldPrefix}-rir`}
                 aria-label={`RIR meta para ${ex.name}`}
-                className="w-full h-9 rounded-xl border border-border px-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-background text-foreground shadow-2xs"
-              >
-                <option value="0">RIR 0 (Fallo)</option>
-                <option value="1">RIR 1</option>
-                <option value="2">RIR 2</option>
-                <option value="3">RIR 3</option>
-                <option value="4">RIR 4+</option>
-              </select>
+                value={String(ex.target_rir ?? 2)}
+                onChange={(val) => onUpdateParam(idx, 'target_rir', val)}
+                options={RIR_SELECT_OPTIONS}
+                surfaceTone="background"
+                triggerClassName="h-9"
+                popoverClassName="min-w-[max(var(--trigger-width),160px)]"
+              />
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-foreground block">Descanso (s)</label>
+              <label htmlFor={`${fieldPrefix}-rest`} className="text-[10px] font-bold text-foreground block">
+                Descanso (s)
+              </label>
               <input
+                id={`${fieldPrefix}-rest`}
                 type="number"
                 step="15"
                 value={ex.target_rest_sec ?? ''}
@@ -224,25 +261,30 @@ function ExerciseParamRow({
             </div>
 
             <div className="space-y-1 col-span-2 sm:col-span-1">
-              <label className="text-[10px] font-bold text-foreground block">Peso & Unidad</label>
+              <label htmlFor={`${fieldPrefix}-weight`} className="text-[10px] font-bold text-foreground block">
+                Peso & Unidad
+              </label>
               <div className="flex gap-1.5 items-center">
                 <input
+                  id={`${fieldPrefix}-weight`}
                   type="number"
                   step="0.5"
                   value={ex.target_weight ?? ''}
                   onChange={(e) => onUpdateParam(idx, 'target_weight', e.target.value)}
                   aria-label={`Peso meta para ${ex.name}`}
-                  className="w-full h-9 rounded-xl border border-border px-2.5 text-xs font-bold bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-400 tabular-nums shadow-2xs"
+                  className="w-full min-w-0 flex-1 h-9 rounded-xl border border-border px-2.5 sm:px-2 text-xs font-bold bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-400 tabular-nums shadow-2xs"
                 />
-                <select
-                  value={ex.weight_unit}
-                  onChange={(e) => onUpdateParam(idx, 'weight_unit', e.target.value)}
+                <VenefitSelect
                   aria-label={`Unidad de peso para ${ex.name}`}
-                  className="h-9 rounded-xl border border-border px-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-background text-foreground shadow-2xs shrink-0"
-                >
-                  <option value="kg">kg</option>
-                  <option value="lb">lb</option>
-                </select>
+                  value={ex.weight_unit || 'kg'}
+                  onChange={(val) => onUpdateParam(idx, 'weight_unit', val)}
+                  options={WEIGHT_UNIT_OPTIONS}
+                  compact
+                  fullWidth={false}
+                  surfaceTone="background"
+                  triggerClassName="h-9 w-[54px] shrink-0"
+                  popoverClassName="min-w-[max(var(--trigger-width),88px)]"
+                />
               </div>
             </div>
           </div>

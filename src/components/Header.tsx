@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button, Chip } from '@heroui/react';
 import { Dumbbell, Users, Plus, UserCheck, LogOut, Sun, Moon, Laptop } from 'lucide-react';
 import { getCurrentTrainer, logoutTrainer } from '../lib/pocketbase';
 import { getThemePreference, setThemePreference, ThemePreference } from '../lib/theme';
 import { Client } from '../types';
+import VenefitSelect from './VenefitSelect';
 
 interface HeaderProps {
   clients?: Client[];
@@ -20,6 +21,11 @@ export default function Header({
 }: HeaderProps) {
   const currentTrainer = getCurrentTrainer();
   const [themePref, setThemePref] = useState<ThemePreference>('system');
+
+  const clientOptions = useMemo(
+    () => clients.map((c) => ({ value: c.id, label: c.name })),
+    [clients]
+  );
 
   useEffect(() => {
     setThemePref(getThemePreference());
@@ -63,32 +69,25 @@ export default function Header({
 
           {/* Desktop Client Selector (sm+) */}
           <div className="hidden sm:flex items-center gap-2 flex-1 justify-center max-w-md mx-2">
-            <div className="relative flex-1 flex items-center">
+            <div className="flex-1 min-w-0">
               <label htmlFor="client-selector-desktop" className="sr-only">
                 Seleccionar cliente activo
               </label>
-              <select
+              <VenefitSelect
                 id="client-selector-desktop"
                 aria-label="Seleccionar cliente activo"
                 value={selectedClient ? selectedClient.id : ''}
-                onChange={(e) => {
-                  const found = clients.find(c => c.id === e.target.value);
+                onChange={(clientId) => {
+                  const found = clients.find((c) => c.id === clientId);
                   if (found) onSelectClient(found);
                 }}
-                className="appearance-none w-full text-xs font-semibold rounded-xl pl-3 pr-8 py-1.5 border border-border cursor-pointer truncate focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-surface text-foreground shadow-2xs"
-              >
-                {clients.length === 0 && (
-                  <option value="" disabled>
-                    Sin clientes registrados
-                  </option>
-                )}
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-              <Users className="w-3.5 h-3.5 text-muted absolute right-2.5 pointer-events-none" aria-hidden="true" />
+                options={clientOptions}
+                placeholder="Sin clientes registrados"
+                disabled={clients.length === 0}
+                startIcon={<Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
+                surfaceTone="surface"
+                triggerClassName="h-8 font-semibold"
+              />
             </div>
 
             <Button
@@ -142,32 +141,25 @@ export default function Header({
 
         {/* Mobile Dedicated Client Selector Row (sm:hidden) */}
         <div className="sm:hidden flex items-center gap-2 mt-2 pt-2 border-t border-border/40">
-          <div className="relative flex-1 flex items-center min-w-0">
+          <div className="flex-1 min-w-0">
             <label htmlFor="client-selector-mobile" className="sr-only">
               Seleccionar cliente activo
             </label>
-            <select
+            <VenefitSelect
               id="client-selector-mobile"
               aria-label="Seleccionar cliente activo"
               value={selectedClient ? selectedClient.id : ''}
-              onChange={(e) => {
-                const found = clients.find(c => c.id === e.target.value);
+              onChange={(clientId) => {
+                const found = clients.find((c) => c.id === clientId);
                 if (found) onSelectClient(found);
               }}
-              className="appearance-none w-full text-xs font-bold rounded-xl pl-3 pr-8 py-2 border border-border cursor-pointer truncate focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-surface text-foreground shadow-2xs"
-            >
-              {clients.length === 0 && (
-                <option value="" disabled>
-                  Sin clientes registrados
-                </option>
-              )}
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            <Users className="w-3.5 h-3.5 text-muted absolute right-2.5 pointer-events-none" aria-hidden="true" />
+              options={clientOptions}
+              placeholder="Sin clientes registrados"
+              disabled={clients.length === 0}
+              startIcon={<Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
+              surfaceTone="surface"
+              triggerClassName="h-9 font-bold"
+            />
           </div>
 
           <Button

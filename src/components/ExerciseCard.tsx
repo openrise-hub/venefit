@@ -3,13 +3,14 @@ import { Card, CardContent, Chip, Button } from '@heroui/react';
 import { GripVertical, Timer, ArrowUp, ArrowDown, Check, Info, Edit3, Target } from 'lucide-react';
 import { RoutineExercise, ExerciseSetResult } from '../types';
 import EditExerciseTargetModal from './EditExerciseTargetModal';
+import VenefitSelect, { VenefitSelectOption } from './VenefitSelect';
 
-const RIR_OPTIONS = [
-  { key: '0', label: 'RIR 0 (Fallo)' },
-  { key: '1', label: 'RIR 1' },
-  { key: '2', label: 'RIR 2' },
-  { key: '3', label: 'RIR 3' },
-  { key: '4', label: 'RIR 4+' }
+const RIR_OPTIONS: VenefitSelectOption[] = [
+  { value: '0', label: 'RIR 0 (Fallo)', triggerLabel: 'RIR 0' },
+  { value: '1', label: 'RIR 1' },
+  { value: '2', label: 'RIR 2' },
+  { value: '3', label: 'RIR 3' },
+  { value: '4', label: 'RIR 4+' }
 ];
 
 const TECHNIQUE_LABELS: Record<string, string> = {
@@ -294,18 +295,18 @@ function ExerciseCard({
 
                       {/* RIR */}
                       <td className="py-2 px-1.5 sm:px-2.5">
-                        <select
+                        <VenefitSelect
                           value={String(rirVal)}
-                          onChange={(e) => onSetChange(exItem.id, setNum, 'rir', e.target.value)}
+                          onChange={(val) => onSetChange(exItem.id, setNum, 'rir', val)}
+                          options={RIR_OPTIONS}
                           aria-label={`RIR para serie ${setNum} de ${exercise.name}`}
-                          className="w-16 sm:w-28 h-9 sm:h-10 rounded-xl border border-border px-1 sm:px-2 text-[11px] sm:text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-surface text-foreground cursor-pointer shadow-2xs"
-                        >
-                          {RIR_OPTIONS.map((opt) => (
-                            <option key={opt.key} value={opt.key} className="bg-surface text-foreground">
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
+                          compact
+                          fullWidth={false}
+                          surfaceTone="surface"
+                          triggerClassName="w-[74px] sm:w-28 h-9 sm:h-10 font-bold"
+                          valueClassName="text-[11px] sm:text-xs font-bold"
+                          popoverClassName="min-w-[max(var(--trigger-width),165px)]"
+                        />
                       </td>
 
                       {/* Status / Checkbox */}
