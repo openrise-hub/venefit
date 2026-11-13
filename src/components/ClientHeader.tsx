@@ -1,22 +1,26 @@
 import React, { useState } from 'react';
 import { Card, CardContent, Chip, Button } from '@heroui/react';
-import { Target, Weight, Ruler, Trash2, Plus, Check } from 'lucide-react';
+import { Target, Weight, Ruler, Trash2, Plus, Check, Edit3 } from 'lucide-react';
 import { Client, ClientPlan } from '../types';
+import EditClientModal from './EditClientModal';
 
 interface ClientHeaderProps {
   client: Client | null;
   plans?: ClientPlan[];
   onOpenPlanBuilder: () => void;
   onDeleteClient: (clientId: string) => void;
+  onUpdateClient?: (updatedClient: Client) => void;
 }
 
 export default function ClientHeader({ 
   client, 
   plans = [], 
   onOpenPlanBuilder, 
-  onDeleteClient 
+  onDeleteClient,
+  onUpdateClient
 }: ClientHeaderProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   if (!client) return null;
 
@@ -58,8 +62,21 @@ export default function ClientHeader({
             </div>
           </div>
 
-          {/* Delete Action Button */}
-          <div className="shrink-0">
+          {/* Actions: Edit and Delete */}
+          <div className="flex items-center gap-1 shrink-0">
+            {onUpdateClient && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onPress={() => setIsEditModalOpen(true)}
+                aria-label={`Editar datos de ${client.name}`}
+                className="h-8 px-2 sm:px-2.5 text-xs font-semibold hover:text-emerald-400 rounded-xl"
+              >
+                <Edit3 className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
+                <span className="hidden sm:inline">Editar</span>
+              </Button>
+            )}
+
             {confirmDelete ? (
               <div className="flex items-center gap-1 bg-rose-500/10 border border-rose-500/30 rounded-xl p-1 animate-in fade-in">
                 <Button
@@ -99,25 +116,37 @@ export default function ClientHeader({
         {/* Metrics & Add Plan Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1.5 border-t border-border/60">
           <div className="flex items-center gap-2 flex-1">
-            {client.current_weight != null && client.current_weight > 0 && (
-              <div className="flex-1 flex items-center gap-2 bg-surface-secondary/70 border border-border px-3 py-1.5 rounded-xl">
-                <Weight className="w-3.5 h-3.5 text-emerald-400 shrink-0" aria-hidden="true" />
-                <div>
-                  <span className="text-[9px] block text-muted font-bold uppercase tracking-wider">Peso</span>
-                  <span className="text-xs font-black text-foreground tabular-nums">{client.current_weight}&nbsp;kg</span>
-                </div>
+            <button
+              type="button"
+              onClick={() => onUpdateClient && setIsEditModalOpen(true)}
+              className="flex-1 flex items-center gap-2 bg-surface-secondary/70 hover:bg-surface-secondary border border-border hover:border-emerald-500/40 px-3 py-1.5 rounded-xl transition-all cursor-pointer text-left"
+              title="Haz clic para editar peso"
+              aria-label={`Peso actual: ${client.current_weight || 'No registrado'}. Haz clic para editar`}
+            >
+              <Weight className="w-3.5 h-3.5 text-emerald-400 shrink-0" aria-hidden="true" />
+              <div>
+                <span className="text-[9px] block text-muted font-bold uppercase tracking-wider">Peso</span>
+                <span className="text-xs font-black text-foreground tabular-nums">
+                  {client.current_weight != null && client.current_weight > 0 ? `${client.current_weight} kg` : 'Sin registrar'}
+                </span>
               </div>
-            )}
+            </button>
 
-            {client.height != null && client.height > 0 && (
-              <div className="flex-1 flex items-center gap-2 bg-surface-secondary/70 border border-border px-3 py-1.5 rounded-xl">
-                <Ruler className="w-3.5 h-3.5 text-emerald-400 shrink-0" aria-hidden="true" />
-                <div>
-                  <span className="text-[9px] block text-muted font-bold uppercase tracking-wider">Altura</span>
-                  <span className="text-xs font-black text-foreground tabular-nums">{client.height}&nbsp;cm</span>
-                </div>
+            <button
+              type="button"
+              onClick={() => onUpdateClient && setIsEditModalOpen(true)}
+              className="flex-1 flex items-center gap-2 bg-surface-secondary/70 hover:bg-surface-secondary border border-border hover:border-emerald-500/40 px-3 py-1.5 rounded-xl transition-all cursor-pointer text-left"
+              title="Haz clic para editar altura"
+              aria-label={`Altura: ${client.height || 'No registrada'}. Haz clic para editar`}
+            >
+              <Ruler className="w-3.5 h-3.5 text-emerald-400 shrink-0" aria-hidden="true" />
+              <div>
+                <span className="text-[9px] block text-muted font-bold uppercase tracking-wider">Altura</span>
+                <span className="text-xs font-black text-foreground tabular-nums">
+                  {client.height != null && client.height > 0 ? `${client.height} cm` : 'Sin registrar'}
+                </span>
               </div>
-            )}
+            </button>
           </div>
 
           <Button
@@ -132,6 +161,16 @@ export default function ClientHeader({
           </Button>
         </div>
       </CardContent>
+
+      {/* Edit Client Modal */}
+      {isEditModalOpen && onUpdateClient && (
+        <EditClientModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          client={client}
+          onClientUpdated={onUpdateClient}
+        />
+      )}
     </Card>
   );
 }
