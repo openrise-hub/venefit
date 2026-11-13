@@ -148,15 +148,20 @@ export default function ExerciseSelectorModal({ isOpen, onClose, onAddExercises 
                 {MODALITY_OPTIONS.map((modality) => {
                   const active = selectedModality === modality;
                   return (
-                    <Chip
+                    <button
                       key={modality}
+                      type="button"
+                      aria-pressed={active}
                       onClick={() => setSelectedModality(modality)}
-                      variant={active ? "primary" : "soft"}
-                      size="sm"
-                      className={`cursor-pointer font-bold text-xs ${active ? 'shadow-xs' : ''}`}
+                      className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-bold transition-all cursor-pointer select-none active:scale-95 ${
+                        active
+                          ? 'bg-emerald-500 text-slate-950 border border-emerald-400 font-black shadow-xs ring-2 ring-emerald-500/30'
+                          : 'bg-surface-secondary/70 border border-border text-muted hover:text-foreground hover:border-emerald-500/40'
+                      }`}
                     >
-                      {modality}
-                    </Chip>
+                      {active && <Check className="w-3.5 h-3.5 stroke-[3]" aria-hidden="true" />}
+                      <span>{modality}</span>
+                    </button>
                   );
                 })}
               </div>
@@ -179,15 +184,20 @@ export default function ExerciseSelectorModal({ isOpen, onClose, onAddExercises 
                 {MUSCLE_GROUPS.map((group) => {
                   const active = selectedMuscleGroups.includes(group);
                   return (
-                    <Chip
+                    <button
                       key={group}
+                      type="button"
+                      aria-pressed={active}
                       onClick={() => toggleMuscleGroup(group)}
-                      variant={active ? "primary" : "soft"}
-                      size="sm"
-                      className={`cursor-pointer font-bold text-xs ${active ? 'shadow-xs' : ''}`}
+                      className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-bold transition-all cursor-pointer select-none active:scale-95 ${
+                        active
+                          ? 'bg-emerald-500 text-slate-950 border border-emerald-400 font-black shadow-xs ring-2 ring-emerald-500/30'
+                          : 'bg-surface-secondary/70 border border-border text-muted hover:text-foreground hover:border-emerald-500/40'
+                      }`}
                     >
-                      {group}
-                    </Chip>
+                      {active && <Check className="w-3.5 h-3.5 stroke-[3]" aria-hidden="true" />}
+                      <span>{group}</span>
+                    </button>
                   );
                 })}
               </div>
