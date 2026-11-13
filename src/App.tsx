@@ -197,6 +197,11 @@ export default function App() {
               onOpenPlanBuilder={handleOpenPlanBuilder}
               onDeleteClient={handleDeleteClient}
               onUpdateClient={handleUpdateClient}
+              onPlansChanged={() => {
+                if (selectedClient) {
+                  fetchClientPlans(selectedClient.id);
+                }
+              }}
             />
 
             <WeekStrip
