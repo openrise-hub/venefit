@@ -365,6 +365,14 @@
       },
       {
         "system": false,
+        "id": "re_custom_name",
+        "name": "custom_name",
+        "type": "text",
+        "required": false,
+        "options": { "min": null, "max": null, "pattern": "" }
+      },
+      {
+        "system": false,
         "id": "re_sort_order",
         "name": "sort_order",
         "type": "number",
